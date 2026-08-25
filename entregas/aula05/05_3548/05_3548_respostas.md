@@ -11,9 +11,9 @@
 - **Classe Base (Superclasse):** `Funcionário`
   - **Atributos Herdados:** `nome: str`, `idade: int`, `salario: float`, `carga_horaria: int`
 - **Subclasses:**
-  - `Garçom`: Herda `nome` e `idade` de `Pessoa` e adiciona o método próprio `anotar_pedido`.
-  - `Chefe de cozinha`: Herda `nome` e `idade` de `Pessoa` e adiciona o método próprio `preparar`.
-  - `Gerente`: Herda `nome` e `idade` de `Pessoa` e adiciona o método próprio `demitir`.
+  - `Garçom`: Herda `nome` e `idade` de `Pessoa`, `salario` e `carga_horario` de `Funcionario` e adiciona o método próprio `anotar_pedido`.
+  - `Chefe de cozinha`: Herda `nome` e `idade` de `Pessoa`, `salario` e `carga_horario` de `Funcionario` e adiciona o método próprio `preparar`.
+  - `Gerente`: Herda `nome` e `idade` de `Pessoa`, `salario` e `carga_horario` de `Funcionario` e adiciona o método próprio `demitir`.
 
 ### 3. Iguaria
 - **Classe Base (Superclasse):** `Iguaria (comida)`
