@@ -32,12 +32,15 @@ Herda de Iguaria o nome e preço, mas adicona o atributo formato, pois se trata 
 #
 # Questão 2: (Relação entre Restaurante e iguaria)
 
-    Poderiamos implementar uma associação de elementos, de forma que cada restaurante "Apontasse" para uma lista de iguarias, que seria seu menu, dessa forma a remoção de um restaurante não afetaria os objetos de iguaria, no caso supondo Giraffas = Restaurante(), poderiamos adicionar um novo atributo menu = list() (para acessarmos elementos da classe iguaria), onde a principio Giraffas.menu = [], a menos que criássemos um método add_iguaria(Iguaria), que adicionasse comidas no menu e um remove_iguaria(Iguaria) que removesse, além disso, poderia também tornar menu como uma classe, embora não necessário, seria de bom uso e de boa organização a implementação do mesmo, nesse cenário, bastaria adiconar como atributo em restaurante um objeto da classe menu e realizar alguns pequenos ajustes
+Poderiamos implementar uma associação de elementos, de forma que cada restaurante "Apontasse" para uma lista de iguarias, que seria seu menu, dessa forma a remoção de um restaurante não afetaria os objetos de iguaria, no caso supondo Giraffas = Restaurante(), poderiamos adicionar um novo atributo menu = list() (para acessarmos elementos da classe iguaria), onde a principio Giraffas.menu = [], a menos que criássemos um método add_iguaria(Iguaria), que adicionasse comidas no menu e um remove_iguaria(Iguaria) que removesse, além disso, poderia também tornar menu como uma classe, embora não necessário, seria de bom uso e de boa organização a implementação do mesmo, nesse cenário, bastaria adiconar como atributo em restaurante um objeto da classe menu e realizar alguns pequenos ajustes
 #
 # Questão 3: 
-    Como já mencionado na atividade 1, poderíamos supor que tanto o método preparar() e anotar_pedido() consistiriam de objetos da classe Iguaria, embora dependendo da implementação estariam em listas ou não, no caso adotado, optei por preparar receber um único alimento por vez, pois poderia retornar uma lista contendo tempo, qualidade do prato etc.. E o método anotar_pedido() optei por ser uma lista de iguarias, pois cada cliente teria uma lista com seus desejos. Adicionalmente, o método demitir() tem como argumento um objeto da classe funcionário (Ou lista de funcionários, mas novamente, se trata de uma questão de como deseja ser implementado), optei por ser um único funcionário por vez.
-    
-    Resumindo os argumentos:
-    Método anotar_pedido() -> list[Iguaria]
-    Método demitir() -> Funcionário
-    Método preparar() -> Iguaria
+Como já mencionado na atividade 1, poderíamos supor que tanto o método preparar() e anotar_pedido() consistiriam de objetos da classe Iguaria, embora dependendo da implementação estariam em listas ou não, no caso adotado, optei por preparar receber um único alimento por vez, pois poderia retornar uma lista contendo tempo, qualidade do prato etc.. E o método anotar_pedido() optei por ser uma lista de iguarias, pois cada cliente teria uma lista com seus desejos. Adicionalmente, o método demitir() tem como argumento um objeto da classe funcionário (Ou lista de funcionários, mas novamente, se trata de uma questão de como deseja ser implementado), optei por ser um único funcionário por vez.
+
+**Resumindo os argumentos:**
+
+Método anotar_pedido() -> list[Iguaria]
+
+Método demitir() -> Funcionário
+
+Método preparar() -> Iguaria
