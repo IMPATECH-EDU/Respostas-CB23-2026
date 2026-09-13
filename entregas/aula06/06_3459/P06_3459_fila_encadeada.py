@@ -1,47 +1,4 @@
-class _No:
-    def __init__(self, valor):
-        self.valor = valor
-        self.proximo = None
-
-
-class PilhaEncadeada:
-    def __init__(self):
-        self._topo = None
-        self._tamanho = 0
-
-    def push(self, item):
-        novo_no = _No(item)
-        novo_no.proximo = self._topo
-        self._topo = novo_no
-        self._tamanho += 1
-
-    def pop(self):
-        if self.esta_vazia():
-            raise IndexError("Subfluxo de pilha: Pilha vazia.")
-        valor_removido = self._topo.valor
-        self._topo = self._topo.proximo
-        self._tamanho -= 1
-        return valor_removido
-
-    def topo(self):
-        if self.esta_vazia():
-            raise IndexError("Pilha vazia.")
-        return self._topo.valor
-
-    def esta_vazia(self):
-        return self._topo is None
-
-    def __len__(self):
-        return self._tamanho
-
-    def __repr__(self):
-        elementos = []
-        atual = self._topo
-        while atual is not None:
-            elementos.append(repr(atual.valor))
-            atual = atual.proximo
-        return " -> ".join(elementos) if elementos else "Pilha Vazia"
-
+from P06_3459_pilha_encadeada import PilhaEncadeada
 
 class FilaEncadeada:
     def __init__(self):
@@ -92,3 +49,40 @@ class FilaEncadeada:
         elementos.extend(reversed(elementos_entrada))
         
         return " <- ".join(elementos)
+
+
+
+
+from P06_123456_fila_encadeada import FilaEncadeada
+
+fila = FilaEncadeada()
+
+print("Fila vazia?", fila.esta_vazia())
+
+fila.enfileirar(10)
+fila.enfileirar(20)
+fila.enfileirar(30)
+fila.enfileirar(40)
+fila.enfileirar(50)
+
+print("Fila:", fila)
+print("Tamanho:", len(fila))
+print("Frente:", fila.frente())
+
+print("Saiu:", fila.desenfileirar())
+print("Fila:", fila)
+
+print("Saiu:", fila.desenfileirar())
+print("Fila:", fila)
+
+fila.enfileirar(60)
+fila.enfileirar(70)
+
+print("Fila depois de adicionar 60 e 70:", fila)
+
+print("Saiu:", fila.desenfileirar())
+print("Saiu:", fila.desenfileirar())
+print("Saiu:", fila.desenfileirar())
+
+print("Fila final:", fila)
+print("Tamanho final:", len(fila))
