@@ -1,0 +1,2 @@
+A função desenfileirar pode custar O(n) porque, se a pilha de saída estiver vazia, ou seja, a pilha de entrada tem todos os N elemnetos. Precisa desempilhar e empilhar dnv todos os N elementos para inverter a ordem.
+Cada elemento faz 4 operações de pilha: recebe 1 push, 1 pop da a pilha de entrada, 1 push na de saída, 1 pop na de saída. São feitas 4N operações, então, dividindo pelo número de elementos, o custo médio (por elemento) é 4N/N = 4, que é O(1) amortizado.
