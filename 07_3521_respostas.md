@@ -1,0 +1,4 @@
+Questão 2:  
+Para o algoritmo de encontrar o caminho entre o rato e o queijo no labirinto, foi utilizada uma busca em profundidade. No exemplo do labirinto usado, como ele é perfeito(sem ciclos), quase não há distinção entre os métodos de busca quando procurando num grafo de árvore com um caminho entre quaisquer dois locais.  
+	Eu escolhi a busca em profundidade devido à maior facilidade de implementação, visto que utiliza uma lógica semelhante à lógica da criação do labirinto, com busca por profundidade e pilhas.  
+Na visualização do labirinto, é capaz de ver tanto o caminho final(verde) quanto os caminhos percorridos pela busca(azul) que foram retornados.
