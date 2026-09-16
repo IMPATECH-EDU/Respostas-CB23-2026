@@ -1,8 +1,4 @@
-import importlib
-
-pilha = importlib.import_module("06_3533_pilha_encadeada")
-No = pilha.No
-PilhaEncadeada = pilha.PilhaEncadeada
+from p06_3533_pilha_encadeada import PilhaEncadeada
 
 class FilaEncadeada:
     def __init__(self):

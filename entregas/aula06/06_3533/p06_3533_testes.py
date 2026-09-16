@@ -1,10 +1,6 @@
-import importlib
+from p06_3533_pilha_encadeada import PilhaEncadeada
+from p06_3533_fila_encadeada import FilaEncadeada
 import unittest
-
-pilha = importlib.import_module("06_3533_pilha_encadeada")
-PilhaEncadeada = pilha.PilhaEncadeada
-fila = importlib.import_module("06_3533_fila_encadeada")
-FilaEncadeada = fila.FilaEncadeada
 
 class TestFilaEncadeada(unittest.TestCase):
     def setUp(self):
