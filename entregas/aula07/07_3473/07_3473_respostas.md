@@ -1,0 +1,1 @@
+Para encontrar o caminho até o queijo, foi utilizada a busca em profundidade (DFS) de forma iterativa. Essa escolha foi feita porque o DFS explora um caminho até o fim antes de voltar para explorar outras possibilidades, sendo adequado para percorrer o labirinto. Além disso, a implementação pode ser realizada utilizando uma pilha, sem necessidade de recursão.
