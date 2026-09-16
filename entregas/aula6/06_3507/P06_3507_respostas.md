@@ -1,0 +1,3 @@
+# Aula 6 - Análise de Complexidade
+
+A transferência dos elementos da pilha entrada  para a pilha saida possui complexidade O(N) em uma operação individual, pois, quando saida está vazia, é necessário mover todos os N elementos. Entretanto, essa operação não acontece a cada desenfileirar: cada elemento é transferido de entrada para saida no máximo uma vez antes de ser removido. Assim, considerando uma sequência de várias operações, o custo total das transferências é proporcional ao número de elementos processados, sendo distribuído entre as operações realizadas. Por isso, embora uma operação isolada possa custar O(N), o custo médio por operação ao longo da sequência é O(1) amortizada.
