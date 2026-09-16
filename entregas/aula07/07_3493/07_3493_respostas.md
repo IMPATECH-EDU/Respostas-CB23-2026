@@ -1,0 +1,2 @@
+# Questão 2
+Podemos resolver essa questão com o menor caminho usando tanto dfs quanto bfs, pois o labirinto é perfeito e adimite solução única. Dessa forma, a escolha entre os algoritmos, também por terem a mesma complexidade que é $O(mn)$, depende da necessidade de aumentar o escopo do problema e da vontade do programador. Nesse sentido, pensando na escabilidade do problema, resolvi-o por bfs, de forma que o mesmo código também resolveria labirintos imperfeitos.
