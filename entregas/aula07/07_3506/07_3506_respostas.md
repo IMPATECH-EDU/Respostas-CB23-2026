@@ -1,0 +1,7 @@
+## questão 2
+
+para encontrar o caminho entre a posição inicial (1,1) e o queijo, utilizei uma busca em profundidade (DFS) iterativa. A DFS foi implementada utilizando uma pilha. A partir da posiçao inicial, o algoritmo visita as posiçoes vizinhas que nao sao paredes e que ainda nao foram visitadas. Para cada nova posiçao visitada, é armazenada tambem a posiçao anterior, permitindo reconstruir posteriormente o caminho encontrado. Quando o queijo é encontrado, o caminho é reconstruido seguindo essas posiçoes anteriores desde o queijo ate (1,1) e, em seguida, invertendo a sequencia
+
+escolhi usar DFS porque o labirinto gerado pelo maze_builder.py é um labirinto perfeito, ou seja, existe apenas um caminho entre quaisquer dois pontos. Dessa forma, nao é necessario utilizar BFS para encontrar um caminho mais curto entre diferentes possibilidades, pois nao existem caminhos alternativos entre a origem e o destino
+
+a complexidade de busca em um grafo geral é O(V + E), onde V é o numero de posiçoes acessiveis do labirinto e E é o numero de conexoes entre elas, mas como o labirinto perfeito pode ser representado por uma arvore, a gente tem que E = V - 1. Logo nesse caso, a complexidade pode ser simplificada para O(V+V-1) = O(V)
