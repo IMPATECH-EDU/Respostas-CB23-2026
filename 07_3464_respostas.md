@@ -1,0 +1,3 @@
+# Justificativa da abordagem (BFS)
+
+O algoritmo de BFS foi escolhido porque achei mais interessante aprender/elaborar o algoritmo que sempre encontra o melhor caminho. Como o labirinto (que é efetivamente printado no terminal) possui dimensões pequenas, não enxerguei diferença entre executar o algoritmo BFS para o DFS. Talvez essa diferença fosse visível se o labirinto fosse iterado diversas vezes, mas como isso não estava no escopo do projeto, a diferença se tornou insignificante.
