@@ -1,0 +1,6 @@
+#Aula 07
+
+A solução que encontrei para achar o caminho até o queijo no labirinto foi com uma busca em largura. 
+Fiz essa escolha, pois com a busca em largura fica mais simples guardar caminhos, e consequentemente descobrir o caminho do início até o queijo. Na busca em largura, como o processo é por níveis de distância até o vértice inicial, para definir o caminho até determinado vértice é muito simples: basta olhar o caminho do vértice anterior (o qual, primeiramente, possibilitou o acesso ao vértice atual) e adicionar o vértice atual.
+
+Já na busca em profundidade, primeiro percorre-se ao máximo até atingir uma folha, é possível guardar esse caminho, mas, ao dar o próximo passo e começar a explorar outro caminho, não sabemos em qual parte do caminho atual foi cortado para adicionar o novo vértice. Seria necessário, então, comparar os vértices do caminho atual (partindo do final da lista e indo deletando) até encontrar o vértice que coincide com o anterior ao vértice que iremos adicionar. Isso é bem mais complicado do que o processo de guardar caminhos com a busca em largura.
