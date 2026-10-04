@@ -39,16 +39,21 @@ def etapa1(texto: str, verdade: dict) -> list:
     print("\n=== Etapa 1: leitura do log ===")
     # (a) Leia o log e imprima o número de registros válidos e de linhas inválidas.
     registros, invalidas = ler_log(texto)
+    print(f"Registros válidos: {len(registros)} | Linhas inválidas: {len(invalidas)}")
     assert len(invalidas) == verdade["invalidas"]
     assert len(registros) + len(invalidas) == verdade["linhas"]
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
-    por_nivel = _todo("1(b)")
+    niveis = {r.nivel for r in registros}
+    por_nivel = {nivel: sum(1 for r in registros if r.nivel == nivel) for nivel in niveis}
     assert por_nivel == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
-    total = _todo("1(c)")
+    s_pulsos = serie(registros, "FT201", "pulsos")
+    total = int(s_pulsos.sum())
+    volume_L = total * 0.1
+    print(f"Total de pulsos de FT201: {total} | Volume bombeado: {volume_L:.1f} L ({volume_L/1000:.3f} m³)")
     assert total == verdade["pulsos_total"]
 
     # (d) valida_tag.
