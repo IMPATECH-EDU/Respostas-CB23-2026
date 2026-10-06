@@ -32,9 +32,24 @@ class TestPorTagExemplo(unittest.TestCase):
         # O código atual com defeito devolve apenas [25.0, 35.0] e falhará aqui
         self.assertTrue(np.allclose(mm, esperado))
 
+class TestReamostrarSerie(unittest.TestCase):
+    """Testes para o método reamostrar e descarte de sobras (Issue #5)."""
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+    def test_descarte_de_sobra_no_fim(self):
+        """Garante que os pontos excedentes no final da série que não formam um bloco são descartados."""
+        s = SerieTemporal.de_lista([1.0, 3.0, 5.0, 7.0, 9.0])
+        r = s.reamostrar(2)
+        # Com k=2, forma os blocos [1, 3] -> 2.0 e [5, 7] -> 6.0. O valor 9.0 é descartado.
+        self.assertEqual(len(r), 2)
+        self.assertTrue(np.allclose(r, [2.0, 6.0]))
+
+    def test_retorno_exato_sem_sobras_e_tipo(self):
+        """Verifica o cálculo exato sem sobras e atesta que o retorno é do tipo SerieTemporal."""
+        s = SerieTemporal.de_lista([10.0, 20.0, 30.0, 40.0])
+        r = s.reamostrar(2)
+        
+        self.assertIsInstance(r, SerieTemporal)
+        self.assertTrue(np.allclose(r, [15.0, 35.0]))
 
 
 if __name__ == "__main__":
