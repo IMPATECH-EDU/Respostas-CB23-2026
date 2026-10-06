@@ -8,6 +8,7 @@ import unittest
 from elevatoria.dados import por_tag
 import numpy as np
 from elevatoria.serie import SerieTemporal
+from elevatoria.dados import ler_log
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -32,6 +33,7 @@ class TestPorTagExemplo(unittest.TestCase):
         # O código atual com defeito devolve apenas [25.0, 35.0] e falhará aqui
         self.assertTrue(np.allclose(mm, esperado))
 
+
 class TestReamostrarSerie(unittest.TestCase):
     """Testes para o método reamostrar e descarte de sobras (Issue #5)."""
 
@@ -50,6 +52,39 @@ class TestReamostrarSerie(unittest.TestCase):
         
         self.assertIsInstance(r, SerieTemporal)
         self.assertTrue(np.allclose(r, [15.0, 35.0]))
+
+
+class TestLerLogRegrasAdicionais(unittest.TestCase):
+    """Testes adicionais para as regras de ler_log (Issue #1)."""
+
+    def test_descarta_data_impossivel(self):
+        """Verifica se linhas com datas ou horas impossíveis (ex: mês 13) são descartadas."""
+        log = "2026-13-05 08:00:00 INFO B1 evento=partida\n"
+        registros, invalidas = ler_log(log)
+        self.assertEqual(len(registros), 0)
+        self.assertEqual(len(invalidas), 1)
+
+    def test_descarta_sem_pares_chave_valor(self):
+        """Garante que a linha seja inválida se o bloco 'resto' não tiver pares chave=valor."""
+        log = "2026-10-05 08:00:00 INFO B1 apenas_texto_solto_sem_igual\n"
+        registros, invalidas = ler_log(log)
+        self.assertEqual(len(registros), 0)
+        self.assertEqual(len(invalidas), 1)
+
+    def test_ignora_linhas_vazias_ou_espacos(self):
+        """Confirma que linhas vazias ou apenas com espaços não contam como inválidas."""
+        log = "   \n\n2026-10-05 08:00:00 INFO B1 evento=partida"
+        registros, invalidas = ler_log(log)
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(len(invalidas), 0)
+
+    def test_conversao_mista_tipos(self):
+        """Verifica se a conversão separa corretamente floats e strings no mesmo registro."""
+        log = "2026-10-05 08:00:00 INFO PT101 contagens=131 evento=falha"
+        registros, _ = ler_log(log)
+        valores = registros[0].valores
+        self.assertIsInstance(valores["contagens"], float)
+        self.assertIsInstance(valores["evento"], str)
 
 
 if __name__ == "__main__":
