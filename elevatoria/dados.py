@@ -26,7 +26,7 @@ from fornecido.cronometro import cronometrar
 #: Padrão de uma linha válida do log, compilado com `re.compile(..., re.VERBOSE)` e com um
 #: comentário em cada parte. Grupos nomeados: `data` (AAAA-MM-DD), `hora` (HH:MM:SS),
 #: `nivel` (INFO, WARN ou ALARME), `tag` (1 ou 2 letras maiúsculas seguidas de 1 a 3
-#: dígitos) e `resto` (o restante da linha, começando poyir um caractere que não é espaço).
+#: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
 LINHA: re.Pattern = re.compile(
@@ -65,26 +65,56 @@ def valida_tag(s: str) -> bool:
     return bool(re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s))
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
-    """Lê o texto do log e devolve `(registros, invalidas)`.
+    """Lê o texto do log e devolve `(registros, invalidas)`."""
+    registros: list[Registro] = []
+    invalidas: list[str] = []
 
-    - `registros`: lista de `Registro`, na ordem em que as linhas aparecem no texto;
-    - `invalidas`: lista das linhas descartadas, exatamente como estavam no texto.
+    for linha in texto.splitlines(): 
+        if not linha.strip():
+            continue
 
-    Regras:
+        match = LINHA.fullmatch(linha)
+        if not match:
+            invalidas.append(linha)
+            continue
 
-    - linhas vazias (ou só com espaços) são ignoradas e não contam como inválidas;
-    - uma linha é inválida se não casar com `LINHA` (com `fullmatch`), se a data ou a hora
-      forem impossíveis (por exemplo, mês 13) ou se o `resto` não tiver nenhum par
-      chave=valor;
-    - `instante` vem de `datetime.strptime` aplicado a `data` e `hora`;
-    - os pares são extraídos do grupo `resto` com o padrão `(\\w+)=(\\S+)`; cada valor vira
-      `float` quando a conversão é possível e continua `str` nos demais casos
-      (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
-    - texto vazio devolve `([], [])`.
-    """
-    raise NotImplementedError("issue #1: ler_log")
+        data = match.group("data")
+        hora = match.group("hora")
+        nivel = match.group("nivel")
+        tag = match.group("tag")
+        resto = match.group("resto")
 
 
+        try: # Tenta converter data e hora em datetime
+            instante = datetime.strptime(f"{data} {hora}", "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            invalidas.append(linha)
+            continue
+
+        pares = re.findall(r"(\w+)=(\S+)", resto) # Extrai os pares de chave = valor do resto
+        if not pares:
+            invalidas.append(linha)
+            continue
+
+        valores: dict[str, float | str] = {}
+        for chave, val_str in pares:
+            try:
+                valores[chave] = float(val_str)
+            except ValueError:
+                valores[chave] = val_str
+
+        registros.append(
+            Registro(
+                instante=instante,
+                nivel=nivel,
+                tag=tag,
+                valores=valores,
+            )
+        )
+
+    return registros, invalidas
+
+    
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
     """Registros da `tag`, na ordem original."""
     return [r for r in registros if r.tag == tag]
