@@ -26,7 +26,7 @@ from fornecido.cronometro import cronometrar
 #: Padrão de uma linha válida do log, compilado com `re.compile(..., re.VERBOSE)` e com um
 #: comentário em cada parte. Grupos nomeados: `data` (AAAA-MM-DD), `hora` (HH:MM:SS),
 #: `nivel` (INFO, WARN ou ALARME), `tag` (1 ou 2 letras maiúsculas seguidas de 1 a 3
-#: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
+#: dígitos) e `resto` (o restante da linha, começando poyir um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
 LINHA: re.Pattern = re.compile(
@@ -61,8 +61,8 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
-
+    
+    return bool(re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s))
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     """Lê o texto do log e devolve `(registros, invalidas)`.
