@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — Maria Leticia Lins Nunes (3478)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -31,9 +31,9 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | | |
-| Tempo do laço / tempo vetorizado | | |
-| Tempo da compreensão / tempo do laço | | |
+| Memória da lista / memória do `uint16` |50 | |
+| Tempo do laço / tempo vetorizado | 200 | |
+| Tempo da compreensão / tempo do laço | 0.7 | |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
@@ -41,11 +41,11 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` |SerieTemporal | |
+| `s[1:]` | SerieTemporal | |
+| `s * 2` | SerieTemporal | |
+| `s.sum()` | Float | |
+| `s[0]` | Float | |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
 
