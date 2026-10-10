@@ -45,6 +45,7 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 | Tempo do laço / tempo vetorizado | 20 | |
 | Tempo da compreensão / tempo do laço | 0.7 | |
 
+2351a64
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
