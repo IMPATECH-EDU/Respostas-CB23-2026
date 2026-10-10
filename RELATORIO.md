@@ -65,14 +65,21 @@ A operação `4095 * 20` resulta em `81900`. Como o `uint16` armazena valores de
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | SerieTemporal | |
-| `s[1:]` | SerieTemporal | |
-| `s * 2` | SerieTemporal | |
-| `s.sum()` | numpy.float64 | |
-| `s[0]` | numpy.float64 | |
+| `s + s` | SerieTemporal | SerieTemporal |
+| `s[1:]` | SerieTemporal | SerieTemporal |
+| `s * 2` | SerieTemporal | SerieTemporal |
+| `s.sum()` | numpy.float64 | SerieTemporal |
+| `s[0]` | numpy.float64 | numpy.float64 |
 
+O resultado que mais me surpreendeu foi s.sum(). Intuitivamente, esperava-se que somar os elementos da série devolvesse um escalar numérico (numpy.float64), já que uma soma não representa mais uma sequência temporal de dados.
+A explicação técnica é que, como SerieTemporal herda diretamente de numpy.ndarray, o mecanismo interno do NumPy preserva a subclasse em operações de redução. O método .sum() gera um vetor escalar de zero dimensões (shape ()), que o NumPy envelopa automaticamente de volta como uma instância de SerieTemporal. Por outro lado, a indexação de elemento único s[0] extrai diretamente o valor numérico interno do vetor, convertendo-o para o tipo escalar nativo.
 <!-- Explique o resultado que mais surpreendeu você. -->
 
 ### R7 — Issue #4
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
+Sintoma: Para uma série de 600 pontos com janela 30, `media_movel` retornava 570 elementos em vez de 571 ($N - \text{janela} + 1$).
+Teste de regressão: `test_media_movel_tamanho_janela_30` em `testes/test_dados.py`.
+Causa: A diferença de soma acumulada (`cs[janela:] - cs[:-janela]`) não contabilizava a primeira janela completa por falta de um elemento neutro ($0.0$) no início.
+Correção: Adicionado $0.0$ no início do vetor com `np.insert(self, 0, 0.0)` antes do `np.cumsum`.
+Falha dos testes de aceitação: Eles não verificavam o tamanho exato devolvido para janelas arbitrárias. Outro caso não coberto é janela $1$ (`janela=1`), verificado pelo teste `test_media_movel_janela_um`.
