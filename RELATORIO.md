@@ -29,7 +29,7 @@ ler_log devolve as linhas descartadas para que seja possível analisar defeitos 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
 O resultado final é 409,5 porque a função lambda só é chamada posteriormente, utilizando como fator de multiplicação do argumento c não pelo fator associado a cada item de "escalas", mas pelo último com que terminou o ciclo de criação de "errados": 0,1.
 
-
+A implementação resolve o problema utilizando um argumento padrão que avalia e liga o valor de `fator` no momento exato da definição da função, preservando o fator individual de cada tag.
 ### R4 — Escala nominal
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->

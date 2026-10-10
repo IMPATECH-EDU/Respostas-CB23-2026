@@ -4,7 +4,7 @@ Regras: pelo menos 8 testes seus (o exemplo abaixo não conta), uma docstring em
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.allclose.
 """
 import unittest
-from elevatoria.dados import ler_log, contagem_por_tag
+from elevatoria.dados import ler_log, contagem_por_tag, criar_conversores
 
 from elevatoria.dados import por_tag
 
@@ -46,6 +46,20 @@ class TestPorTagExemplo(unittest.TestCase):
         """Verifica se contagem_por_tag devolve um dicionario vazio ao receber uma lista vazia de registros."""
         resultado = contagem_por_tag([])
         self.assertEqual(resultado, {})
+
+    
+    def test_criar_conversores_cada_tag_usa_seu_fator_independente(self):
+        """Garante que cada conversor aplica o fator correto da sua propria tag sem sofrer de late binding."""
+        escalas = {"PT101": 0.1465, "PT102": 0.1465, "FT201": 0.1}
+        conversores = criar_conversores(escalas)
+        
+        # Testa se PT101 e FT201 usam fatores diferentes
+        self.assertAlmostEqual(conversores["PT101"](100), 14.65)
+        self.assertAlmostEqual(conversores["FT201"](100), 10.0)
+
+    def test_criar_conversores_dicionario_vazio_retorna_vazio(self):
+        """Verifica se criar_conversores com dicionario de escalas vazio retorna um dicionario vazio."""
+        self.assertEqual(criar_conversores({}), {})
 
 
 

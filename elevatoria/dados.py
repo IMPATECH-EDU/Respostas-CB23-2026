@@ -153,12 +153,9 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
 # Issue #2: conversores por tag
 # ---------------------------------------------------------------------------------------
 def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], float]]:
-    """Dado `{tag: fator}`, devolve `{tag: f}`, em que `f(c) = c * fator` da própria tag.
-
-    Cada `f` é uma lambda. Cuidado com o *late binding*: cada função deve usar o fator da
-    sua tag, e não o último fator do dicionário (veja a issue #2 no enunciado).
-    """
-    raise NotImplementedError("issue #2: criar_conversores")
+    
+    """Dado {tag: fator}, devolve {tag: f}, em que f(c) = c * fator da própria tag."""
+    return {tag: lambda c, f=fator: c * f for tag, fator in escalas.items()}
 
 
 # ---------------------------------------------------------------------------------------
