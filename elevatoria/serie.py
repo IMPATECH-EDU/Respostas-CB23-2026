@@ -30,10 +30,10 @@ class SerieTemporal(np.ndarray):
         O valor `i` do resultado é a média de `self[i : i + janela]`. Usa a soma acumulada
         (`np.cumsum`), sem laços. Levanta `ValueError` se `janela < 1` ou `janela > len(self)`.
         """
-        if janela < 1 or janela > len(self):
-            raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
-        acumulada = np.cumsum(self)
-        return (acumulada[janela:] - acumulada[:-janela]) / janela
+        if not isinstance(janela, int) or janela < 1 or janela > len(self):
+            raise ValueError(f"janela deve ser um inteiro entre 1 e {len(self)}; recebi {janela}")
+        acumulada = np.cumsum(np.insert(self, 0, 0.0))
+        return SerieTemporal.de_lista((acumulada[janela:] - acumulada[:-janela]) / janela)
 
     def variacao(self) -> SerieTemporal:
         """Diferenças entre pontos consecutivos (`n - 1` valores)."""
@@ -54,10 +54,16 @@ class SerieTemporal(np.ndarray):
         return (self - self.mean()) / desvio
 
     def reamostrar(self, k: int) -> SerieTemporal:
-        """Médias de blocos consecutivos de `k` pontos: `len(self) // k` valores.
+        """Devolve uma nova SerieTemporal com a média de blocos consecutivos de k pontos.
 
-        O bloco `j` é `self[j*k : (j+1)*k]`; os `len(self) % k` pontos finais que não
-        completam um bloco são descartados. Usa `reshape`, sem laços. Levanta `ValueError`
-        se `k < 1` ou `k > len(self)`.
+        Sobras no final do vetor que não completam um bloco de tamanho k são descartadas.
+        Levanta ValueError se k não for um inteiro positivo ou se k > len(self).
         """
-        raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")
+        if not isinstance(k, int) or k < 1 or k > len(self):
+            raise ValueError(f"k deve ser um inteiro positivo e menor ou igual ao tamanho da série; recebi {k!r}")
+
+        n_blocos = len(self) // k
+        fatia = self[: n_blocos * k]
+        medias = fatia.reshape(n_blocos, k).mean(axis=1)
+        
+        return SerieTemporal.de_lista(medias)
