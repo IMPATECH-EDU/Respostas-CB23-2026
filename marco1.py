@@ -98,7 +98,7 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     convertido = re.sub(
         r"pulsos=(\d+)",
         lambda m: f"volume_L={int(m.group(1)) * 0.1:.1f}",
-        texto,
+        texto
     )
     assert convertido.count("volume_L=") == 600 and "pulsos=" not in convertido
 
@@ -132,18 +132,52 @@ def etapa3() -> None:
     # (a) Memória: imprima uma tabela com estrutura, bytes por elemento, bytes totais e a
     #     razão em relação à lista.
     memoria = medir_memoria(contagens)
-    _todo("3(a) tabela")
+
+    print("\n---- Memória ocupada pelas estruturas (bytes) ----")
+    print(f"{'Estrutura':<15} {'Bytes/Elem':<12} {'Bytes Totais':<15} {'Razão':<20}")
+    print("-" * 55)
+
+    bytes_por_elem = {
+        "list": memoria["list"] / n,
+        "array('H')": 2.0,
+        "uint16": 2.0,
+        "int32": 4.0,
+        "int64": 8.0,
+        "float32": 4.0,
+        "float64": 8.0
+    }
+
+    for estrutura, bytes_totais in memoria.items():
+        bytes_elem = bytes_por_elem[estrutura]
+        razao = memoria["list"] / bytes_totais
+        print(f"{estrutura:<12} | {bytes_elem:<10.1f} | {bytes_totais:<12,d} | {razao:<15.2f}x")
+
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
 
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
-    _todo("3(b) tabela")
+
+    print("\n ---- Tempo de conversão (ms) ----")
+    print(f"{'Método':<14} {'Tempo (ms)':<14} {'Aceleração (laço/método)':<20}")
+    print("-" * 60)
+    tempo_laco = tempos["laço"]
+
+    for metodo, tempo in tempos.items():
+        tempo_ms = tempo * 1000
+        aceleracao = tempo_laco / tempo if tempo != 0 else float('inf')
+        print(f"{metodo:<12} | {tempo_ms:<12.3f} | {aceleracao:<20.2f}x")
+
     assert tempos["laço"] / tempos["vetorizado"] >= 5
 
     # (c) Tipos e overflow: imprima os dois resultados.
     misto = np.array([1, 2.5, "a"])
     estouro = np.array([4095], dtype=np.uint16) * 20
+
+    print("\n ---- Tipos e overflow ----")
+    print(f"Array misto: dtype: {misto.dtype} (kind: {misto.dtype.kind}) | Conteúdo = {misto}")
+    print(f"Estouro unit16 (4095 * 20): unit16 = {estouro[0]} | Python init = {4095 * 20}")
+
     assert misto.dtype.kind == "U"
     assert estouro[0] == 16364 and 4095 * 20 == 81900
 
