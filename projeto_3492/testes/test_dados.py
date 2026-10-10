@@ -6,6 +6,8 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 import unittest
 
 from elevatoria.dados import por_tag
+from elevatoria.serie import SerieTemporal
+import numpy as np
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -18,6 +20,13 @@ class TestPorTagExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestIssue4(unittest.TestCase):
+    def test_media_movel_funciona(self):
+        lista_teste=[1,5,9,7,3] #resultado esperado = [3 7 8 5] com janela = 2
+        media = SerieTemporal.de_lista(lista_teste).media_movel(2)
+        self.assertEqual(len(media), 4)
+        self.assertIsInstance(media, SerieTemporal)
+        self.assertTrue(np.allclose(media, [3, 7, 8, 5]))
 
 
 if __name__ == "__main__":
