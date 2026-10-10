@@ -30,10 +30,10 @@ class SerieTemporal(np.ndarray):
         O valor `i` do resultado é a média de `self[i : i + janela]`. Usa a soma acumulada
         (`np.cumsum`), sem laços. Levanta `ValueError` se `janela < 1` ou `janela > len(self)`.
         """
-        if janela < 1 or janela > len(self):
-            raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
-        acumulada = np.cumsum(self)
-        return (acumulada[janela:] - acumulada[:-janela]) / janela
+        if not isinstance(janela, int) or janela < 1 or janela > len(self):
+            raise ValueError(f"janela deve ser um inteiro entre 1 e {len(self)}; recebi {janela}")
+        acumulada = np.cumsum(np.insert(self, 0, 0.0))
+        return SerieTemporal.de_lista((acumulada[janela:] - acumulada[:-janela]) / janela)
 
     def variacao(self) -> SerieTemporal:
         """Diferenças entre pontos consecutivos (`n - 1` valores)."""
