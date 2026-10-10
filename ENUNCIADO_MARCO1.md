@@ -1,4 +1,4 @@
-# Projeto Elevatória — Marco 1: Dados (após a Aula 8, 05/10)
+# Projeto Elevatória — Marco 1: Dados (Aula 8, 05/10)
 
 O fluxo de trabalho (branch, Pull Request) e as regras da casa estão no `README.md` deste
 repositório; as regras gerais do projeto (uso de IA, antiplágio e prazo final de 23/11/2026),

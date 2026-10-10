@@ -5,7 +5,7 @@ contém a base de código do Projeto Elevatória: o software de supervisão de u
 elevatória de água, escrito por uma equipe da qual você agora faz parte. Cada aluno trabalha
 na sua própria branch e entrega o trabalho em um Pull Request contra a `main`.
 
-**Marco atual:** [Marco 1 — Dados](ENUNCIADO_MARCO1.md).
+**Marcos publicados:** [Marco 1 — Dados](ENUNCIADO_MARCO1.md) · [Marco 2 — Medição](ENUNCIADO_MARCO2.md).
 
 ## Como trabalhar
 
