@@ -29,7 +29,19 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+LINHA: re.Pattern = re.compile(
+    r""" 
+^(?P<data>\d{4}-\d{2}-\d{2}) #Esse grupo seleciona a data, garantindo a formatação exigida (dddd-dd-dd)
+\s+
+(?P<hora>\d{2}:\d{2}:\d{2}) #Esse grupo seleciona o horário, garantindo a formatação exigida (hh:hh:hh)
+\s+
+(?P<nivel>INFO|WARN|ALARME) #Esse grupo seleciona o aviso do nível, exigindo que seja 'INFO', 'WARN' ou 'ALARME'
+\s+
+(?P<tag>[A-Z]{1,2}\d{1,3}) #Esse grupo vai obter a tag no estilo especificado
+\s+
+(?P<resto>\S.*)$ #Esse último irá receber o resto da linha
+    """, re.VERBOSE
+    )  
 
 
 @dataclass(frozen=True)
@@ -45,31 +57,66 @@ class Registro:
 def valida_tag(s: str) -> bool:
     """`True` se a string inteira for uma tag válida (1 ou 2 maiúsculas e 1 a 3 dígitos).
 
-    Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
-    `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
+ Válidas: `"PT101"`, `"FT201"`, `"B1"`.
+Inválidas: `"pt101"`, `"PT"`, `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    pttrn = r'[A-Z]{1,2}\d{1,3}'
+    match = re.fullmatch(pttrn, s)
+
+    return True if match else False
+    
+
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
-    """Lê o texto do log e devolve `(registros, invalidas)`.
+    """Lê o texto do log e devolve `(registros, invalidas)`"""
 
-    - `registros`: lista de `Registro`, na ordem em que as linhas aparecem no texto;
-    - `invalidas`: lista das linhas descartadas, exatamente como estavam no texto.
+    linhas_corretas = []
+    linhas_incorretas = []
 
-    Regras:
+    for linha in texto.splitlines():
+        if not linha.strip():
+            continue
+        else:
+            resultado = re.fullmatch(LINHA, linha)
+            if not resultado:
+                linhas_incorretas.append(linha)
+            else:
+                resto = f'{resultado["resto"]}'
+                valores = {}
 
-    - linhas vazias (ou só com espaços) são ignoradas e não contam como inválidas;
-    - uma linha é inválida se não casar com `LINHA` (com `fullmatch`), se a data ou a hora
-      forem impossíveis (por exemplo, mês 13) ou se o `resto` não tiver nenhum par
-      chave=valor;
-    - `instante` vem de `datetime.strptime` aplicado a `data` e `hora`;
-    - os pares são extraídos do grupo `resto` com o padrão `(\\w+)=(\\S+)`; cada valor vira
-      `float` quando a conversão é possível e continua `str` nos demais casos
-      (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
-    - texto vazio devolve `([], [])`.
-    """
-    raise NotImplementedError("issue #1: ler_log")
+                if not resto:
+                    linhas_incorretas.append(linha)
+                    continue
+
+                for chave, valor in re.findall(r'(\w+)=(\S+)', resto ):
+                    try:
+                        valores[chave] = float(valor)
+                    except ValueError:
+                        valores[chave] = valor
+                data_str = resultado["data"]
+                hora_str = resultado["hora"]
+
+                if not valores:
+                    linhas_incorretas.append(linha)
+                    continue
+
+                try:
+                    instante_obtido = datetime.strptime(f"{data_str} {hora_str}", "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    linhas_incorretas.append(linha)
+                    continue
+                reg = Registro(
+                instante = instante_obtido,
+                nivel = resultado["nivel"],
+                tag = resultado["tag"],
+                valores = valores)
+                linhas_corretas.append(reg)
+                
+
+
+
+    return linhas_corretas, linhas_incorretas
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
@@ -79,11 +126,10 @@ def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
 
 def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     """Dicionário tag -> número de registros.
-
-    Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
-    de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    tags = {registrado.tag for registrado in registros}
+
+    return {tag : sum(1 for elemento in registros if elemento.tag == tag) for tag in tags}
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
@@ -92,19 +138,24 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
     """
-    raise NotImplementedError("issue #1: serie")
+    lista = []
+
+    for registrado in registros:
+        if registrado.tag == tag and chave in registrado.valores:
+            lista.append(registrado.valores[chave]) 
+
+    return SerieTemporal.de_lista(lista)
+            
+
 
 
 # ---------------------------------------------------------------------------------------
 # Issue #2: conversores por tag
 # ---------------------------------------------------------------------------------------
 def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], float]]:
-    """Dado `{tag: fator}`, devolve `{tag: f}`, em que `f(c) = c * fator` da própria tag.
-
-    Cada `f` é uma lambda. Cuidado com o *late binding*: cada função deve usar o fator da
-    sua tag, e não o último fator do dicionário (veja a issue #2 no enunciado).
-    """
-    raise NotImplementedError("issue #2: criar_conversores")
+    
+    """Dado {tag: fator}, devolve {tag: f}, em que f(c) = c * fator da própria tag."""
+    return {tag: lambda c, f=fator: c * f for tag, fator in escalas.items()}
 
 
 # ---------------------------------------------------------------------------------------
