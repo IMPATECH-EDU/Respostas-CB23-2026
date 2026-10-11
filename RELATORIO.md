@@ -41,12 +41,16 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | 18 | |
-| Tempo do laço / tempo vetorizado | 20 | |
-| Tempo da compreensão / tempo do laço | 0.7 | |
+| Memória da lista / memória do `uint16` | 18 | 18.000028 |
+| Tempo do laço / tempo vetorizado | 20 | 19.20 |
+| Tempo da compreensão / tempo do laço | 0.7 | 0.86 |
 
 2351a64
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
+A multiplicação direta de $4095 \times 20$ dá $81900$, que excede o limite máximo suportado. Quando ocorre um estouro no NumPy, o valor equivale a tirar o resto da divisão por $65536$, retornando $16364$.
+O tipo a ser escolhido deve ser o uint16, pois os valores utilizados encontram-se dentre do intervalo de 0 a 4095, dentro dos limites do uint16 sem desperdiçar memória.
+
+Não houve uma grande discrepância entre o previsto e o obtido, mas a maior, que foi a razão de tempo da compressão pelo tempo do laço, mas podem ser explicadas por processos computacionais internos. A discrepância na memória pode ser explicada pela necessidade de ocupar memória para outros processos além de somente os ponteiros e dados da lista, como o cabeçalho e outros dados da estrutura interna da lista. As discrepâncias nas razões dos tempos, por outro lado, são um pouco maiores por dercorreram de chutes menos precisos, baseados apenas no conhecimento teórico da otimização de cada implementação, mas passíveis de alteração devido à natureza dinâmica e inconstante do tempo de execução.
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 

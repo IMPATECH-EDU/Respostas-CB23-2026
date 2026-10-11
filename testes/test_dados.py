@@ -4,7 +4,8 @@ Regras: pelo menos 8 testes seus (o exemplo abaixo não conta), uma docstring em
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.allclose.
 """
 import unittest
-from elevatoria.dados import ler_log, contagem_por_tag, criar_conversores
+import numpy as np
+from elevatoria.dados import ler_log, contagem_por_tag, criar_conversores, medir_tempos, medir_memoria, converter_vetorizado, converter_map, converter_laco, converter_compreensao
 
 from elevatoria.dados import por_tag
 
@@ -60,6 +61,54 @@ class TestPorTagExemplo(unittest.TestCase):
     def test_criar_conversores_dicionario_vazio_retorna_vazio(self):
         """Verifica se criar_conversores com dicionario de escalas vazio retorna um dicionario vazio."""
         self.assertEqual(criar_conversores({}), {})
+
+    def test_memoria_chaves(self):
+        """Verifica se medir_memoria devolve exatamente as chaves exigidas."""
+        resultado = medir_memoria(np.array([0, 100, 4095]))
+        esperadas = {
+            "list", "array('H')", "uint16", "int32",
+            "int64", "float32", "float64",
+        }
+        self.assertEqual(set(resultado), esperadas)
+
+   
+    def test_memoria_rejeita_lista(self):
+        """Verifica se uma lista Python é rejeitada por medir_memoria."""
+        with self.assertRaises(ValueError):
+            medir_memoria([1, 2, 3])
+
+    def test_memoria_rejeita_multidimensional(self):
+        """Verifica se medir_memoria rejeita arrays com mais de uma dimensão."""
+        with self.assertRaises(ValueError):
+            medir_memoria(np.array([[1, 2], [3, 4]]))
+
+    def test_memoria_rejeita_float(self):
+        """Verifica se medir_memoria rejeita arrays com dtype de ponto flutuante."""
+        with self.assertRaises(ValueError):
+            medir_memoria(np.array([1.0, 2.0]))
+
+    def test_conversoes_equivalentes(self):
+        """Verifica se as quatro conversões produzem resultados equivalentes."""
+        contagens = [0, 100, 2047, 4095]
+        vetor = np.array(contagens)
+
+        resultados = [
+            converter_laco(contagens),
+            converter_compreensao(contagens),
+            converter_map(contagens),
+            converter_vetorizado(vetor),
+        ]
+
+        for resultado in resultados[1:]:
+            self.assertTrue(np.allclose(resultados[0], resultado))
+
+    def test_medir_tempos_chaves(self):
+        """Verifica se medir_tempos devolve exatamente as quatro chaves exigidas."""
+        resultado = medir_tempos(np.array([0, 100, 4095]), k=2)
+        esperadas = {"laço", "compreensão", "map+lambda", "vetorizado"}
+        self.assertEqual(set(resultado), esperadas)
+
+    
 
 
 
