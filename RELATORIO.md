@@ -9,6 +9,11 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
 
+/home/marco/venvs/prog2-venv/bin/python
+
+=== Etapa 0: ambiente ===
+Python 3.12.3 | NumPy 2.5.4 | fornecido 2.0
+
 ### R1 — Expressões regulares
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
