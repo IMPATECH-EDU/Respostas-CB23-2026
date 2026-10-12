@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — Cecília Maria Gomes dos Santos (3496)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -7,6 +7,8 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
+=== Etapa 0: ambiente ===
+Python 3.14.7 | NumPy 2.5.4 | fornecido 2.0
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
 
 ### R1 — Expressões regulares
@@ -31,9 +33,9 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | | |
-| Tempo do laço / tempo vetorizado | | |
-| Tempo da compreensão / tempo do laço | | |
+| Memória da lista / memória do `uint16` | 8 MB | |
+| Tempo do laço / tempo vetorizado | 2 MB | |
+| Tempo da compreensão / tempo do laço | 100 ms  | |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
