@@ -62,4 +62,14 @@ class SerieTemporal(np.ndarray):
         completam um bloco são descartados. Usa `reshape`, sem laços. Levanta `ValueError`
         se `k < 1` ou `k > len(self)`.
         """
-        raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")
+        a = len(self)
+
+        if k<1 or k>a:
+            raise ValueError('k deve ser menor ou igual ao tamanho do array e maior ou igual a 1')
+        copia = self[:a-a%k]
+        
+        copia = copia.reshape(len(copia)//k, k)
+
+
+
+        return copia.mean(axis=1)

@@ -142,6 +142,50 @@ class TestPorTagExemplo(unittest.TestCase):
 
             self.assertIsInstance(resultado, SerieTemporal)
 
+    def test_reamostrar_descarta_sobras(self):
+        """Verifica que os pontos finais que não completam um bloco são descartados."""
+        s = SerieTemporal.de_lista([1, 2, 3, 4, 5, 6, 7, 8])
+
+        resultado = s.reamostrar(3)
+
+        self.assertTrue(np.allclose(resultado, [2.0, 5.0]))
+
+
+    def test_reamostrar_retorna_serie_temporal(self):
+        """Verifica que o resultado de reamostrar mantém o tipo SerieTemporal."""
+        s = SerieTemporal.de_lista([1, 2, 3, 4])
+
+        resultado = s.reamostrar(2)
+
+        self.assertIsInstance(resultado, SerieTemporal)
+
+
+    def test_reamostrar_nao_modifica_original(self):
+        """Verifica que reamostrar não altera os valores da série original."""
+        s = SerieTemporal.de_lista([1, 2, 3, 4, 5])
+        original = s.copy()
+
+        s.reamostrar(2)
+
+        self.assertTrue(np.array_equal(s, original))
+
+
+    def test_reamostrar_rejeita_k_invalido(self):
+        """Verifica que reamostrar rejeita k menor que 1 ou maior que o tamanho da série."""
+        s = SerieTemporal.de_lista([1, 2, 3, 4])
+
+        for k in [0, -1, 5]:
+            with self.subTest(k=k), self.assertRaises(ValueError):
+                s.reamostrar(k)
+
+
+    def test_reamostrar_casos_limite(self):
+        """Verifica que blocos de tamanho 1 e do tamanho da série produzem médias corretas."""
+        s = SerieTemporal.de_lista([2, 4, 6])
+
+        self.assertTrue(np.allclose(s.reamostrar(1), [2, 4, 6]))
+        self.assertTrue(np.allclose(s.reamostrar(3), [4]))
+
     
 
 
