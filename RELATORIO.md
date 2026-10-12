@@ -56,14 +56,16 @@ Não houve uma grande discrepância entre o previsto e o obtido, mas a maior, qu
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | SerieTemporal | |
-| `s[1:]` | SerieTemporal | |
-| `s * 2` | SerieTemporal | |
-| `s.sum()` | Float64 | |
-| `s[0]` | Float64 | |
+| `s + s` | SerieTemporal | SerieTemporal |
+| `s[1:]` | SerieTemporal | SerieTemporal |
+| `s * 2` | SerieTemporal | SerieTemporal |
+| `s.sum()` | Float64 | SerieTemporal |
+| `s[0]` | Float64 | Float64 |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
+O fato de que s.sum() é do tipo SerieTemporal e não float64. 
 
 ### R7 — Issue #4
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
+O sintoma era que media_movel(30) retornava 570 valores para uma série de 600 pontos, quando deveria retornar 571. O teste de regressão test_media_movel_quantidade_correta detecta esse erro. A causa era o uso de acumulada[janela:] - acumulada[:-janela], que descartava uma média válida. Corrigi o problema acrescentando zero ao início da soma acumulada e usando acumulada[janela-1:] no primeiro termo da subtração. Os testes de aceitação não detectaram o defeito porque não cobriam esse caso: detectam se há tipo de retorno adequado, se levanta ValueError em caso de janela maior do que o tamanho da lista e se algumas operações mantêm o tipo SerieTemporal. Além disso, testei uma janela igual a 1 (test_media_movel_janela_um) e uma janela igual ao tamanho da série (test_media_movel_janela_igual_tamanho), casos que verificam os limites da operação.

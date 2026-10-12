@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 from elevatoria.dados import ler_log, contagem_por_tag, criar_conversores, medir_tempos, medir_memoria, converter_vetorizado, converter_map, converter_laco, converter_compreensao
 
-from elevatoria.dados import por_tag
+from elevatoria.dados import por_tag, SerieTemporal
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -107,6 +107,40 @@ class TestPorTagExemplo(unittest.TestCase):
         resultado = medir_tempos(np.array([0, 100, 4095]), k=2)
         esperadas = {"laço", "compreensão", "map+lambda", "vetorizado"}
         self.assertEqual(set(resultado), esperadas)
+
+
+
+    """Testes de regressão da média móvel."""
+
+    def test_media_movel_quantidade_correta(self):
+            """Verifica que uma janela de 2 pontos produz n - 1 médias."""
+            serie = SerieTemporal.de_lista([1, 2, 3, 4])
+            resultado = serie.media_movel(2)
+
+            self.assertEqual(len(resultado), 3)
+            self.assertTrue(np.allclose(resultado, [1.5, 2.5, 3.5]))
+
+    def test_media_movel_janela_um(self):
+            """Verifica que uma janela de tamanho 1 preserva os valores."""
+            serie = SerieTemporal.de_lista([2, 4, 6])
+            resultado = serie.media_movel(1)
+
+            self.assertTrue(np.allclose(resultado, [2, 4, 6]))
+
+    def test_media_movel_janela_igual_tamanho(self):
+            """Verifica que uma janela igual à série produz uma única média."""
+            serie = SerieTemporal.de_lista([2, 4, 6, 8])
+            resultado = serie.media_movel(4)
+
+            self.assertEqual(len(resultado), 1)
+            self.assertTrue(np.allclose(resultado, [5.0]))
+
+    def test_media_movel_retorna_serie_temporal(self):
+            """Verifica que o resultado mantém o tipo SerieTemporal."""
+            serie = SerieTemporal.de_lista([1, 2, 3])
+            resultado = serie.media_movel(2)
+
+            self.assertIsInstance(resultado, SerieTemporal)
 
     
 
