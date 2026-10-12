@@ -18,6 +18,14 @@ Python 3.12.3 | NumPy 2.5.4 | fornecido 2.0
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
 
+`"FT201     "` (possui 5 espaços a mais no final). E tomando um padrão igual ao usado em valida_tag: `TAG: re.Pattern = re.compile(r"[A-Z]{1,2}\d{1,3}")`.
+
+O `re.match` verifica se o padrão se cumpre a partir do inicio da string e ignora oque sobrar. Nesse caso o `re.match` SIM aceita a string, pois ignora os 5 espaços a mais.
+
+O `re.fullmatch` verifica se o padrão se cumpre em toda a string. Nesse caso o `re.fullmatch` NAO aceita a string, pois existem espaços a mais.
+
+Se `valida_tag` usasse `re.match` ele iria retornar True para strings que deveria barrar, como: `"PT101 "` (sobra de caracteres).
+
 ### R2 — Linhas inválidas
 
 <!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
