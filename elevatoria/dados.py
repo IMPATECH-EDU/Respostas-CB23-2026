@@ -121,21 +121,15 @@ def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
 
 
 def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
-    """Dicionário tag -> número de registros.
+    """Dicionário tag -> número de registros."""
 
-    Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
-    de conjunto. Lista vazia devolve `{}`.
-    """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    tags = {r.tag for r in registros}
+    return {tag: len(por_tag(registros, tag)) for tag in tags}
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
-    """`SerieTemporal` com o valor de `chave` dos registros da `tag` que têm essa chave.
-
-    Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
-    `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
-    """
-    raise NotImplementedError("issue #1: serie")
+    """`SerieTemporal` com o valor de `chave` dos registros da `tag` que têm essa chave."""
+    return SerieTemporal.de_lista([r.valores[chave] for r in por_tag(registros, tag)if chave in r.valores])
 
 
 # ---------------------------------------------------------------------------------------
