@@ -124,7 +124,7 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
         )
         registros.append(registro)
 
-        return registros, invalidas
+    return registros, invalidas
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
     """Registros da `tag`, na ordem original."""
@@ -142,6 +142,7 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     # Soma 1 para cada registro de uma tag específica e guarda o total como valor no dicionário.
     # Itera sobre cada tag no registro.                            
     # Busca as tags nos registros gerados pela função ler_log.
+    
     return dic
 
 
@@ -153,8 +154,7 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     """
     # A chave é especificada pelo usuário ao chamar a função.
     # Retorna um objeto SerieTemporal (classe de array Numpy) com os valores da chave especificada para a tag dada.
-    for r in registros:
-        valores = [float(r.valores[chave]) for r in registros if r.tag == tag and chave in r.valores]
+    valores = [float(r.valores[chave]) for r in registros if r.tag == tag and chave in r.valores]
     return SerieTemporal.de_lista(valores)
 
 # ---------------------------------------------------------------------------------------
