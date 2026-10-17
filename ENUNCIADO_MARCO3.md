@@ -160,11 +160,6 @@ situação em que o Newton falha e a bissecção não. -->
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
 
-### R13 — Interpolação e extrapolação
-
-<!-- Na Etapa 1, o polinômio de grau 10 passa exatamente pelos 11 pontos do ensaio. Por que,
-mesmo assim, ele erra alguns metros entre os pontos e milhares de metros em Q = 130 L/s?
-(Lembre que o ensaio tem ruído.) Por que a CurvaCalibracao se recusa a calcular esse ponto? -->
 ```
 
 ## 7. Entrega
