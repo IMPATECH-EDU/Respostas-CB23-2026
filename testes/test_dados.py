@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 
-from elevatoria.dados import ler_log, por_tag, serie
+from elevatoria.dados import criar_conversores, ler_log, por_tag, serie
 from elevatoria.serie import SerieTemporal
 
 
@@ -83,6 +83,22 @@ class TestSerieContrato(unittest.TestCase):
                 resultado = serie(registros, tag, chave)
                 self.assertIsInstance(resultado, SerieTemporal)
                 self.assertEqual(resultado.size, 0)
+
+
+class TestConversoresContrato(unittest.TestCase):
+    """Conversores com fatores próprios, incluindo os casos limite do dicionário."""
+
+    def test_fatores_zero_negativo_e_fracionario(self) -> None:
+        """Cada lambda preserva seu fator, inclusive zero, negativo e fracionário."""
+        conversores = criar_conversores({"A1": 0.0, "B2": -2.0, "C3": 0.5})
+        self.assertEqual(set(conversores), {"A1", "B2", "C3"})
+        self.assertAlmostEqual(conversores["A1"](4.0), 0.0)
+        self.assertAlmostEqual(conversores["B2"](4.0), -8.0)
+        self.assertAlmostEqual(conversores["C3"](4.0), 2.0)
+
+    def test_escalas_vazias(self) -> None:
+        """Sem escalas, não há conversores a criar."""
+        self.assertEqual(criar_conversores({}), {})
 
 
 if __name__ == "__main__":
