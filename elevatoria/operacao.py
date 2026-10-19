@@ -64,6 +64,16 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
     quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
 
-    Levanta `ValueError` se houver menos de 3 erros acima do piso.
+    Levanta `ValueError` se houver menos de 3 erros acima do piso, ou se os dois erros mais
+    antigos desses três forem iguais (o denominador da fórmula seria log(1) = 0).
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    corte = piso * max(1.0, abs(raiz))
+    erros = [abs(x - raiz) for x in historico]
+    acima_do_piso = [e for e in erros if e > corte]
+    if len(acima_do_piso) < 3:
+        raise ValueError(f"preciso de 3 erros maiores que {corte:.1e}; "
+                         f"o histórico só tem {len(acima_do_piso)}")
+    e_antes, e_meio, e_depois = acima_do_piso[-3:]
+    if e_antes == e_meio:
+        raise ValueError("os erros não diminuíram entre as iterações: a ordem não está definida")
+    return math.log(e_depois / e_meio) / math.log(e_meio / e_antes)
