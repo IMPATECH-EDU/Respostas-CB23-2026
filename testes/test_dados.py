@@ -9,6 +9,7 @@ import numpy as np
 
 from elevatoria.dados import (converter_vetorizado, criar_conversores, ler_log,
                               medir_memoria, por_tag, serie)
+from elevatoria.serie import SerieTemporal
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -90,6 +91,30 @@ class TestMemoriaETempo(unittest.TestCase):
         """medir_memoria recusa um ndarray de floats com ValueError."""
         with self.assertRaises(ValueError):
             medir_memoria(np.array([1.0, 2.0, 3.0]))
+
+
+# ---------------------------------------------------------------------------------------
+# Issue #4: testes de regressão de media_movel (escritos antes da correção)
+# ---------------------------------------------------------------------------------------
+class TestMediaMovelRegressao(unittest.TestCase):
+    """Issue #4: media_movel devolvia um valor a menos."""
+
+    def setUp(self):
+        self.s = SerieTemporal.de_lista([1.0, 4.0, 9.0, 16.0, 25.0])
+
+    def test_quantidade_de_valores(self):
+        """Com n pontos e janela w, saem n - w + 1 médias (5 pontos, janela 3: 3 médias)."""
+        self.assertEqual(len(self.s.media_movel(3)), 3)
+
+    def test_primeira_janela_entra_no_resultado(self):
+        """O primeiro valor é a média de s[0:janela]; os demais seguem deslizando de 1 em 1."""
+        self.assertTrue(np.allclose(self.s.media_movel(2), [2.5, 6.5, 12.5, 20.5]))
+
+    def test_janela_do_tamanho_da_serie(self):
+        """Janela igual ao tamanho da série dá um único valor: a média de tudo."""
+        r = self.s.media_movel(5)
+        self.assertEqual(len(r), 1)
+        self.assertAlmostEqual(float(r[0]), 11.0)
 
 
 if __name__ == "__main__":
