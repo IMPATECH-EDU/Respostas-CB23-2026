@@ -1,4 +1,4 @@
-# Relatório — <Wilian Martins da Silva> (<3551>)
+# Relatório — <Wilian Martins da Silva> (3551)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -7,23 +7,24 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
-<!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
+/usr/bin/python3
+Python 3.14.4 | NumPy 2.3.5 | fornecido 3.0
 
 ### R1 — Expressões regulares
 
-<!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
+O `re.match` procura correspondência apenas no início, aceitando "PT101 " (com um espaço no fim). O `re.fullmatch` exige que a string inteira corresponda ao padrão. Se usássemos `match` em `valida_tag`, as strings com lixo ou espaços extra no final seriam aceites indevidamente como tags válidas, o que iria corromper a filtragem dos dados.
 
 ### R2 — Linhas inválidas
 
-<!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
+Devolver as linhas descartadas permite que o sistema seja auditado. Se o `ler_log` as ignorasse em silêncio, a equipa não conseguiria distinguir entre um período sem eventos e uma falha crítica, como uma perda de pacotes de rede ou um sensor avariado a enviar dados truncados que precisaria de intervenção de manutenção.
 
 ### R3 — Late binding
 
-<!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
+A versão `errados["PT102"](4095)` dá 409.5 porque o Python avalia a variável `k` apenas quando a lambda é chamada (*late binding*), usando o último valor assumido no laço (0.1)[cite: 15]. A nossa `criar_conversores` resolve isto com um argumento padrão (`fator=fator`), forçando a avaliação imediata (*early binding*) na criação da lambda.
 
 ### R4 — Escala nominal
 
-<!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
+A escala nominal resulta em 261.99 kPa contra os 380.00 kPa de referência[cite: 7, 14]. A diferença deve-se ao facto do instrumento `PT102` estar a simular um desvio real (ruído ou falta de calibração) face à equação ideal. A explicação codificada para esta perturbação nos dados encontra-se no ficheiro da base `fornecido/simulador.py`[cite: 15].
 
 ### R5 — Previsão × medição (Etapa 3)
 
@@ -31,24 +32,24 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | | |
-| Tempo do laço / tempo vetorizado | | |
-| Tempo da compreensão / tempo do laço | | |
+| Memória da lista / memória do `uint16` | [Sua Previsão] | ~ 18.0x (36.000.056 / 2.000.000) |
+| Tempo do laço / tempo vetorizado | [Sua Previsão] | ~ 33.7x (37.33 ms / 1.11 ms) |
+| Tempo da compreensão / tempo do laço | [Sua Previsão] | ~ 1.0x (37.61 ms / 37.33 ms) |
 
-<!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
+A maior diferença reside na aceleração da versão vetorizada face ao laço (33.7x)[cite: 7], pois o NumPy roda as operações em C compilado, ignorando o *overhead* do interpretador Python. O valor `16364` surge porque 81900 excede o limite do `uint16` (65535), causando um *overflow* ($81900 \pmod{65536} = 16364$)[cite: 7]. Escolheria `uint16` para as contagens A/D e `float32` ou `float64` para pressões em kPa.
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` | [Sua Previsão] | `SerieTemporal` |
+| `s[1:]` | [Sua Previsão] | `SerieTemporal` |
+| `s * 2` | [Sua Previsão] | `SerieTemporal` |
+| `s.sum()` | [Sua Previsão] | `float` |
+| `s[0]` | [Sua Previsão] | `float` |
 
-<!-- Explique o resultado que mais surpreendeu você. -->
+O resultado que mais me surpreendeu foi que `s.sum()` e o acesso ao índice `s[0]` devolvem o tipo primitivo `float` do Python[cite: 7, 14], em vez de retornarem uma série unitária ou um tipo nativo do NumPy (como `numpy.float64`).
 
 ### R7 — Issue #4
 
-<!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
+O sintoma era que o tamanho da série resultante na `media_movel` tinha um valor a menos do que o tamanho matematicamente correto[cite: 15]. O meu teste de regressão é o `test_tamanho_media_movel`. A causa era o uso de `len() - w` no limite do `range`, que exclui a última iteração. A correção foi alterar o iterador para `len(self._valores) - w + 1`[cite: 13]. Os testes de aceitação não falharam porque não faziam validação ao tamanho da lista[cite: 15]. Outro caso que não cobriam era passar um tamanho de janela inválido (ex: `w <= 0`), algo que eu cobri no `test_media_movel_w_invalido`.
