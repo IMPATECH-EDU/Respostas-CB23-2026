@@ -63,7 +63,13 @@ def valida_tag(s: str) -> bool:
     """
     return re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s) is not None
 
-
+def _converter_valor(valor: str) -> float | str:
+    """Devolve `valor` como `float` se a conversão for possível; senão, devolve a própria `str`."""
+    try:
+        return float(valor)
+    except ValueError:
+        return valor
+    
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     """Lê o texto do log e devolve `(registros, invalidas)`.
 
@@ -82,7 +88,29 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+    registros: list[Registro] = []
+    invalidas: list[str] = []
+    for linha in texto.splitlines():
+        if not linha.strip():
+            continue
+        casou = LINHA.fullmatch(linha)
+        if casou is None:
+            invalidas.append(linha)
+            continue
+        try:
+            instante = datetime.strptime(
+                f"{casou.group('data')} {casou.group('hora')}", "%Y-%m-%d %H:%M:%S"
+            )
+        except ValueError:
+            invalidas.append(linha)
+            continue
+        pares = re.findall(r"(\w+)=(\S+)", casou.group("resto"))
+        if not pares:
+            invalidas.append(linha)
+            continue
+        valores = {chave: _converter_valor(valor) for chave, valor in pares}
+        registros.append(Registro(instante, casou.group("nivel"), casou.group("tag"), valores))
+    return registros, invalidas
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
