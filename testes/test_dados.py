@@ -4,9 +4,9 @@ Regras: pelo menos 8 testes seus (o exemplo abaixo não conta), uma docstring em
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.allclose.
 """
 import unittest
-
+import numpy as np
 from elevatoria.dados import por_tag
-
+from elevatoria.serie import SerieTemporal
 
 class TestPorTagExemplo(unittest.TestCase):
     """Exemplo do formato. `por_tag` é código existente da base."""
@@ -18,6 +18,22 @@ class TestPorTagExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+class TestRegressaoIssue4(unittest.TestCase):
+    """Testes de regresssão para a Issue #4 (media_movel)"""
+
+    def test_media_movel_tamanho_retornado(self):
+        """Para N=5 e janela w=3, media_movel deve retornar 3 elementos (5 - 3 + 1)."""
+        serie = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0, 5.0])
+        resultado = serie.media_movel(3)
+        self.assertEqual(len(resultado), 3)
+
+    def test_media_movel_valores_janela_2(self):
+        """Média móvel de janela 2 em [10, 20, 30] deve retornar [15, 25] com tamanho 2."""
+        serie = SerieTemporal.de_lista([10.0, 20.0, 30.0])
+        resultado = serie.media_movel(2)
+        esperado = np.array([15.0, 25.0])
+        self.assertTrue(np.allclose(resultado, esperado))
 
 
 if __name__ == "__main__":
