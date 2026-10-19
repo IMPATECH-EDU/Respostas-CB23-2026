@@ -5,7 +5,7 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 import numpy as np
-from elevatoria.dados import por_tag
+from elevatoria.dados import por_tag, ler_log
 from elevatoria.serie import SerieTemporal
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -50,6 +50,49 @@ class TestReamostrar(unittest.TestCase):
         esperado = [2.0,5.0]
         self.assertTrue(np.allclose(resultado,esperado))
         self.assertEqual(len(resultado), 2)
+
+class TestContratoLerLog(unittest.TestCase):
+    def test_ignora_linhas_em_branco(self):
+        """Ignora linhas vazias e de espaços sem contá-las como inválidas."""
+        texto = (
+            "\n"
+            "   \n"
+            "2026-10-05 08:00:00 INFO PT101 contagens=131\n"
+            "\n"
+        )
+
+        registros, invalidas = ler_log(texto)
+
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(invalidas, [])
+
+    def test_rejeita_data_de_calendario_invalida(self):
+        """Registra como inválida uma linha com mês inexistente."""
+        linha = "2026-13-05 08:00:00 INFO PT101 contagens=131"
+
+        registros, invalidas = ler_log(linha)
+
+        self.assertEqual(registros, [])
+        self.assertEqual(invalidas, [linha])
+
+
+class TestReamostrarCasosAdicionais(unittest.TestCase):
+    def test_k_zero_levanta_value_error(self):
+        """Rejeita k igual a zero."""
+        serie = SerieTemporal.de_lista([1.0, 2.0, 3.0])
+
+        with self.assertRaises(ValueError):
+            serie.reamostrar(0)
+
+    def test_nao_modifica_serie_original(self):
+        """Preserva os valores da série original após reamostrar."""
+        serie = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0])
+        original = serie.copy()
+
+        resultado = serie.reamostrar(2)
+
+        np.testing.assert_allclose(serie, original)
+        np.testing.assert_allclose(resultado, [1.5, 3.5])
 
 if __name__ == "__main__":
     unittest.main()
