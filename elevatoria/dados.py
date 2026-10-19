@@ -61,7 +61,7 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    return re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s) is not None
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
