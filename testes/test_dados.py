@@ -15,10 +15,6 @@ class TestPorTagExemplo(unittest.TestCase):
         """Sem registros, por_tag devolve uma lista vazia."""
         self.assertEqual(por_tag([], "PT101"), [])
 
-
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
-
 class TestRegressaoIssue4(unittest.TestCase):
     """Testes de regresssão para a Issue #4 (media_movel)"""
 
@@ -35,6 +31,25 @@ class TestRegressaoIssue4(unittest.TestCase):
         esperado = np.array([15.0, 25.0])
         self.assertTrue(np.allclose(resultado, esperado))
 
+class TestReamostrar(unittest.TestCase):
+    def test_medias_dos_blocos(self):
+        """Calcula a media correta de cada bloco"""
+        serie = SerieTemporal.de_lista([1,2,3,4,5,6])
+
+        resultado = serie.reamostrar(2)
+
+        esperado = [1.5,3.5,5.5]
+        self.assertTrue(np.allclose(resultado, esperado))
+
+    def test_descartar_sobra_final(self):
+        """Descarta a parte que sobrou na divisão inteira"""
+        serie = SerieTemporal.de_lista([1,2,3,4,5,6,100])
+
+        resultado = serie.reamostrar(3)
+
+        esperado = [2.0,5.0]
+        self.assertTrue(np.allclose(resultado,esperado))
+        self.assertEqual(len(resultado), 2)
 
 if __name__ == "__main__":
     unittest.main()
