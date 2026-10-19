@@ -1,7 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
-
-Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
-os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
+# Relatório — Matheus Ferreira Lucena (3548)
 
 ## Marco 1
 
@@ -27,7 +24,7 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+Previsões registradas no commit: d9bcd37
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
