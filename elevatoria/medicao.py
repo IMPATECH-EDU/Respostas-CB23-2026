@@ -13,6 +13,7 @@ Funções auxiliares privadas (`_nome`) são permitidas.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -61,9 +62,44 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
 
     Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
-    fora do domínio) não é tratado: ele chega a quem chamou `medir`.
+    fora do domínio) não é tratado: ele chega a quem chamou `medir`. Também levanta
+    `ValueError` se `limiar` não for positivo.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica não pode ser negativa; recebi {u_sistematica}")
+    if limiar <= 0:
+        raise ValueError(f"o limiar do z robusto deve ser positivo; recebi {limiar}")
+
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError(f"a tag {tag} tem {len(contagens)} leitura(s); preciso de pelo menos 2")
+
+    leituras = np.asarray(curva(np.asarray(contagens)))   # kPa; fora do domínio, a curva reclama
+    validas, espurias = _separa_espurias(leituras, limiar)
+    if validas.size < 2:
+        raise ValueError(f"sobraram {validas.size} leitura(s) válida(s) de {tag}; "
+                         "preciso de pelo menos 2")
+
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))       # desvio / sqrt(n), também com ddof=1
+    incerteza = math.hypot(erro_padrao, u_sistematica)
+    return Medicao(tag=tag, medida=Medida(media, incerteza), desvio=desvio,
+                   n_validas=int(validas.size), espurias=espurias)
+
+
+def _separa_espurias(x: np.ndarray, limiar: float) -> tuple[np.ndarray, list[int]]:
+    """Separa `x` em `(válidas, índices das espúrias)` pelo z robusto `(x - mediana) / MAD`.
+
+    A MAD vem com `scale="normal"`, para ficar na mesma escala de um desvio padrão quando os
+    dados são normais. Levanta `ValueError` se a MAD for zero (o z não fica definido).
+    """
+    mad = float(stats.median_abs_deviation(x, scale="normal"))
+    if mad == 0.0:
+        raise ValueError("a MAD das leituras é zero: não dá para calcular o z robusto")
+    z = (x - np.median(x)) / mad
+    fora = np.abs(z) > limiar
+    return x[~fora], np.flatnonzero(fora).tolist()
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
