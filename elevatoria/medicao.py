@@ -110,5 +110,10 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     `P_PT102` são as `medida`s de `medir` para as duas tags, em kPa (o fator 1000 converte
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
+
+    Levanta `ValueError` nos mesmos casos de `medir` (para qualquer uma das duas tags).
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    p_succao = medir(registros, "PT101", curva, u_sistematica).medida
+    p_recalque = medir(registros, "PT102", curva, u_sistematica).medida
+    # kPa -> Pa e divisão por rho*g: a Medida carrega as incertezas em cada operação
+    return (p_recalque - p_succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
