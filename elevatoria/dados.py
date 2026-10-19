@@ -166,13 +166,22 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
 # ---------------------------------------------------------------------------------------
 # Issue #2: conversores por tag
 # ---------------------------------------------------------------------------------------
+def _multiplicador(fator: float) -> Callable[[float], float]:
+    """Lambda que multiplica a contagem por `fator`, fixado no momento da chamada."""
+    # Cada chamada cria um escopo novo, com o seu próprio `fator`; a lambda guarda esse
+    # escopo (closure). Não há uma variável compartilhada que mude depois.
+    return lambda c: c * fator
+
+
 def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], float]]:
     """Dado `{tag: fator}`, devolve `{tag: f}`, em que `f(c) = c * fator` da própria tag.
 
     Cada `f` é uma lambda. Cuidado com o *late binding*: cada função deve usar o fator da
     sua tag, e não o último fator do dicionário (veja a issue #2 no enunciado).
     """
-    raise NotImplementedError("issue #2: criar_conversores")
+    # A versão `{tag: lambda c: c * fator for ...}` leria `fator` só na hora da chamada,
+    # quando o laço já acabou e `fator` vale o último fator do dicionário.
+    return {tag: _multiplicador(fator) for tag, fator in escalas.items()}
 
 
 # ---------------------------------------------------------------------------------------
