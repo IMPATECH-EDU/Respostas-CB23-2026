@@ -1,0 +1,11 @@
+# Ambientes virtuais (ficam fora do repositório)
+venv/
+.venv/
+env/
+# Arquivos gerados pelo Python e por editores
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
