@@ -5,7 +5,10 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import criar_conversores, ler_log, por_tag, serie
+import numpy as np
+
+from elevatoria.dados import (converter_vetorizado, criar_conversores, ler_log,
+                              medir_memoria, por_tag, serie)
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -70,6 +73,23 @@ class TestConversores(unittest.TestCase):
         conv = criar_conversores({"PT101": 2.0, "FT201": 0.1})
         self.assertAlmostEqual(conv["PT101"](4095), 8190.0)
         self.assertAlmostEqual(conv["FT201"](4095), 409.5)
+
+
+# ---------------------------------------------------------------------------------------
+# Issue #3: memória e tempo
+# ---------------------------------------------------------------------------------------
+class TestMemoriaETempo(unittest.TestCase):
+    """Issue #3: casos fora dos testes de aceitação."""
+
+    def test_vetorizado_com_uint16_nao_estoura(self):
+        """converter_vetorizado com contagens uint16 dá 600 kPa em 4095 (sem overflow)."""
+        kpa = converter_vetorizado(np.array([0, 4095], dtype=np.uint16))
+        self.assertTrue(np.allclose(kpa, [0.0, 600.0]))
+
+    def test_memoria_rejeita_floats(self):
+        """medir_memoria recusa um ndarray de floats com ValueError."""
+        with self.assertRaises(ValueError):
+            medir_memoria(np.array([1.0, 2.0, 3.0]))
 
 
 if __name__ == "__main__":
