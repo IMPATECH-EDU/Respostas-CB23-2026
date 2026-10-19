@@ -10,14 +10,21 @@ from __future__ import annotations
 import array
 import re
 import sys
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable
 
 import numpy as np
 
-from elevatoria.serie import SerieTemporal
-from fornecido.cronometro import cronometrar
+from serie import SerieTemporal
+dire_alv = os.path.abspath(
+    './Respostas-CB23-2026/fornecido'
+)
+if dire_alv not in sys.path:
+    sys.path.append(dire_alv)
+
+from cronometro import cronometrar
 
 # ---------------------------------------------------------------------------------------
 # Issue #1: leitor do log
@@ -30,8 +37,36 @@ from fornecido.cronometro import cronometrar
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
 
-LINHA: re.Pattern(r""" """, re.VERBOSE)  # type: ignore[assignment]  # TODO issue #1
-
+LINHA: re.pattern= re.compile(
+    r"""
+    ^                               # Início da linha
+    (?P<data>                       # Grupo nomeado 'data'
+        \d{4}-                      # Ano com 4 dígitos
+        (?:0[1-9]|1[0-2])-          # Mês de 01 a 12
+        (?:0[1-9]|[12]\d|3[01])     # Dia de 01 a 31
+    )
+    \s+                             # Espaço
+    (?P<hora>                       # Grupo nomeado 'hora'
+        (?:[01]\d|2[0-3]):          # Hora de 00 a 23
+        [0-5]\d:                    # Minuto de 00 a 59
+        [0-5]\d                     # Segundo de 00 a 59
+    )
+    \s+                             # Espaço
+    (?P<nivel>                      # Grupo nomeado 'nivel'
+        [A-Z]+                      # Nível de log em maiúsculas (EX: INFO, WARN ou ALARME)
+    )
+    \s+                             # Espaço
+    (?P<tag>                        # Grupo nomeado 'tag'
+        \[?[a-zA-Z0-9_\.-]+\]?      # Nome da tag/módulo, opcionalmente entre colchetes
+    )
+    \s+                             # Espaço
+    (?P<resto>                      # Grupo nomeado 'resto'
+        (\\w+)=(\\S+)                 # Garante ao menos um par chave=valor no conteúdo final
+    )
+    $                               # Fim da linha
+""",
+    re.VERBOSE,
+)
 
 @dataclass(frozen=True)
 class Registro:
@@ -42,21 +77,18 @@ class Registro:
     tag: str
     valores: dict[str, float | str]
 
-
 def valida_tag(s: str) -> bool:
     """`True` se a string inteira for uma tag válida (1 ou 2 maiúsculas e 1 a 3 dígitos).
 
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    valid={"PT101", "FT201", "B1"}
-    resu={}
-    for i in range(3):
-        if type(resu.append(re.fullmatch(valid[i], s)))==re.Match:
-            return True
-        else:
-            continue
-    return False
+    padrao=r"[A-Z]{1,2}\d{1,3}"
+    resultado=re.fullmatch(padrao, s)
+    if resultado:
+        return True
+    else:
+        return False
     raise NotImplementedError("issue #1: valida_tag")
 
 
@@ -78,6 +110,72 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
+    # Estamos tratando cada linha do 'texto' como uma linha de leitura, desconsiderando-se os casos em que
+    # posso ocorrer de não ocorrer uma quebra de linha
+
+    if len(texto)==0:
+        return ([], [])
+    else:
+        regis: list[Registro]=[]
+        inval: list[str]=[]
+        for lina in texto.splitlines():
+            sim=LINHA.fullmatch(lina)  # Se for None então ou a linha é inválida ou ela é vazia
+            
+            if not sim and len(lina)!=0:      # Caso a linha seja inválida
+                inval.append(lina)
+                continue
+            elif lina is None:                # Caso a linha seja vazia
+                continue
+            # Daqui em diante consideramos se a linha é válida ou não para os demais critérios dados na docstring
+            # Além disso, realizamos a formatação para adicionar a linha na classe Registro, e então colocá-la na lista regis
+            
+            data_str= sim.group("data")         # String da linha que é data
+            hora_str= sim.group("hora")         # Parte que é a hora
+            resto_str= sim.group("resto")       # Parte que é o resto, para avaliarmos: chaves=valores
+
+            # 
+            hora_norm = hora_str.replace(",", ".")
+            fmt = (
+            "%Y-%m-%d %H:%M:%S.%f"
+            if "." in hora_norm
+            else "%Y-%m-%d %H:%M:%S"
+            )
+            
+            try:
+                instan = datetime.strptime(f"{data_str} {hora_norm}", fmt)
+            except ValueError:
+                inval.append(lina)
+                continue
+
+            # Agora vamos avaliar a parte que são as chaves
+            pares = re.findall(r"(\w+)=(\S+)", resto_str)       # Aqui temos uma lista contendo todas as chave=valor que estão na linha
+            if not pares:
+                inval.append(lina)
+                continue
+            
+            valors={}
+            for chav, valo in pares:
+                try:
+                    valors[chav]=float(valo)
+                except ValueError:
+                    valors[chav]=f"{valo}"
+
+            # Agora vamos validar a tag de leitura da linha
+            if not valida_tag(sim.group("tag")):
+                inval.append(lina)
+                continue
+
+            regist=Registro(
+                instante=instan,
+                nivel= sim.group("nivel"),
+                tag=sim.group("tag"),
+                valores=valors
+            )
+
+            regis.append(regist)
+
+        return (regis, inval)
+
     raise NotImplementedError("issue #1: ler_log")
 
 
