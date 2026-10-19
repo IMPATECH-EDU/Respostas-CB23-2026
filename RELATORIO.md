@@ -83,3 +83,46 @@ Teste de regressão: `test_media_movel_tamanho_janela_30` em `testes/test_dados.
 Causa: A diferença de soma acumulada (`cs[janela:] - cs[:-janela]`) não contabilizava a primeira janela completa por falta de um elemento neutro ($0.0$) no início.
 Correção: Adicionado $0.0$ no início do vetor com `np.insert(self, 0, 0.0)` antes do `np.cumsum`.
 Falha dos testes de aceitação: Eles não verificavam o tamanho exato devolvido para janelas arbitrárias. Outro caso não coberto é janela $1$ (`janela=1`), verificado pelo teste `test_media_movel_janela_um`.
+
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+=== Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 3.0 | matrícula 3538
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+      k        h         erro
+      0    1e+00    1.658e-05
+      1    1e-01    1.657e-06
+      2    1e-02    1.657e-07
+      3    1e-03    1.654e-08
+      4    1e-04    1.651e-09
+      5    1e-05    6.224e-10
+      6    1e-06    2.336e-08
+      7    1e-07    6.191e-08
+      8    1e-08    6.191e-08
+      9    1e-09    1.415e-05
+     10    1e-10    2.984e-04
+     11    1e-11    2.572e-03
+     12    1e-12    1.394e-02
+     13    1e-13    3.550e-01
+     14    1e-14    2.134e-01
+    menor erro: h = 1e-5, erro = 6.224e-10
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->

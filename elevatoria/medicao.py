@@ -63,7 +63,36 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica deve ser não negativa; recebi {u_sistematica!r}")
+
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError(f"menos de 2 leituras para a tag {tag!r}")
+
+    x = curva(contagens)
+
+    mediana = np.median(x)
+    mad = stats.median_abs_deviation(x, scale="normal")
+
+    if mad == 0.0:
+        raise ValueError(f"MAD = 0 para a tag {tag!r}")
+
+    z = (x - mediana) / mad
+    espurias_mask = np.abs(z) > limiar
+    espurias = np.where(espurias_mask)[0].tolist()
+
+    x_validas = x[~espurias_mask]
+
+    if len(x_validas) < 2:
+        raise ValueError(f"menos de 2 leituras válidas para a tag {tag!r}")
+
+    media = np.mean(x_validas)
+    desvio = np.std(x_validas, ddof=1)
+    erro_padrao = stats.sem(x_validas, ddof=1)
+    u = np.sqrt(erro_padrao**2 + u_sistematica**2)
+
+    return Medicao(tag, Medida(media, u), desvio, len(x_validas), espurias)
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +104,10 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    medicao_PT101 = medir(registros, "PT101", curva, u_sistematica)
+    medicao_PT102 = medir(registros, "PT102", curva, u_sistematica)
+
+    pt101 = medicao_PT101.medida
+    pt102 = medicao_PT102.medida
+
+    return (pt102 - pt101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
