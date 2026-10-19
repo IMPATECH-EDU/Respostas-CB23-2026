@@ -117,5 +117,32 @@ class TestMediaMovelRegressao(unittest.TestCase):
         self.assertAlmostEqual(float(r[0]), 11.0)
 
 
+# ---------------------------------------------------------------------------------------
+# Issue #5: reamostrar
+# ---------------------------------------------------------------------------------------
+class TestReamostrar(unittest.TestCase):
+    """Issue #5: médias de blocos consecutivos."""
+
+    def test_sobra_do_fim_e_descartada(self):
+        """Com 7 pontos e k = 3 saem 2 blocos; o 7º ponto (que não completa bloco) some."""
+        s = SerieTemporal.de_lista([1, 2, 3, 10, 20, 30, 1000])
+        r = s.reamostrar(3)
+        self.assertEqual(len(r), 2)
+        self.assertTrue(np.allclose(r, [2.0, 20.0]))
+
+    def test_k_do_tamanho_da_serie(self):
+        """k igual ao tamanho da série devolve um só bloco, com a média de tudo."""
+        r = SerieTemporal.de_lista([2.0, 4.0, 9.0]).reamostrar(3)
+        self.assertTrue(np.allclose(r, [5.0]))
+
+    def test_nao_modifica_a_serie(self):
+        """reamostrar devolve uma SerieTemporal nova e deixa a original intacta."""
+        s = SerieTemporal.de_lista([1.0, 3.0, 5.0, 7.0, 9.0])
+        copia = np.array(s)
+        r = s.reamostrar(2)
+        self.assertIsInstance(r, SerieTemporal)
+        self.assertTrue(np.array_equal(s, copia))
+
+
 if __name__ == "__main__":
     unittest.main()
