@@ -29,7 +29,13 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+LINHA: re.Pattern = re.compile(
+    r"(?P<data>\d{4}-\d{2}-\d{2}) "
+    r"(?P<hora>\d{2}:\d{2}:\d{2}) "
+    r"(?P<nivel>\w+) "
+    r"(?P<tag>\w+\d+) "
+    r"(?P<resto>.*)"
+)
 
 
 @dataclass(frozen=True)
@@ -48,8 +54,12 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
 
+    VALIDA: re.Pattern = re.compile(r"[A-Z]{1,2}\d{1,3}")
+    if VALIDA.fullmatch(s):
+        return True
+    return 
+    
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     """Lê o texto do log e devolve `(registros, invalidas)`.
@@ -69,8 +79,65 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
 
+    registros = []
+    invalidas = []
+
+    if not texto:
+        return ([], [])
+
+    for linha in texto.splitlines():
+
+        if not linha.strip():
+            continue
+
+        comparar = LINHA.fullmatch(linha)
+
+        if comparar is None:
+            invalidas.append(linha)
+            continue
+
+        dados = comparar.groupdict()
+
+        data = dados["data"]
+        hora = dados["hora"]
+        resto = dados["resto"]
+
+        try:
+            instante = datetime.strptime(
+                data + " " + hora,
+                "%Y-%m-%d %H:%M:%S"
+            )
+        except ValueError:
+            invalidas.append(linha)
+            continue
+
+        pares = re.findall(r"(\w+)=(\S+)", resto)
+
+        if not pares:
+            invalidas.append(linha)
+            continue
+
+        valores = {}
+        for chave, valor in pares:
+            try:
+                valores[chave] = float(valor)
+            except ValueError:
+                valores[chave] = valor
+
+        if valida_tag(dados["tag"]) is None:
+            invalidas.append(linha)
+
+        registro = Registro(
+            instante = instante,
+            nivel = dados["nivel"],
+            tag = dados["tag"],
+            valores = valores
+        )
+        registros.append(registro)
+
+    return registros, invalidas
+        
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
     """Registros da `tag`, na ordem original."""
@@ -83,8 +150,11 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
     de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
-
+    return {
+        tag: sum(1 for registro in registros if registro.tag == tag)
+        for tag in {registro.tag for registro in registros}
+    }
+    
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     """`SerieTemporal` com o valor de `chave` dos registros da `tag` que têm essa chave.
@@ -92,7 +162,18 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
     """
-    raise NotImplementedError("issue #1: serie")
+    seq = []
+    for registro in registros:
+        if registro.tag == tag:
+            if chave in registro.valores:
+                seq.append(registro.valores[chave])
+
+    #seq = seq.reverse
+
+    return SerieTemporal.de_lista(seq)
+
+    
+    #raise NotImplementedError("issue #1: serie")
 
 
 # ---------------------------------------------------------------------------------------

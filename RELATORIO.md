@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — <Guilherme Araújo Diniz> (<3510>)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -7,10 +7,29 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
+/home/guilharaujo/venvs/prog2-venv/bin/python
+
+=== Etapa 0: ambiente ===
+Python 3.14.6 | NumPy 2.5.4 | fornecido 3.0
+
+=== Etapa 1: leitura do log ===
+Traceback (most recent call last):
+  File "/mnt/c/Users/guilh/pogramas/prog2/Respostas-CB23-2026/marco1.py", line 159, in <module>
+    main()
+    ~~~~^^
+  File "/mnt/c/Users/guilh/pogramas/prog2/Respostas-CB23-2026/marco1.py", line 151, in main
+    registros = etapa1(texto, verdade)
+  File "/mnt/c/Users/guilh/pogramas/prog2/Respostas-CB23-2026/marco1.py", line 41, in etapa1
+    registros, invalidas = ler_log(texto)
+                           ~~~~~~~^^^^^^^
+  File "/mnt/c/Users/guilh/pogramas/prog2/Respostas-CB23-2026/elevatoria/dados.py", line 72, in ler_log
+    raise NotImplementedError("issue #1: ler_log")
+NotImplementedError: issue #1: ler_log
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
 
 ### R1 — Expressões regulares
 
+String aceita por re.match e rejeitada por re.fullmatch
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
 
 ### R2 — Linhas inválidas
