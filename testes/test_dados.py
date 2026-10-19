@@ -5,7 +5,11 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import por_tag
+import sys
+import os
+sys.path.append(os.path.abspath('Respostacs-CB23-2026/elevatoria'))
+
+from dados import por_tag
 
 
 class TestPorTagExemplo(unittest.TestCase):
