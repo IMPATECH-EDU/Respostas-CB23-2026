@@ -47,9 +47,26 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     Levanta `ValueError` se `a >= b`, se `[a, b]` não estiver dentro do domínio da bomba
     (`bomba.dominio`) ou se o resolvedor não convergir (`resultado.convergiu` falso). Um
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
-    tratado: ele chega a quem chamou `ponto_operacao`.
+    tratado: ele chega a quem chamou `ponto_operacao`. Também levanta `ValueError` se o
+    resolvedor convergir para uma vazão fora de `[a, b]` (o Newton pode sair do intervalo).
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    q_min, q_max = bomba.dominio
+    if a < q_min or b > q_max:
+        raise ValueError(f"[{a}, {b}] sai do domínio da curva da bomba [{q_min}, {q_max}]")
+
+    def desequilibrio(Q: float) -> float:
+        """Sobra de altura da bomba em relação ao sistema; zero no ponto de operação."""
+        return float(bomba(Q)) - tubulacao.altura_sistema(Q)
+
+    resultado = resolvedor.encontrar(desequilibrio, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"o resolvedor não convergiu em {resultado.iteracoes} iterações")
+    vazao = resultado.raiz
+    if not a <= vazao <= b:
+        raise ValueError(f"o resolvedor convergiu para Q = {vazao}, fora de [{a}, {b}]")
+    return PontoOperacao(vazao=vazao, altura=float(bomba(vazao)), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
