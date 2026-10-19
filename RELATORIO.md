@@ -115,14 +115,20 @@ depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e
      13    1e-13    3.550e-01
      14    1e-14    2.134e-01
     menor erro: h = 1e-5, erro = 6.224e-10
+
+    O erro diminui inicialmente porque o erro de truncamento (da fórmula matemática) cai conforme `h` diminui. A partir de 1e-5, o erro volta a crescer porque o erro de arredondamento de ponto flutuante passa a dominar, já que estamos subtraindo números muito próximos. Em `h = 1e-14`, o limite da mantissa faz com que `1000 + 1e-14` seja exatamente `1000` em memória; logo, a derivada numérica calculada zera, e o erro absoluto final passa a ser exatamente o valor real da derivada.
+
 ### R9 — Issue #7
 
 <!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
 t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
 de aceitação não pegaram o defeito. -->
+Os meus testes de regressão foram `test_soma_um_milhao_de_decimos` e `test_perda_de_precisao_com_parcelas_desiguais`. A falha ocorria porque `t` já é o resultado truncado de `s + y`; subtrair `(s + y)` de `t` gera 0, destruindo a compensação de Kahan. Alterar para `(t - s) - y` isola o resíduo exato da parcela truncada. Os testes de aceitação falharam em pegar o defeito porque provavelmente usavam poucas parcelas ou números inteiros, onde o limite da precisão não chega a estourar.
 
 ### R10 — Precisão × exatidão
 
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+
+Precisão é a dispersão das leituras (desvio), que se manteve igual pois o ruído físico do sensor captado no log é o mesmo para as duas curvas. Exatidão é a proximidade com o valor real, que diferiu bastante porque a curva linear sofre de um erro de modelagem (viés) em relação à verdadeira curva não-linear do transmissor. Tirar a média de 600 pontos reduz apenas o ruído aleatório (melhora a precisão), mas é matematicamente incapaz de consertar o erro sistemático da curva linear.
