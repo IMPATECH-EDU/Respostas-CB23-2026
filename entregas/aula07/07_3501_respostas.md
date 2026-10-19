@@ -1,0 +1,1 @@
+DFS e BFS são igualmente bons (ou ruins) neste caso porque sempre existe um e apenas um caminho entre (1,1) e o queijo, então escolhi BFS porque é mais fácil de implementar. De fato um DFS guloso seria a melhor opção, mas o problema não pede isso.
