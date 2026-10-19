@@ -26,14 +26,14 @@ class SerieTemporal(np.ndarray):
 
     def media_movel(self, janela: int) -> SerieTemporal:
         """Médias de `janela` pontos consecutivos: `n - janela + 1` valores.
-
         O valor `i` do resultado é a média de `self[i : i + janela]`. Usa a soma acumulada
         (`np.cumsum`), sem laços. Levanta `ValueError` se `janela < 1` ou `janela > len(self)`.
         """
         if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
-        acumulada = np.cumsum(self)
-        return (acumulada[janela:] - acumulada[:-janela]) / janela
+        acumulada = np.insert(np.cumsum(self), 0, 0.0)
+        resultado = (acumulada[janela:] - acumulada[:-janela]) / janela
+        return resultado.view(SerieTemporal)
 
     def variacao(self) -> SerieTemporal:
         """Diferenças entre pontos consecutivos (`n - 1` valores)."""
@@ -60,4 +60,10 @@ class SerieTemporal(np.ndarray):
         completam um bloco são descartados. Usa `reshape`, sem laços. Levanta `ValueError`
         se `k < 1` ou `k > len(self)`.
         """
-        raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")
+        if k < 1 or k > len(self):
+            raise ValueError(f"O valor {k} não se encaixa no exigido, não está entre 1 e {len(self)}")
+        n_blocos = len(self) // k
+        n_pontos_usados = n_blocos * k
+        blocos = self[:n_pontos_usados].reshape(n_blocos, k)
+
+        return blocos.mean(axis=1)
