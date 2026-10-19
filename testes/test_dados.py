@@ -26,6 +26,27 @@ class TestPorTagExemplo(unittest.TestCase):
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
 
+class TestMediaMovelRegressao(unittest.TestCase):
+    """Regressões da Issue #4, escritas antes da correção de media_movel."""
+
+    def test_media_movel_inclui_primeira_janela(self) -> None:
+        """Janela de dois pontos inclui a primeira janela e todas as médias esperadas."""
+        s = SerieTemporal.de_lista([1.0, 4.0, 9.0, 16.0, 25.0])
+        resultado = s.media_movel(2)
+        esperado = [2.5, 6.5, 12.5, 20.5]
+        self.assertEqual(resultado.shape, (4,),
+                         f"Esperado {esperado}; recebido {resultado.tolist()}")
+        self.assertTrue(np.allclose(resultado, esperado))
+
+    def test_media_movel_janela_igual_ao_tamanho(self) -> None:
+        """Janela igual ao tamanho da série produz um único valor com a média total."""
+        s = SerieTemporal.de_lista([1.0, 4.0, 9.0, 16.0, 25.0])
+        resultado = s.media_movel(5)
+        self.assertEqual(resultado.shape, (1,),
+                         f"Esperado [11.0]; recebido {resultado.tolist()}")
+        self.assertAlmostEqual(float(resultado[0]), 11.0)
+
+
 class TestLerLogContrato(unittest.TestCase):
     """Regras de leitura não verificadas pelos testes de aceitação."""
 
