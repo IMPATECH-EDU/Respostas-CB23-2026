@@ -3,11 +3,14 @@
 Regras: pelo menos 8 testes seus (o exemplo abaixo não conta), uma docstring em cada teste
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.allclose.
 """
+import sys
 import unittest
 
 import numpy as np
 
-from elevatoria.dados import criar_conversores, ler_log, por_tag, serie
+from elevatoria.dados import (converter_compreensao, converter_laco, converter_map,
+                              converter_vetorizado, criar_conversores, ler_log,
+                              medir_memoria, medir_tempos, por_tag, serie)
 from elevatoria.serie import SerieTemporal
 
 
@@ -99,6 +102,63 @@ class TestConversoresContrato(unittest.TestCase):
     def test_escalas_vazias(self) -> None:
         """Sem escalas, não há conversores a criar."""
         self.assertEqual(criar_conversores({}), {})
+
+
+class TestMemoriaContrato(unittest.TestCase):
+    """Contagem dos bytes e validação das entradas de medir_memoria."""
+
+    def test_lista_conta_objetos_e_arrays_contam_dados(self) -> None:
+        """A lista inclui seu objeto e cada elemento; arrays contam apenas seus dados."""
+        memoria = medir_memoria(np.array([0, 0, 0, 4095], dtype=np.uint16))
+        self.assertEqual(memoria["list"],
+                         sys.getsizeof([0, 0, 0, 4095]) + 3 * sys.getsizeof(0) + sys.getsizeof(4095))
+        for estrutura, esperado in [("array('H')", 8), ("uint16", 8), ("int32", 16),
+                                    ("int64", 32), ("float32", 16), ("float64", 32)]:
+            with self.subTest(estrutura=estrutura):
+                self.assertEqual(memoria[estrutura], esperado)
+
+    def test_rejeita_entradas_que_nao_sao_vetores_inteiros(self) -> None:
+        """Lista Python, array escalar e vetores de tipos não inteiros são rejeitados."""
+        for entrada in [[1, 2], np.array(1), np.array([1.5]),
+                        np.array([True]), np.array(["1"])]:
+            with self.subTest(entrada=entrada):
+                with self.assertRaises(ValueError):
+                    medir_memoria(entrada)
+
+
+class TestConversaoContrato(unittest.TestCase):
+    """Casos limite dos quatro métodos de conversão para kPa."""
+
+    def test_vetorizado_uint16_sem_estouro_e_sem_mutacao(self) -> None:
+        """A conversão de uint16 alcança 600 kPa sem overflow nem alterar a entrada."""
+        contagens = np.array([0, 273, 4095], dtype=np.uint16)
+        convertido = converter_vetorizado(contagens)
+        self.assertIsInstance(convertido, np.ndarray)
+        self.assertTrue(np.issubdtype(convertido.dtype, np.floating))
+        self.assertTrue(np.allclose(convertido, [0.0, 40.0, 600.0]))
+        self.assertTrue(np.array_equal(contagens, [0, 273, 4095]))
+
+    def test_conversoes_vazias_preservam_tipo_de_retorno(self) -> None:
+        """Entrada vazia produz lista nas versões Python e ndarray na vetorizada."""
+        for converter in [converter_laco, converter_compreensao, converter_map]:
+            with self.subTest(funcao=converter.__name__):
+                convertido = converter([])
+                self.assertIsInstance(convertido, list)
+                self.assertEqual(convertido, [])
+        convertido = converter_vetorizado(np.array([], dtype=np.uint16))
+        self.assertIsInstance(convertido, np.ndarray)
+        self.assertEqual(convertido.shape, (0,))
+
+
+class TestTemposContrato(unittest.TestCase):
+    """Validação das repetições pelo cronômetro fornecido."""
+
+    def test_repeticoes_invalidas(self) -> None:
+        """Repetições não inteiras ou não positivas levantam ValueError."""
+        for k in [0, -1, 1.5, "2"]:
+            with self.subTest(k=k):
+                with self.assertRaises(ValueError):
+                    medir_tempos(np.array([0, 4095]), k=k)
 
 
 if __name__ == "__main__":
