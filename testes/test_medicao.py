@@ -39,6 +39,33 @@ class TestRegressaoIssue7(unittest.TestCase):
         # A compensação de Kahan deve preservar a mantissa acumulada e resultar no valor exato
         self.assertEqual(acumulador.total, 10000.00000001)
 
+class TestMedirIssue6(unittest.TestCase):
+    """Testes de contrato e casos de borda para a função medir (Issue #6)."""
+
+    def setUp(self):
+        """Prepara uma curva de calibração falsa que apenas repassa os valores."""
+        self.curva_mock = lambda x: x 
+
+    def test_medir_u_sistematica_negativa(self):
+        """Levanta ValueError se a incerteza sistemática passada for negativa."""
+        with self.assertRaises(ValueError):
+            medir([], "PT101", self.curva_mock, u_sistematica=-0.5)
+
+    def test_medir_menos_de_duas_leituras_no_log(self):
+        """Levanta ValueError se a tag possuir menos de 2 leituras na série extraída."""
+        registros = [Registro(instante=None, nivel="INFO", tag="PT101", valores={"contagens": 100.0})]
+        with self.assertRaises(ValueError):
+            medir(registros, "PT101", self.curva_mock)
+
+    def test_medir_mad_zero(self):
+        """Levanta ValueError se os valores da tag forem todos idênticos, resultando em MAD nula."""
+        registros = [
+            Registro(instante=None, nivel="INFO", tag="PT101", valores={"contagens": 150.0}),
+            Registro(instante=None, nivel="INFO", tag="PT101", valores={"contagens": 150.0}),
+            Registro(instante=None, nivel="INFO", tag="PT101", valores={"contagens": 150.0})
+        ]
+        with self.assertRaises(ValueError):
+            medir(registros, "PT101", self.curva_mock)
 
 if __name__ == "__main__":
     unittest.main()
