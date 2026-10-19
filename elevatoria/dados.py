@@ -29,8 +29,12 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
-
+LINHA: re.Pattern = re.compile((r'(?P<data>\d{4}-\d{2}-\d{2})\s+' + # data: 4 digitos-2 digitos-2 digitos
+           r'(?P<hora>\d{2}(?::\d{2}){2})\s+' + # hora: 2 digitos:2 digitos: 2 digitos
+           r'(?P<nivel>INFO|WARN|ALARME)\s+' + # nivel: INFO ou WARN ou ALARME
+           r'(?P<tag>[A-Z]{1,2}\d{1,3})\s+'+ # tag: de 1 a 2 letras maiúsculas, 1 a 3 números
+           r'(?P<resto>\S.*)'), re.VERBOSE) # resto, início diferente de espaço
+TAG: re.Pattern = re.compile(r'[A-Z]{1,2}\d{1,3}')
 
 @dataclass(frozen=True)
 class Registro:
@@ -48,7 +52,7 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    return TAG.fullmatch(s) is not None
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -69,7 +73,32 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+    registros = []
+    invalidos = []
+    
+    for linha in texto.split('\n'):
+        if linha.strip() == '':
+            continue
+        res = LINHA.fullmatch(linha)
+        
+        if not res:
+            invalidos.append(linha)    
+            continue
+
+        d = res.groupdict()
+        instante = datetime.strptime(f'{d['data']} {d['hora']}', '%Y-%m-%d %H:%M:%S')
+        pares_str = re.findall(r'(\w+)=(\S+)',d['resto'])
+        pares = {}
+        for par in pares_str:
+            try:
+                val = float(par[1])
+            except ValueError:
+                val = par[1]
+            pares[par[0]] = val
+        registros.append(Registro(instante, d['nivel'], d['tag'], pares))
+
+
+    return (registros, invalidos)
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
@@ -83,7 +112,11 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
     de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    return {
+        tag: sum(1 for r in registros if r.tag == tag)
+        for tag in {r.tag for r in registros}
+    }
+    
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
@@ -92,7 +125,19 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
     """
-    raise NotImplementedError("issue #1: serie")
+    
+    valores: list[float] = []
+
+    for r in registros:
+        if r.tag != tag:
+            continue
+
+        valor = r.valores.get(chave)
+
+        if isinstance(valor, float):
+            valores.append(valor)
+
+    return SerieTemporal.de_lista(valores)
 
 
 # ---------------------------------------------------------------------------------------
@@ -104,7 +149,7 @@ def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], 
     Cada `f` é uma lambda. Cuidado com o *late binding*: cada função deve usar o fator da
     sua tag, e não o último fator do dicionário (veja a issue #2 no enunciado).
     """
-    raise NotImplementedError("issue #2: criar_conversores")
+    return {p[0]: (lambda c: c * p[1]) for p in escalas.items()}
 
 
 # ---------------------------------------------------------------------------------------
