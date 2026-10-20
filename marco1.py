@@ -2,9 +2,8 @@
 
 Execute a partir da pasta do projeto, com o ambiente ativado:  python marco1.py
 
-Este esqueleto já traz a estrutura, os imports e todos os assert. Complete os trechos
-marcados com TODO e acrescente as impressões pedidas no enunciado. Não remova nem
-enfraqueça nenhum assert. O script usa apenas a interface pública dos módulos.
+O script demonstra as etapas do enunciado e confere os resultados com assert,
+usando apenas a interface pública dos módulos.
 """
 import math
 import re
@@ -17,12 +16,7 @@ from fornecido.simulador import gerar_log
 from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
                               medir_tempos, serie, valida_tag)
 
-MATRICULA = 123456  # troque pelo seu número de matrícula
-
-
-def _todo(item: str):
-    """Marca um trecho ainda não feito; apague as chamadas a _todo ao completar o script."""
-    raise NotImplementedError(f"marco1.py: complete o item {item}")
+MATRICULA = 3548
 
 
 def etapa0() -> None:
@@ -39,16 +33,21 @@ def etapa1(texto: str, verdade: dict) -> list:
     print("\n=== Etapa 1: leitura do log ===")
     # (a) Leia o log e imprima o número de registros válidos e de linhas inválidas.
     registros, invalidas = ler_log(texto)
+    print(f"Registros válidos: {len(registros)} | Linhas inválidas: {len(invalidas)}")
     assert len(invalidas) == verdade["invalidas"]
     assert len(registros) + len(invalidas) == verdade["linhas"]
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
-    por_nivel = _todo("1(b)")
+    por_nivel = {
+        nivel: sum(r.nivel == nivel for r in registros) for nivel in {r.nivel for r in registros}
+    }
+    print(f"Registros por nível: {por_nivel}")
     assert por_nivel == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
-    total = _todo("1(c)")
+    total = float(serie(registros, "FT201", "pulsos").sum())
+    print(f"Total de pulsos: {total:.0f} | Volume bombeado: {total * 0.1:.1f} L")
     assert total == verdade["pulsos_total"]
 
     # (d) valida_tag.
@@ -63,37 +62,50 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     """Etapa 2 — Lambda e compreensões (issue #2)."""
     print("\n=== Etapa 2: lambda e compreensões ===")
     # (a) Ordene com sorted e key=lambda: (i) por (tag, instante); (ii) por instante decrescente.
-    por_tag_instante = _todo("2(a)(i)")
-    decrescente = _todo("2(a)(ii)")
+    por_tag_instante = sorted(registros, key=lambda r: (r.tag, r.instante))
+    decrescente = sorted(registros, key=lambda r: r.instante, reverse=True)
     assert por_tag_instante[0].tag == "B1"
     assert decrescente[0].instante == max(r.instante for r in registros)
 
     # (b) Contagens de PT102 (só registros com a chave "contagens"): map/filter e compreensão.
-    com_map = _todo("2(b) map/filter")
-    com_compreensao = _todo("2(b) compreensão")
+    com_map = list(map(
+        lambda r: r.valores["contagens"],
+        filter(lambda r: r.tag == "PT102" and "contagens" in r.valores, registros)
+    ))
+    com_compreensao = [
+        r.valores["contagens"] for r in registros
+        if r.tag == "PT102" and "contagens" in r.valores
+    ]
     assert com_map == com_compreensao and len(com_compreensao) == 600
 
     # (c) Contagens acima de 2000 (compreensão de lista) e tags distintas (de conjunto).
-    altas = _todo("2(c) altas")
-    tags = _todo("2(c) tags")
+    altas = [c for c in com_compreensao if c > 2000]
+    tags = {r.tag for r in registros}
     assert len(altas) == 5
     assert tags == {"B1", "PT101", "PT102", "FT201", "LT301"}
 
     # (d) Com re.sub e uma lambda como repl, troque pulsos=N por volume_L=V (V = N * 0,1,
     #     com uma casa decimal; por exemplo, pulsos=3892 vira volume_L=389.2).
-    convertido = _todo("2(d)")
+    convertido = re.sub(
+        r"pulsos=(\d+)", lambda m: f"volume_L={int(m[1]) * 0.1:.1f}", texto
+    )
     assert convertido.count("volume_L=") == 600 and "pulsos=" not in convertido
 
     # (e) Late binding: a versão errada (não corrija esta linha) e a sua.
     escalas = {"PT101": 600 / 4095, "PT102": 600 / 4095, "FT201": 0.1}
     errados = {tag: (lambda c: c * k) for tag, k in escalas.items()}
     certos = criar_conversores(escalas)
+    print(f"PT102 (4095 contagens): errado = {errados['PT102'](4095):.1f} | "
+          f"correto = {certos['PT102'](4095):.1f}")
     assert math.isclose(errados["PT102"](4095), 409.5)
     assert math.isclose(certos["PT102"](4095), 600.0)
 
     # (f) Converta a média das contagens normais de PT102 (até 2000) com a escala nominal
     #     (certos["PT102"]) e imprima ao lado de verdade["pressao_recalque"].
-    p_nominal = _todo("2(f)")
+    normais = [c for c in com_compreensao if c <= 2000]
+    p_nominal = certos["PT102"](sum(normais) / len(normais))
+    print(f"Pressão nominal: {p_nominal:.2f} kPa | "
+          f"Conferência: {verdade['pressao_recalque']:.2f} kPa")
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
 
 
@@ -106,18 +118,28 @@ def etapa3() -> None:
     # (a) Memória: imprima uma tabela com estrutura, bytes por elemento, bytes totais e a
     #     razão em relação à lista.
     memoria = medir_memoria(contagens)
-    _todo("3(a) tabela")
+    print(f"{'Estrutura':<14} {'Bytes/elemento':>15} {'Bytes totais':>14} {'Memória/lista':>15}")
+    for estrutura, tamanho in memoria.items():
+        print(f"{estrutura:<14} {tamanho / n:>15.6f} {tamanho:>14d} "
+              f"{tamanho / memoria['list']:>15.6f}")
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
 
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
-    _todo("3(b) tabela")
+    print(f"\n{'Método':<14} {'Tempo (ms)':>14} {'Aceleração':>14}")
+    for metodo, tempo in tempos.items():
+        print(f"{metodo:<14} {tempo * 1000:>14.3f} {tempos['laço'] / tempo:>13.2f}x")
+    print(f"\nLista/uint16: {memoria['list'] / memoria['uint16']:.6f}")
+    print(f"Laço/vetorizado: {tempos['laço'] / tempos['vetorizado']:.6f}")
+    print(f"Compreensão/laço: {tempos['compreensão'] / tempos['laço']:.6f}")
     assert tempos["laço"] / tempos["vetorizado"] >= 5
 
     # (c) Tipos e overflow: imprima os dois resultados.
     misto = np.array([1, 2.5, "a"])
     estouro = np.array([4095], dtype=np.uint16) * 20
+    print(f"\nLista mista: {misto} | dtype: {misto.dtype}")
+    print(f"uint16 * 20: {estouro[0]} | Inteiro Python: {4095 * 20}")
     assert misto.dtype.kind == "U"
     assert estouro[0] == 16364 and 4095 * 20 == 81900
 
@@ -128,20 +150,29 @@ def etapa4(registros: list) -> None:
     s = serie(registros, "PT102", "contagens")
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
+    print(f"Média: {float(s.mean()):.3f} | Desvio (ddof=1): {float(s.std(ddof=1)):.3f} | "
+          f"Amplitude: {s.amplitude():.3f}")
     assert len(s) == 600 and s.amplitude() > 300
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
+    print(f"Média móvel de 30 pontos: {len(mm)} valores")
+    print(f"{'Série':<16} {'Mínimo':>12} {'Máximo':>12}")
+    print(f"{'Original':<16} {float(s.min()):>12.3f} {float(s.max()):>12.3f}")
+    print(f"{'Média móvel':<16} {float(mm.min()):>12.3f} {float(mm.max()):>12.3f}")
     assert len(mm) == 571
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
+    print(f"Médias por minuto ({len(por_minuto)} blocos): {por_minuto}")
     assert len(por_minuto) == 60
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    for expressao, resultado in [("s + s", s + s), ("s[1:]", s[1:]), ("s * 2", s * 2),
+                                 ("s.sum()", s.sum()), ("s[0]", s[0])]:
+        print(f"{expressao}: {type(resultado).__name__}")
 
 
 def main(matricula: int = MATRICULA) -> None:
