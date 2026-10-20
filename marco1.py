@@ -2,9 +2,8 @@
 
 Execute a partir da pasta do projeto, com o ambiente ativado:  python marco1.py
 
-Este esqueleto já traz a estrutura, os imports e todos os assert. Complete os trechos
-marcados com TODO e acrescente as impressões pedidas no enunciado. Não remova nem
-enfraqueça nenhum assert. O script usa apenas a interface pública dos módulos.
+O script demonstra as etapas do enunciado e confere os resultados com assert,
+usando apenas a interface pública dos módulos.
 """
 import math
 import re
@@ -18,11 +17,6 @@ from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medi
                               medir_tempos, serie, valida_tag)
 
 MATRICULA = 3548
-
-
-def _todo(item: str):
-    """Marca um trecho ainda não feito; apague as chamadas a _todo ao completar o script."""
-    raise NotImplementedError(f"marco1.py: complete o item {item}")
 
 
 def etapa0() -> None:
@@ -156,11 +150,17 @@ def etapa4(registros: list) -> None:
     s = serie(registros, "PT102", "contagens")
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
+    print(f"Média: {float(s.mean()):.3f} | Desvio (ddof=1): {float(s.std(ddof=1)):.3f} | "
+          f"Amplitude: {s.amplitude():.3f}")
     assert len(s) == 600 and s.amplitude() > 300
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
+    print(f"Média móvel de 30 pontos: {len(mm)} valores")
+    print(f"{'Série':<16} {'Mínimo':>12} {'Máximo':>12}")
+    print(f"{'Original':<16} {float(s.min()):>12.3f} {float(s.max()):>12.3f}")
+    print(f"{'Média móvel':<16} {float(mm.min()):>12.3f} {float(mm.max()):>12.3f}")
     assert len(mm) == 571
 
     # (c) Médias por minuto (10 leituras de 6 s).
@@ -170,7 +170,9 @@ def etapa4(registros: list) -> None:
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    for expressao, resultado in [("s + s", s + s), ("s[1:]", s[1:]), ("s * 2", s * 2),
+                                 ("s.sum()", s.sum()), ("s[0]", s[0])]:
+        print(f"{expressao}: {type(resultado).__name__}")
 
 
 def main(matricula: int = MATRICULA) -> None:
