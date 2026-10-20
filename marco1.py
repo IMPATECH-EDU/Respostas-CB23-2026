@@ -6,6 +6,7 @@ Este esqueleto já traz a estrutura, os imports e todos os assert. Complete os t
 marcados com TODO e acrescente as impressões pedidas no enunciado. Não remova nem
 enfraqueça nenhum assert. O script usa apenas a interface pública dos módulos.
 """
+
 import math
 import re
 import sys
@@ -13,11 +14,18 @@ import sys
 import numpy as np
 
 import fornecido
+from elevatoria.dados import (
+    contagem_por_tag,
+    criar_conversores,
+    ler_log,
+    medir_memoria,
+    medir_tempos,
+    serie,
+    valida_tag,
+)
 from fornecido.simulador import gerar_log
-from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
-                              medir_tempos, serie, valida_tag)
 
-MATRICULA = 123456  # troque pelo seu número de matrícula
+MATRICULA = 3518  # meu número de matrícula
 
 
 def _todo(item: str):
@@ -28,7 +36,9 @@ def _todo(item: str):
 def etapa0() -> None:
     """Etapa 0 — Ambiente: versões e uma verificação rápida do NumPy."""
     print("=== Etapa 0: ambiente ===")
-    print(f"Python {sys.version.split()[0]} | NumPy {np.__version__} | fornecido {fornecido.VERSAO}")
+    print(
+        f"Python {sys.version.split()[0]} | NumPy {np.__version__} | fornecido {fornecido.VERSAO}"
+    )
     assert np.arange(10).sum() == 45
     assert np.ones((3, 3)).trace() == 3
     assert np.allclose(np.linspace(0, 1, 5), [0, 0.25, 0.5, 0.75, 1])
@@ -42,14 +52,19 @@ def etapa1(texto: str, verdade: dict) -> list:
     assert len(invalidas) == verdade["invalidas"]
     assert len(registros) + len(invalidas) == verdade["linhas"]
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
+    print(f"registros válidos - {len(registros)}, linhas inválidas - {len(invalidas)}")
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
-    por_nivel = _todo("1(b)")
+    por_nivel = {
+        nivel: len([r for r in registros if r.nivel == nivel])
+        for nivel in {o.nivel for o in registros}
+    }
     assert por_nivel == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
-    total = _todo("1(c)")
+    total = serie(registros, "FT201", "pulsos").sum()
     assert total == verdade["pulsos_total"]
+    print(f"volume bombeado na hora: {total * 0.1:.1f} L")
 
     # (d) valida_tag.
     for tag in ["PT101", "FT201", "B1"]:

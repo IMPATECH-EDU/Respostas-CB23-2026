@@ -7,7 +7,11 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
-<!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
+Saída de `which python`: /c/Users/vitor/venvs/prog2-venv/Scripts/python
+
+Etapa 0 do `python marco1.py`: 
+=== Etapa 0: ambiente ===
+Python 3.14.3 | NumPy 2.5.4 | fornecido 1.0
 
 ### R1 — Expressões regulares
 
@@ -25,7 +29,7 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+Previsões registradas no commit: d050c9b
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
