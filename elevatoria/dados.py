@@ -187,28 +187,49 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
 
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
     """
+    # Verifica se o array contagens é um ndarray 1D de inteiros.
+    if not isinstance(contagens, np.ndarray) or contagens.ndim != 1 or not np.issubdtype(contagens.dtype, np.integer):
+        raise ValueError("contagens deve ser um ndarray 1D de inteiros")
     
-    raise NotImplementedError("issue #3: medir_memoria")
+    dicionario_memoria = {}
 
+    list = contagens.tolist()
+    dicionario_memoria["list"] = sys.getsizeof(list) + sum(sys.getsizeof(x) for x in list)
+
+    dicionario_memoria["array('H')"] = array.array("H", contagens).itemsize * len(contagens)
+
+    # Calcula o tamanho em bytes ocupado pelo ndarray convertido para cada tipo de dado especificado.
+    for dtype in ["uint16", "int32", "int64", "float32", "float64"]:
+        dicionario_memoria[dtype] = contagens.astype(dtype).nbytes
+    # Atributo .nbytes retorna o número de bytes ocupados pelo array. (size * itemsize)
+
+    return dicionario_memoria
 
 def converter_laco(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `for` e `append`."""
-    raise NotImplementedError("issue #3: converter_laco")
+    resultado = []
+    for c in contagens:
+        resultado.append(c * 600 / 4095)
+    return resultado
 
 
 def converter_compreensao(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma compreensão de lista."""
-    raise NotImplementedError("issue #3: converter_compreensao")
+    resultado = [c * 600 / 4095 for c in contagens]
+    return resultado
 
 
 def converter_map(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `map` e uma lambda."""
-    raise NotImplementedError("issue #3: converter_map")
+    resultado = list(map(lambda c: c * 600 / 4095, contagens))
+    return resultado
 
 
 def converter_vetorizado(contagens: np.ndarray) -> np.ndarray:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma operação vetorizada do NumPy."""
-    raise NotImplementedError("issue #3: converter_vetorizado")
+    contagens = np.asanyarray(contagens)
+    resultado = contagens * 600 / 4095
+    return resultado
 
 
 def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
@@ -218,4 +239,14 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     `"map+lambda"` (que recebem a lista `contagens.tolist()`, criada uma única vez, fora da
     medição) e `"vetorizado"` (que recebe o próprio `ndarray`).
     """
-    raise NotImplementedError("issue #3: medir_tempos")
+    tempos = {}
+    convertido_list = contagens.tolist()
+    for f in [converter_laco, converter_compreensao, converter_map, converter_vetorizado]:
+        if f is converter_vetorizado:
+            convertido_np = np.asanyarray(contagens)
+            tempos["vetorizado"] = cronometrar(f, convertido_np, k=k)
+        else:
+            tempos[f.__name__.replace("converter_", "")] = cronometrar(f, convertido_list, k=k)
+        # O método especial __name__ retorna o nome da função como uma string.
+        # O método replace é usado aqui para substituir a substring "converter_" por uma string vazia, simplificando o nome da chave no dicionário tempos.
+    return tempos
