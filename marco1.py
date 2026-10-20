@@ -165,6 +165,7 @@ def etapa4(registros: list) -> None:
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
+    print(f"Médias por minuto ({len(por_minuto)} blocos): {por_minuto}")
     assert len(por_minuto) == 60
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 

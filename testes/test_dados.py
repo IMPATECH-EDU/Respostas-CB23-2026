@@ -182,5 +182,28 @@ class TestTemposContrato(unittest.TestCase):
                     medir_tempos(np.array([0, 4095]), k=k)
 
 
+class TestReamostrarContrato(unittest.TestCase):
+    """Médias por bloco, sobra final e limites válidos de reamostrar."""
+
+    def test_descarta_sobra_sem_modificar_serie(self) -> None:
+        """O ponto final sem bloco completo é descartado e a série original é preservada."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0, 8.0, 1000.0])
+        resultado = s.reamostrar(2)
+        self.assertIsInstance(resultado, SerieTemporal)
+        self.assertEqual(resultado.shape, (2,))
+        self.assertTrue(np.allclose(resultado, [3.0, 7.0]))
+        self.assertTrue(np.allclose(s, [2.0, 4.0, 6.0, 8.0, 1000.0]))
+
+    def test_limites_validos_k_um_e_tamanho_total(self) -> None:
+        """k igual a um preserva os valores e k igual ao tamanho produz a média total."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0, 8.0])
+        for k, esperado in [(1, [2.0, 4.0, 6.0, 8.0]), (4, [5.0])]:
+            with self.subTest(k=k):
+                resultado = s.reamostrar(k)
+                self.assertIsInstance(resultado, SerieTemporal)
+                self.assertEqual(resultado.shape, (len(esperado),))
+                self.assertTrue(np.allclose(resultado, esperado))
+
+
 if __name__ == "__main__":
     unittest.main()
