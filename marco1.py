@@ -144,13 +144,22 @@ def etapa3() -> None:
     # (a) Memória: imprima uma tabela com estrutura, bytes por elemento, bytes totais e a
     #     razão em relação à lista.
     memoria = medir_memoria(contagens)
-    _todo("3(a) tabela")
+    print(
+        f"{'estrutura':<12}{'bytes/elem':>12}{'bytes totais':>16}{'razão p/ list':>15}"
+    )
+    for estrutura, total in memoria.items():
+        print(
+            f"{estrutura:<12}{total / n:>12.2f}{total:>16,}"
+            f"{total / memoria['list']:>15.3f}"
+        )
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
 
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
-    _todo("3(b) tabela")
+    print(f"\n{'método':<14}{'tempo (ms)':>12}{'aceleração':>12}")
+    for metodo, t in tempos.items():
+        print(f"{metodo:<14}{t * 1000:>12.2f}{tempos['laço'] / t:>11.1f}x")
     assert tempos["laço"] / tempos["vetorizado"] >= 5
 
     # (c) Tipos e overflow: imprima os dois resultados.
@@ -158,6 +167,7 @@ def etapa3() -> None:
     estouro = np.array([4095], dtype=np.uint16) * 20
     assert misto.dtype.kind == "U"
     assert estouro[0] == 16364 and 4095 * 20 == 81900
+    print(misto, estouro)
 
 
 def etapa4(registros: list) -> None:
