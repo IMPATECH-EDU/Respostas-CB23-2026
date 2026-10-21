@@ -155,3 +155,21 @@ Os testes são `test_newton_colebrook_reduz_iteracoes` e `test_newton_colebrook_
 Ao manter a derivada do ponto inicial, Newton usa uma inclinação fixa e fica com convergência linear, em vez de atualizar a inclinação local para obter convergência quadrática.
 A correção recalcula a derivada em cada aproximação: para Reynolds `1e4`, convergiu em 5 iterações, com ordem estimada 2,00.
 Os testes de aceitação verificavam a raiz e a convergência, mas não o número de iterações nem a ordem.
+
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+As mudanças bruscas de tarifa em 18 h e 21 h tornam o custo descontínuo, violando a hipótese de suavidade usada para obter as ordens teóricas. Integrar atravessando essas quebras reduz a ordem observada; nesta execução foi 1,00 para o trapézio e 0,65 para Simpson. Separando as faixas, cada integral tem tarifa constante e integrando uma função suave, as ordens voltam a 2,00 e 4,00.
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+
+Os testes de regressão são `test_trapezio_linear_com_intervalo_irregular` e `test_trapezio_constante_com_intervalos_irregulares`; antes da correção ambos davam 6 em vez de 8. A causa era usar a primeira largura entre amostras para todos os trapézios, embora as falhas do SCADA criem intervalos de 15, 30 ou 45 minutos. Os testes de aceitação usavam malhas uniformes, nas quais essa largura fixa funciona. Simpson não serve ao registro porque exige uma malha uniforme e um número ímpar de pontos; o registro tem espaçamento irregular por causa das leituras perdidas.
