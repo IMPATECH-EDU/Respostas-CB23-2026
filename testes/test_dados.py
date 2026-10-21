@@ -24,6 +24,7 @@ class TestPorTagExemplo(unittest.TestCase):
 class TestRegressionIssue4(unittest.TestCase):
     """Testes de regressão da issue #4 (média móvel)."""
     def test_media_movel_tamanho_correto(self):
+        """Média móvel com janela 30 deve conter n - janela + 1 valores."""
         dados = np.arange(600, dtype=float)
         s = SerieTemporal.de_lista(dados)
         mm = s.media_movel(30)

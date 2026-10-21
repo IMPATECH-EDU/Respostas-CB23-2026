@@ -15,9 +15,17 @@ class SerieTemporal(np.ndarray):
 
     @classmethod
     def de_lista(cls, seq: Sequence[float]) -> SerieTemporal:
-        """Cria uma `SerieTemporal` de `float` (uma cópia) a partir de qualquer sequência.
+        """Cria uma série unidimensional de ponto flutuante a partir de uma sequência.
 
-        Levanta `ValueError` se o resultado não for unidimensional.
+        Args:
+            seq: Sequência de valores conversíveis em `float`.
+
+        Returns:
+            Nova instância `SerieTemporal`; os dados são copiados para um array NumPy.
+
+        Raises:
+            ValueError: Se os valores não puderem ser convertidos para `float` ou se
+                resultarem em array não unidimensional.
         """
         arr = np.array(seq, dtype=float)
         if arr.ndim != 1:
@@ -25,10 +33,17 @@ class SerieTemporal(np.ndarray):
         return arr.view(cls)
 
     def media_movel(self, janela: int) -> SerieTemporal:
-        """Médias de `janela` pontos consecutivos: `n - janela + 1` valores.
+        """Calcula a média de cada janela consecutiva da série.
 
-        O valor `i` do resultado é a média de `self[i : i + janela]`. Usa a soma acumulada
-        (`np.cumsum`), sem laços. Levanta `ValueError` se `janela < 1` ou `janela > len(self)`.
+        Args:
+            janela: Número de pontos em cada janela.
+
+        Returns:
+            `SerieTemporal` com `len(self) - janela + 1` valores; o elemento `i` é a média
+            de `self[i : i + janela]`.
+
+        Raises:
+            ValueError: Se `janela` não for um inteiro entre 1 e o tamanho da série.
         """
         if not isinstance(janela, int) or janela < 1 or janela > len(self):
             raise ValueError(f"janela deve ser um inteiro entre 1 e {len(self)}; recebi {janela}")
@@ -36,17 +51,32 @@ class SerieTemporal(np.ndarray):
         return SerieTemporal.de_lista((acumulada[janela:] - acumulada[:-janela]) / janela)
 
     def variacao(self) -> SerieTemporal:
-        """Diferenças entre pontos consecutivos (`n - 1` valores)."""
+        """Calcula as diferenças entre cada par de pontos consecutivos.
+
+        Returns:
+            `SerieTemporal` de tamanho `max(len(self) - 1, 0)`, com `self[i + 1] - self[i]`.
+        """
         return np.diff(self)
 
     def amplitude(self) -> float:
-        """Máximo menos mínimo da série, como `float`."""
+        """Calcula a diferença entre o maior e o menor valor da série.
+
+        Returns:
+            Amplitude da série como `float`.
+
+        Raises:
+            ValueError: Se a série estiver vazia.
+        """
         return float(self.max() - self.min())
 
     def normalizar(self) -> SerieTemporal:
-        """Série padronizada `(x - média) / desvio`, com desvio amostral (`ddof=1`).
+        """Padroniza a série usando a média e o desvio padrão amostral.
 
-        Levanta `ValueError` se o desvio for zero.
+        Returns:
+            Nova `SerieTemporal` com `(x - média) / desvio`, usando `ddof=1`.
+
+        Raises:
+            ValueError: Se o desvio padrão amostral for exatamente zero.
         """
         desvio = float(self.std(ddof=1))
         if desvio == 0.0:
@@ -54,10 +84,17 @@ class SerieTemporal(np.ndarray):
         return (self - self.mean()) / desvio
 
     def reamostrar(self, k: int) -> SerieTemporal:
-        """Devolve uma nova SerieTemporal com a média de blocos consecutivos de k pontos.
+        """Calcula as médias de blocos consecutivos e não sobrepostos.
 
-        Sobras no final do vetor que não completam um bloco de tamanho k são descartadas.
-        Levanta ValueError se k não for um inteiro positivo ou se k > len(self).
+        Args:
+            k: Número de pontos por bloco.
+
+        Returns:
+            Nova `SerieTemporal` com a média de cada bloco completo. Pontos finais que não
+            completam um bloco são descartados.
+
+        Raises:
+            ValueError: Se `k` não for um inteiro positivo ou for maior que o tamanho da série.
         """
         if not isinstance(k, int) or k < 1 or k > len(self):
             raise ValueError(f"k deve ser um inteiro positivo e menor ou igual ao tamanho da série; recebi {k!r}")

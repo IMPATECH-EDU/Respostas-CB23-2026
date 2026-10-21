@@ -31,7 +31,15 @@ GRAVIDADE = 9.81
 
 @dataclass(frozen=True)
 class Medicao:
-    """Resultado da medição de uma grandeza a partir do log."""
+    """Resultado estatístico e metrológico de uma medição do log.
+
+    Attributes:
+        tag: Identificador do instrumento medido.
+        medida: Média das leituras válidas e incerteza total associada.
+        desvio: Desvio padrão amostral das leituras válidas, como medida de precisão.
+        n_validas: Número de leituras usadas no cálculo.
+        espurias: Índices das leituras descartadas, na série extraída da tag.
+    """
 
     tag: str
     medida: Medida        # média das leituras válidas, com a incerteza total
@@ -42,26 +50,25 @@ class Medicao:
 
 def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
           u_sistematica: float = 0.0, limiar: float = 6.0) -> Medicao:
-    """Mede a grandeza registrada pela `tag` no log.
+    """Estima a pressão média de uma tag e sua incerteza combinada.
 
-    Passos:
+    Args:
+        registros: Registros estruturados do log.
+        tag: Tag de pressão a medir; seus registros devem conter `"contagens"`.
+        curva: Curva que converte contagens em kPa.
+        u_sistematica: Incerteza sistemática não negativa, em kPa.
+        limiar: Limite estrito do valor absoluto do z-score robusto para rejeitar leituras.
 
-    1. obtém as contagens da `tag` (chave `"contagens"`) com `serie`, do Marco 1;
-    2. converte as contagens com a `curva`;
-    3. descarta as leituras espúrias pelo z robusto: `z = (x - mediana) / MAD`, com a MAD
-       calculada por `scipy.stats.median_abs_deviation(x, scale="normal")`; uma leitura é
-       espúria se `|z| > limiar`. Os índices em `espurias` são posições na série da tag
-       (a primeira leitura da tag tem índice 0);
-    4. com as leituras válidas, calcula a média, o desvio padrão amostral (`ddof=1`) e o erro
-       padrão da média (`scipy.stats.sem`);
-    5. devolve uma `Medicao` cuja `medida` é `Medida(média, u)`, com
-       `u = sqrt(erro_padrao² + u_sistematica²)`.
+    Returns:
+        `Medicao` com média em `Medida`, desvio padrão amostral, número de leituras válidas
+        e índices das leituras descartadas. A incerteza da medida combina erro padrão e
+        incerteza sistemática pela raiz da soma dos quadrados.
 
-    `u_sistematica` é a incerteza do instrumento, que não diminui com o número de leituras.
-
-    Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
-    for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
-    fora do domínio) não é tratado: ele chega a quem chamou `medir`.
+    Raises:
+        ValueError: Se `u_sistematica` for negativa, houver menos de duas leituras da tag,
+            a MAD for zero ou restarem menos de duas leituras válidas.
+        ValueError: Propaga também o erro da curva se uma contagem estiver fora do domínio
+            calibrado.
     """
     if u_sistematica < 0:
         raise ValueError(f"u_sistematica deve ser não negativa; recebi {u_sistematica!r}")
@@ -97,12 +104,19 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
                        u_sistematica: float = 1.5) -> Medida:
-    """Altura manométrica da bomba, em metros, com a sua incerteza.
+    """Calcula a altura manométrica da bomba e propaga sua incerteza.
 
-    `H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)`, em que `P_PT101` e
-    `P_PT102` são as `medida`s de `medir` para as duas tags, em kPa (o fator 1000 converte
-    para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
-    com `Medida`, que propaga as incertezas.
+    Args:
+        registros: Registros estruturados do log, com leituras para `PT101` e `PT102`.
+        curva: Curva que converte contagens em kPa.
+        u_sistematica: Incerteza sistemática usada para cada transmissor, em kPa.
+
+    Returns:
+        `Medida` da altura em metros, calculada como
+        `(P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)`.
+
+    Raises:
+        ValueError: Propaga erros de validação ou de calibração levantados por `medir`.
     """
     medicao_PT101 = medir(registros, "PT101", curva, u_sistematica)
     medicao_PT102 = medir(registros, "PT102", curva, u_sistematica)
