@@ -14,10 +14,11 @@ import numpy as np
 
 import fornecido
 from fornecido.simulador import gerar_log
-from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
-                              medir_tempos, serie, valida_tag)
+from elevatoria.dados import (contagem_por_tag, contagem_por_nivel, total, criar_conversores, ler_log, medir_memoria,
+                              medir_tempos, serie, valida_tag, por_tag_instante, decrescente, com_map,
+                              com_compreensao, altas, tags, conversao, media_convert)
 
-MATRICULA = 123456  # troque pelo seu número de matrícula
+MATRICULA = 3530  # troque pelo seu número de matrícula
 
 
 def _todo(item: str):
@@ -44,12 +45,12 @@ def etapa1(texto: str, verdade: dict) -> list:
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
-    por_nivel = _todo("1(b)")
-    assert por_nivel == verdade["por_nivel"]
+
+    assert contagem_por_nivel(registros) == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
-    total = _todo("1(c)")
-    assert total == verdade["pulsos_total"]
+
+    assert total(registros) == verdade["pulsos_total"]
 
     # (d) valida_tag.
     for tag in ["PT101", "FT201", "B1"]:
@@ -63,25 +64,24 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     """Etapa 2 — Lambda e compreensões (issue #2)."""
     print("\n=== Etapa 2: lambda e compreensões ===")
     # (a) Ordene com sorted e key=lambda: (i) por (tag, instante); (ii) por instante decrescente.
-    por_tag_instante = _todo("2(a)(i)")
-    decrescente = _todo("2(a)(ii)")
-    assert por_tag_instante[0].tag == "B1"
-    assert decrescente[0].instante == max(r.instante for r in registros)
+    
+    assert por_tag_instante(registros)[0].tag == "B1"
+    assert decrescente(registros)[0].instante == max(r.instante for r in registros)
 
     # (b) Contagens de PT102 (só registros com a chave "contagens"): map/filter e compreensão.
-    com_map = _todo("2(b) map/filter")
-    com_compreensao = _todo("2(b) compreensão")
-    assert com_map == com_compreensao and len(com_compreensao) == 600
+
+    assert com_map(registros) == com_compreensao(registros) and len(com_compreensao(registros)) == 600
 
     # (c) Contagens acima de 2000 (compreensão de lista) e tags distintas (de conjunto).
-    altas = _todo("2(c) altas")
-    tags = _todo("2(c) tags")
-    assert len(altas) == 5
-    assert tags == {"B1", "PT101", "PT102", "FT201", "LT301"}
+
+
+    assert len(altas(registros)) == 5
+
+    assert tags(registros) == {"B1", "PT101", "PT102", "FT201", "LT301"}
 
     # (d) Com re.sub e uma lambda como repl, troque pulsos=N por volume_L=V (V = N * 0,1,
     #     com uma casa decimal; por exemplo, pulsos=3892 vira volume_L=389.2).
-    convertido = _todo("2(d)")
+    convertido = conversao(texto)
     assert convertido.count("volume_L=") == 600 and "pulsos=" not in convertido
 
     # (e) Late binding: a versão errada (não corrija esta linha) e a sua.
@@ -91,12 +91,15 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     assert math.isclose(errados["PT102"](4095), 409.5)
     assert math.isclose(certos["PT102"](4095), 600.0)
 
+
     # (f) Converta a média das contagens normais de PT102 (até 2000) com a escala nominal
     #     (certos["PT102"]) e imprima ao lado de verdade["pressao_recalque"].
-    p_nominal = _todo("2(f)")
+    p_nominal = media_convert(registros, certos["PT102"])
+    print(f"Escala nominal: {p_nominal} \t Verdade['pressão_recalque']: {verdade['pressao_recalque']}")
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
 
 
+#Você parou aqui
 def etapa3() -> None:
     """Etapa 3 — Memória e tempo (issue #3). Registre as previsões ANTES de rodar."""
     print("\n=== Etapa 3: memória e tempo ===")
