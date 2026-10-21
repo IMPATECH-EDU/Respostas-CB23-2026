@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — Mickael Eleakim dos Santos Oliveira Almeida (3492)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -7,7 +7,9 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
-<!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
+/home/al.mickael.eleakim/venvs/prog2-venv/bin/python
+
+Python 3.14.4 | NumPy 2.3.5 | fornecido 4.0
 
 ### R1 — Expressões regulares
 
@@ -27,7 +29,7 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+Previsões registradas no commit: 9ed72f0
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
