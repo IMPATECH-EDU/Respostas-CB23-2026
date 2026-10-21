@@ -177,11 +177,15 @@ def etapa4(registros: list) -> None:
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
     assert len(s) == 600 and s.amplitude() > 300
+    print(f"média - {s.mean()}; desvio - {s.std(ddof=1)}; amplitude - {s.amplitude()}")
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
     assert len(mm) == 571
+    print(
+        f"tamanho - {len(mm)};\nmínimo da mm- {mm.min()};\nmáximo da mm - {mm.max()};\nmínimo da série - {s.min()};\nmáximo da série - {s.max()}"
+    )
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
@@ -189,7 +193,13 @@ def etapa4(registros: list) -> None:
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    print(
+        type(s + s).__name__,
+        type(s[1:]).__name__,
+        type(s * 2).__name__,
+        type(s.sum()).__name__,
+        type(s[0]).__name__,
+    )
 
 
 def main(matricula: int = MATRICULA) -> None:
