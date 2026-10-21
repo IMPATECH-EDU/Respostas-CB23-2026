@@ -271,6 +271,7 @@ def media_convert(registros, fator):
 # ---------------------------------------------------------------------------------------
 # Issue #3: memória e tempo
 # ---------------------------------------------------------------------------------------
+#Você parou aqui
 def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     """Bytes ocupados pelas `contagens` (ndarray 1D de inteiros de 0 a 4095) em cada estrutura.
 

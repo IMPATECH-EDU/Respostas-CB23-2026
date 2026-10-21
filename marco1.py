@@ -99,6 +99,7 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
 
 
+#Você parou aqui
 def etapa3() -> None:
     """Etapa 3 — Memória e tempo (issue #3). Registre as previsões ANTES de rodar."""
     print("\n=== Etapa 3: memória e tempo ===")
