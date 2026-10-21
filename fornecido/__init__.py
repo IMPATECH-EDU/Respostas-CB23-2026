@@ -3,4 +3,4 @@
 Qualquer mudança nesta pasta aparece no diff do seu Pull Request e é conferida na correção.
 """
 
-VERSAO = "4.0"
+VERSAO = "3.0"
