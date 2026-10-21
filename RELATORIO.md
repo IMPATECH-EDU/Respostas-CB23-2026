@@ -132,3 +132,26 @@ diferentes para PT102. Explique a diferença entre precisão e exatidão com ess
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 
 Precisão é a dispersão das leituras (desvio), que se manteve igual pois o ruído físico do sensor captado no log é o mesmo para as duas curvas. Exatidão é a proximidade com o valor real, que diferiu bastante porque a curva linear sofre de um erro de modelagem (viés) em relação à verdadeira curva não-linear do transmissor. Tirar a média de 600 pontos reduz apenas o ruído aleatório (melhora a precisão), mas é matematicamente incapaz de consertar o erro sistemático da curva linear.
+
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+Com intervalo inicial fixo `[2, 15]` e tolerância `1e-12`, a bissecção sempre divide a mesma largura até atingir a tolerância; o Reynolds muda a raiz, mas não o número de divisões (44).
+Ordem 2 significa que, perto da raiz, o erro seguinte é aproximadamente proporcional ao quadrado do erro atual; por isso os dígitos corretos aproximadamente dobram por iteração. Na saída, a ordem estimada ficou entre 1,98 e 2,00.
+Newton pode falhar se entrar num ciclo ou encontrar derivada nula. Com `f(x)=x³−2x+2` e intervalo `[-2, 2]`, ele parte de 0 e alterna entre 0 e 1, enquanto a bissecção tem mudança de sinal e converge.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+Os testes são `test_newton_colebrook_reduz_iteracoes` e `test_newton_colebrook_tem_convergencia_quadratica`; antes da correção falhavam com 10 iterações e ordem 0,99.
+Ao manter a derivada do ponto inicial, Newton usa uma inclinação fixa e fica com convergência linear, em vez de atualizar a inclinação local para obter convergência quadrática.
+A correção recalcula a derivada em cada aproximação: para Reynolds `1e4`, convergiu em 5 iterações, com ordem estimada 2,00.
+Os testes de aceitação verificavam a raiz e a convergência, mas não o número de iterações nem a ordem.
