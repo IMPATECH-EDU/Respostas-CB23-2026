@@ -23,7 +23,7 @@ from fornecido.energia import FAIXAS_TARIFARIAS, potencia_eletrica
 
 
 def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
-    """Coeficientes `[c0, c1, ..., c_grau]` do polinômio de mínimos quadrados de grau `grau`.
+    """Ajusta por mínimos quadrados um polinômio aos pontos fornecidos.
 
     O polinômio `p(x) = c0 + c1·x + ... + c_grau·x^grau` minimiza
     `Σ (y_i - p(x_i))²`. Os coeficientes retornados estão em ordem crescente e podem ser
@@ -101,12 +101,6 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     potencia = potencia_eletrica(vazao, altura, rendimento)
     volume = 3.6 * integrador.integrar_tabela(t, vazao)
     energia = integrador.integrar_tabela(t, potencia)
-    custo_por_faixa = tuple(
-        integrador.integrar_tabela(
-            t[(t >= inicio) & (t <= fim)],
-            potencia[(t >= inicio) & (t <= fim)],
-        ) * tarifa
-        for inicio, fim, tarifa in FAIXAS_TARIFARIAS
-    )
+    custo_por_faixa = tuple(integrador.integrar_tabela(t[(t >= inicio) & (t <= fim)],potencia[(t >= inicio) & (t <= fim)]) * tarifa for inicio, fim, tarifa in FAIXAS_TARIFARIAS)
     custo_total = sum(custo_por_faixa)
     return ResumoDia(volume, energia, custo_total, custo_por_faixa)
