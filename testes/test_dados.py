@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 
-from elevatoria.dados import por_tag
+from elevatoria.dados import ler_log, por_tag
 from elevatoria.serie import SerieTemporal
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestPorTagExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
-class TestMediaMovelRegrassao(unittest.TestCase):
+class TestMediaMovelRegressao(unittest.TestCase):
     def test_tamanho(self):
         # Estamos fazendo o numero de pontos menos o numero da janela mais um para criar a media movel
         s = SerieTemporal.de_lista(range(10))
@@ -52,6 +52,25 @@ class TestReamostrar(unittest.TestCase):
         r = s.reamostrar(2)
         self.assertIsInstance(r, SerieTemporal)
         self.assertTrue(np.allclose(s, [1,2,3,4]))
+
+class TestLerLogRegras(unittest.TestCase):
+    def test_linhas_em_branco(self):
+        texto = "\n   \n2026-10-05 08:00:00 INFO PT101 contagens=131\n\t\n"
+        registros, invalidas = ler_log(texto)
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(invalidas, [])
+
+    def test_data_impossivel(self):
+        linha = "2026-13-05 08:00:00 INFO PT101 contagens=131"
+        registros, invalidas = ler_log(linha)
+        self.assertEqual(registros, [])
+        self.assertEqual(invalidas, [linha])
+
+    def test_sem_par_chave_valor(self):
+        linha = "2026-10-05 08:00:00 INFO PT101 sem pares aqui"
+        registro, invalidas = ler_log(linha)
+        self.assertEqual(registro, [])
+        self.assertEqual(invalidas, [linha])
 
 if __name__ == "__main__":
     unittest.main()
