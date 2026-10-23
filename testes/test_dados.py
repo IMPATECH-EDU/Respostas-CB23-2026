@@ -5,9 +5,10 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
+import numpy as np
+
 from elevatoria.dados import por_tag
 from elevatoria.serie import SerieTemporal
-
 
 class TestPorTagExemplo(unittest.TestCase):
     """Exemplo do formato. `por_tag` é código existente da base."""
@@ -36,6 +37,21 @@ class TestMediaMovelRegrassao(unittest.TestCase):
         mm = s.media_movel(3)
         self.assertEqual(len(mm),1)
         self.assertAlmostEqual(float(mm[0]), 4.0)
+
+class TestReamostrar(unittest.TestCase):
+    def test_blocos_exatos(self):
+        r = SerieTemporal.de_lista([1,2,3,4,5,6]).reamostrar(3)
+        self.assertTrue(np.allclose(r, [2.0, 5.0]))
+
+    def test_sobra_descartada(self):
+        r = SerieTemporal.de_lista([1,2,3,4,5,6,100]).reamostrar(3)
+        self.assertTrue(np.allclose(r,[2.0, 5.0]))
+
+    def test_tipo_e_original_intacto(self):
+        s = SerieTemporal.de_lista([1,2,3,4])
+        r = s.reamostrar(2)
+        self.assertIsInstance(r, SerieTemporal)
+        self.assertTrue(np.allclose(s, [1,2,3,4]))
 
 if __name__ == "__main__":
     unittest.main()
