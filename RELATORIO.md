@@ -75,3 +75,17 @@ O meu teste de regressão para esta correção foi o `test_01_kahan_regressao`. 
 ### R10 — Precisão × exatidão
 
 A precisão está ligada ao desvio (dispersão dos dados) e reflete o ruído aleatório do sensor; como os dados brutos são os mesmos, o desvio pouco muda. Já a exatidão reflete a proximidade com a pressão real (viés). A curva linear gera um viés alto (> 0.5) porque falha em modelar a curvatura natural da resposta física do transmissor. A média de 600 leituras consegue atenuar a incerteza aleatória (melhora a precisão da média), mas é matematicamente incapaz de anular um erro sistemático intrínseco (a má calibração da curva linear).
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção gasta sempre 44 iterações porque o seu critério de parada olha só para a largura do intervalo, nunca para `f`: o Colebrook parte sempre de `[2, 15]` (largura 13) com `tol = 1e-12`, e `13 / 2^k < 1e-12` só vale a partir de `k = ⌈log2(1,3·10¹³)⌉ = 44`, para qualquer Reynolds.
+Ordem de convergência 2 quer dizer que cada erro é proporcional ao **quadrado** do anterior, `e_{k+1} ≈ C·e_k²`. Na Etapa 2(b), para Re = 10⁴, os erros foram 2,9; 5,0·10⁻²; 2,3·10⁻⁵; 5,0·10⁻¹²: o número de dígitos corretos vai de 1 para 4 e para 11, ou seja, mais que dobra a cada passo (ordem estimada: 2,00).
+O Newton falha onde a bissecção não em `f(x) = x³ − 2x + 2` no intervalo `[−2, 2]`: ele parte do ponto médio, 0, vai para 1, volta para 0 e fica oscilando para sempre (`convergiu = False`), enquanto a bissecção, garantida pela troca de sinal entre `f(−2) < 0` e `f(2) > 0`, acha a raiz −1,769292.
+
+### R12 — Issue #9
+
+Testes de regressão (escritos antes da correção, e que falhavam no código original): `test_regressao_derivada_recalculada_a_cada_iteracao` (a derivada foi avaliada 1 vez em 23 iterações: `1 != 23`) e `test_regressao_colebrook_re_1e4_converge_quadraticamente` (o Newton levava 10 iterações; o limite do teste é 7, e depois da correção são 5).
+Calcular a derivada uma vez só, em `x0`, transforma a iteração em `x_{k+1} = x_k − f(x_k)/f'(x0)`, o método da corda: um ponto fixo cuja derivada na raiz vale `1 − f'(r)/f'(x0)`, que não é zero. O erro então só é multiplicado por uma constante a cada passo (convergência linear). No Newton de verdade `f'` é reavaliada em `x_k` e essa derivada na raiz vale 0, o que dá a convergência quadrática.
+Os testes de aceitação não pegaram o defeito porque só conferem o **valor final** (a raiz e o fator de atrito), que o método da corda também atinge, só que com mais iterações; nenhum deles verifica o número de iterações nem a ordem de convergência.
