@@ -3,7 +3,9 @@
 import unittest
 import numpy as np ####
 
+from elevatoria import dados
 from elevatoria.dados import valida_tag, ler_log
+from elevatoria import serie
 from elevatoria.serie import SerieTemporal
 
 class TestElevatoriaOitoExtras(unittest.TestCase):

@@ -57,3 +57,21 @@ O resultado que mais me surpreendeu foi que `s.sum()` e o acesso ao índice `s[0
 ### R7 — Issue #4
 
 O sintoma era que o tamanho da série resultante na `media_movel` tinha um valor a menos do que o tamanho matematicamente correto[cite: 15]. O meu teste de regressão é o `test_tamanho_media_movel`. A causa era o uso de `len() - w` no limite do `range`, que exclui a última iteração. A correção foi alterar o iterador para `len(self._valores) - w + 1`[cite: 13]. Os testes de aceitação não falharam porque não faziam validação ao tamanho da lista[cite: 15]. Outro caso que não cobriam era passar um tamanho de janela inválido (ex: `w <= 0`), algo que eu cobri no `test_media_movel_w_invalido`.
+
+## Marco 2
+
+### Ambiente
+
+Python 3.14.4 | NumPy 2.3.5 | SciPy 1.15.0 | fornecido 3.0 | matrícula 3551
+
+### R8 — Derivada numérica
+
+Para $h$ grande (até $\approx 10^{-5}$), domina o erro de truncamento matemático (a secante afasta-se da tangente real). Para $h$ muito pequeno, domina o erro de arredondamento de ponto flutuante. Em $h = 10^{-14}$, a limitação de precisão do `float` faz com que `1000 + 1e-14` seja exatamente `1000.0`; logo, $f(x+h) - f(x)$ dá $0$. Como a fórmula resulta em zero, a diferença entre a aproximação (0) e a derivada exata é, naturalmente, o próprio valor da derivada exata.
+
+### R9 — Issue #7
+
+O meu teste de regressão para esta correção foi o `test_01_kahan_regressao`. A falha ocorria porque, em `t - (s + y)`, o Python reavalia a soma `s + y` sofrendo exatamente o mesmo arredondamento que gerou `t` na linha anterior, resultando em `t - t = 0.0`. A forma correta, `(t - s) - y`, remove primeiro a parte inteira/maior, deixando o resíduo isolado. Os testes de aceitação falharam em detetar o defeito porque provavelmente testavam com poucas parcelas ou com números inteiros, onde o erro flutuante não se manifesta.
+
+### R10 — Precisão × exatidão
+
+A precisão está ligada ao desvio (dispersão dos dados) e reflete o ruído aleatório do sensor; como os dados brutos são os mesmos, o desvio pouco muda. Já a exatidão reflete a proximidade com a pressão real (viés). A curva linear gera um viés alto (> 0.5) porque falha em modelar a curvatura natural da resposta física do transmissor. A média de 600 leituras consegue atenuar a incerteza aleatória (melhora a precisão da média), mas é matematicamente incapaz de anular um erro sistemático intrínseco (a má calibração da curva linear).
