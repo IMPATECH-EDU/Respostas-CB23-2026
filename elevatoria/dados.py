@@ -160,6 +160,7 @@ def converter_compreensao(contagens: list[int]) -> list[float]:
     return [c * 600.0 / 4095.0 for c in contagens]
 
 
+
 def converter_map(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `map` e uma lambda."""
     return list(map(lambda c: c * 600.0 / 4095.0, contagens))

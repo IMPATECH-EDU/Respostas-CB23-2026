@@ -4,6 +4,7 @@ import math
 import numpy as np
 
 
+
 class SerieTemporal:
     """Representa uma série temporal numérica unidimensional e imutável."""
 
