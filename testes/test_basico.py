@@ -1,7 +1,7 @@
 """Conjunto de 8 testes extras para os ficheiros dados.py e serie.py."""
 
 import unittest
-import numpy as np
+import numpy as np ####
 
 from elevatoria.dados import valida_tag, ler_log
 from elevatoria.serie import SerieTemporal
