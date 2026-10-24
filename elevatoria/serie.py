@@ -114,3 +114,5 @@ class SerieTemporal:
         if len(self._valores) <= 1:
             return SerieTemporal([])
         return SerieTemporal(np.diff(self._valores))
+
+#linha verificadora

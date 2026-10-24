@@ -179,3 +179,5 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
         "map+lambda": cronometrar(converter_map, lista, k=k),
         "vetorizado": cronometrar(converter_vetorizado, contagens, k=k),
     }
+
+#linha verificadora
