@@ -13,6 +13,7 @@ Funções auxiliares privadas (`_nome`) são permitidas.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -42,37 +43,63 @@ class Medicao:
 
 def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
           u_sistematica: float = 0.0, limiar: float = 6.0) -> Medicao:
-    """Mede a grandeza registrada pela `tag` no log.
+    """Mede a grandeza registrada pela `tag` no log."""
+    if u_sistematica < 0:
+        raise ValueError("Incerteza sistemática não pode ser negativa")
 
-    Passos:
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError("A tag precisa ter pelo menos 2 leituras")
 
-    1. obtém as contagens da `tag` (chave `"contagens"`) com `serie`, do Marco 1;
-    2. converte as contagens com a `curva`;
-    3. descarta as leituras espúrias pelo z robusto: `z = (x - mediana) / MAD`, com a MAD
-       calculada por `scipy.stats.median_abs_deviation(x, scale="normal")`; uma leitura é
-       espúria se `|z| > limiar`. Os índices em `espurias` são posições na série da tag
-       (a primeira leitura da tag tem índice 0);
-    4. com as leituras válidas, calcula a média, o desvio padrão amostral (`ddof=1`) e o erro
-       padrão da média (`scipy.stats.sem`);
-    5. devolve uma `Medicao` cuja `medida` é `Medida(média, u)`, com
-       `u = sqrt(erro_padrao² + u_sistematica²)`.
+    # 1 e 2. Converte as contagens para kPa
+    pressao_kpa = np.array([curva(c) for c in contagens], dtype=float)
 
-    `u_sistematica` é a incerteza do instrumento, que não diminui com o número de leituras.
+    # 3. Z robusto e filtro de espúrias
+    mediana = float(np.median(pressao_kpa))
+    mad = float(stats.median_abs_deviation(pressao_kpa, scale="normal"))
 
-    Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
-    for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
-    fora do domínio) não é tratado: ele chega a quem chamou `medir`.
-    """
-    raise NotImplementedError("issue #6: medir")
+    if mad == 0:
+        raise ValueError("MAD é zero")
+
+    z_scores = np.abs(pressao_kpa - mediana) / mad
+    
+    validas_mask = z_scores <= limiar
+    pressao_validas = pressao_kpa[validas_mask]
+    
+    if len(pressao_validas) < 2:
+        raise ValueError("Sobra de leituras válidas é menor que 2")
+
+    espurias = list(np.where(~validas_mask)[0])
+
+    # 4. Estatísticas sobre leituras válidas
+    media = float(np.mean(pressao_validas))
+    desvio = float(np.std(pressao_validas, ddof=1))
+    erro_padrao = float(stats.sem(pressao_validas))
+
+    # 5. Incerteza total e retorno do objeto Medicao
+    u_total = math.sqrt(erro_padrao**2 + u_sistematica**2)
+    medida_obj = Medida(media, u_total)
+
+    return Medicao(
+        tag=tag,
+        medida=medida_obj,
+        desvio=desvio,
+        n_validas=len(pressao_validas),
+        espurias=espurias,
+    )
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
                        u_sistematica: float = 1.5) -> Medida:
-    """Altura manométrica da bomba, em metros, com a sua incerteza.
+    """Altura manométrica da bomba, em metros, com a sua incerteza."""
+    med_pt102 = medir(registros, "PT102", curva, u_sistematica=u_sistematica)
+    med_pt101 = medir(registros, "PT101", curva, u_sistematica=u_sistematica)
 
-    `H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)`, em que `P_PT101` e
-    `P_PT102` são as `medida`s de `medir` para as duas tags, em kPa (o fator 1000 converte
-    para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
-    com `Medida`, que propaga as incertezas.
-    """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    p_pt102 = med_pt102.medida
+    p_pt101 = med_pt101.medida
+
+    # H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
+    delta_p = p_pt102 - p_pt101
+    h = (delta_p * 1000) / (MASSA_ESPECIFICA * GRAVIDADE)
+
+    return h

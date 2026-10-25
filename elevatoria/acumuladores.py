@@ -62,10 +62,9 @@ class AcumuladorKahan(Acumulador):
         self._correcao = 0.0
 
     def adicionar(self, x: float) -> None:
-        """Acrescenta `x` à soma, compensando o arredondamento."""
-        y = float(x) - self._correcao
+        y = x - self._correcao
         t = self._soma + y
-        self._correcao = t - (self._soma + y)   # o que se perdeu ao arredondar soma + y
+        self._correcao = (t - self._soma) - y  # A mágica do algoritmo de Kahan
         self._soma = t
 
     @property
