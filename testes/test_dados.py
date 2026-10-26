@@ -190,8 +190,7 @@ class TestPorTagExemplo(unittest.TestCase):
 
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
 
 
 if __name__ == "__main__":

@@ -69,3 +69,41 @@ O fato de que s.sum() é do tipo SerieTemporal e não float64.
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 O sintoma era que media_movel(30) retornava 570 valores para uma série de 600 pontos, quando deveria retornar 571. O teste de regressão test_media_movel_quantidade_correta detecta esse erro. A causa era o uso de acumulada[janela:] - acumulada[:-janela], que descartava uma média válida. Corrigi o problema acrescentando zero ao início da soma acumulada e usando acumulada[janela-1:] no primeiro termo da subtração. Os testes de aceitação não detectaram o defeito porque não cobriam esse caso: detectam se há tipo de retorno adequado, se levanta ValueError em caso de janela maior do que o tamanho da lista e se algumas operações mantêm o tipo SerieTemporal. Além disso, testei uma janela igual a 1 (test_media_movel_janela_um) e uma janela igual ao tamanho da série (test_media_movel_janela_igual_tamanho), casos que verificam os limites da operação.
+
+
+
+## Marco 2
+
+### Ambiente
+
+=== Etapa 0: ambiente ===
+Python 3.14.3 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 3.0 | matrícula 3519
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+O erro diminui de $h=1$ até $h \approx 10^{-5}$ porque é dominado pelo erro de truncamento ($O(h)$ da série de Taylor), que reduz à medida que $h$ diminui; a partir desse ponto, o erro de arredondamento passa a dominar devido ao cancelamento catastrófico na subtração $f(x+h) - f(x)$ amplificado pela divisão por $1/h$. Por fim, em $h = 10^{-14}$, a limitação de precisão do ponto flutuante de 64 bits faz com que $1000.0 + 10^{-14} == 1000.0$, zerando o numerador e resultando em uma derivada numérica igual a $0.0$, o que torna o erro absoluto exatamente igual ao valor da própria derivada exata ($|0.0 - f'(x)| = f'(x)$).
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+### R9 — Issue #7
+
+**Testes de regressão:** `test_kahan_soma_de_pequenos` e `test_kahan_pequeno_com_grande`.
+
+**Causa:** No código original, a correção era calculada como `self._correcao = t - (self._soma + y)`. Como `t` havia acabado de ser definido como `self._soma + y`, os parênteses faziam o Python reavaliar essa soma primeiro, resultando em `t - t = 0.0`. Sem a ordem correta das operações `(t - self._soma) - y` para isolar a perda de precisão, a correção zerava e o algoritmo se comportava exatamente como o `AcumuladorIngenuo`.
+
+**Testes de aceitação:** O teste de aceitação original totalizava apenas 10 parcelas de `0.1` [2]. Com poucas iterações, o erro acumulado em ponto flutuante de 64 bits é ínfimo e cai dentro da tolerância do `math.isclose`. O defeito só se torna visível em somas de grande escala (como $10^6$ ou $10^7$ parcelas) ou ao somar parcelas minúsculas a um acumulador grande.
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+```
+
+A precisão (medida pelo desvio padrão) reflete a dispersão aleatória das leituras e é praticamente idêntica em ambos os modelos (~0,54 kPa), pois alterar a curva não altera o ruído do sensor; já a exatidão (medida pelo viés) é significativamente superior na spline (viés de -0,005 kPa contra -1,835 kPa na linear), pois ela se ajusta à resposta física não linear do transmissor. Tirar a média de 600 leituras reduz apenas as flutuações aleatórias do sinal, mas não elimina o erro sistemático (viés) do modelo linear — a média simplesmente faz a medição convergir com alta precisão para o valor incorreto do modelo.
