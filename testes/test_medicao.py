@@ -17,8 +17,27 @@ class TestAcumuladorIngenuoExemplo(unittest.TestCase):
         self.assertEqual(AcumuladorIngenuo().total, 0.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #7 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+import math
+from itertools import repeat
+from elevatoria.acumuladores import AcumuladorKahan
+
+
+class TestKahanRegressao(unittest.TestCase):
+    """Regressões da compensação de arredondamento da issue #7."""
+
+    def test_pulsos_decimais(self) -> None:
+        """Cem mil pulsos decimais não acumulam o erro da soma ingênua."""
+        acumulador = AcumuladorKahan()
+        acumulador.adicionar_todos(repeat(0.1, 100_000))
+        self.assertAlmostEqual(acumulador.total, 10_000.0, delta=1e-11)
+
+    def test_parcelas_menores_que_ulp(self) -> None:
+        """Parcelas unitárias perdidas isoladamente são recuperadas pela compensação."""
+        acumulador = AcumuladorKahan()
+        parcelas = [float(2 ** 54), 1.0, 1.0, 1.0, 1.0]
+        acumulador.adicionar_todos(parcelas)
+        self.assertAlmostEqual(acumulador.total, math.fsum(parcelas), delta=0.5)
 
 
 if __name__ == "__main__":

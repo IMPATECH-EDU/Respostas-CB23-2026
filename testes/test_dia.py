@@ -17,8 +17,22 @@ class TestSimpsonExemplo(unittest.TestCase):
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+from elevatoria.integracao import Trapezio
+
+
+class TestTrapezioRegressao(unittest.TestCase):
+    """Regressões da largura de cada intervalo da issue #11."""
+
+    def test_constante_com_lacunas(self) -> None:
+        """Uma constante integra corretamente com intervalos de larguras distintas."""
+        area = Trapezio().integrar_tabela([0, 0.25, 1.5, 4], [7, 7, 7, 7])
+        self.assertAlmostEqual(area, 28.0)
+
+    def test_reta_com_primeiro_intervalo_largo(self) -> None:
+        """O trapézio é exato para uma reta mesmo quando o primeiro passo é maior."""
+        area = Trapezio().integrar_tabela([0, 3, 4, 4.5], [2, 8, 10, 11])
+        self.assertAlmostEqual(area, 29.25)
 
 
 if __name__ == "__main__":

@@ -18,8 +18,27 @@ class TestBisseccaoExemplo(unittest.TestCase):
         self.assertEqual((resultado.raiz, resultado.iteracoes), (1.0, 0))
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+import math
+from elevatoria.raizes import Newton
+
+
+class TestNewtonRegressao(unittest.TestCase):
+    """Regressões da atualização da derivada da issue #9."""
+
+    def test_derivada_analitica_atualizada(self) -> None:
+        """Newton analítico alcança sqrt(2) dentro de seis iterações."""
+        resultado = Newton(tol=1e-12, max_iter=6, df=lambda x: 2*x).encontrar(
+            lambda x: x*x - 2, 0.0, 2.0)
+        self.assertTrue(resultado.convergiu)
+        self.assertAlmostEqual(resultado.raiz, math.sqrt(2), places=12)
+
+    def test_derivada_numerica_atualizada(self) -> None:
+        """Newton numérico converge para a raiz cúbica dentro de seis iterações."""
+        resultado = Newton(tol=1e-10, max_iter=6).encontrar(
+            lambda x: x**3 - 7, 1.0, 4.0)
+        self.assertTrue(resultado.convergiu)
+        self.assertAlmostEqual(resultado.raiz, 7 ** (1/3), places=9)
 
 
 if __name__ == "__main__":

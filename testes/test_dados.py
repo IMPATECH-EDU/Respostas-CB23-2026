@@ -16,8 +16,34 @@ class TestPorTagExemplo(unittest.TestCase):
         self.assertEqual(por_tag([], "PT101"), [])
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+import numpy as np
+from elevatoria.serie import SerieTemporal
+
+
+class TestMediaMovelRegressao(unittest.TestCase):
+    """Regressões da issue #4, inclusive janelas nas extremidades."""
+
+    def test_primeira_janela_preservada(self) -> None:
+        """A primeira média aparece e o resultado tem n - janela + 1 pontos."""
+        s = SerieTemporal.de_lista([2, 8, 5, 17])
+        resultado = s.media_movel(2)
+        self.assertEqual(len(resultado), 3)
+        self.assertTrue(np.allclose(resultado, [5, 6.5, 11]))
+        self.assertTrue(np.allclose(s, [2, 8, 5, 17]))
+
+    def test_janela_igual_serie(self) -> None:
+        """Uma janela que ocupa toda a série produz sua média em um único ponto."""
+        resultado = SerieTemporal.de_lista([3, 8, 13]).media_movel(3)
+        self.assertEqual(len(resultado), 1)
+        self.assertAlmostEqual(float(resultado[0]), 8.0)
+
+    def test_janela_unitaria(self) -> None:
+        """Janela unitária conserva todos os valores, inclusive o primeiro."""
+        s = SerieTemporal.de_lista([9, -2, 4])
+        resultado = s.media_movel(1)
+        self.assertEqual(len(resultado), len(s))
+        self.assertTrue(np.allclose(resultado, s))
 
 
 if __name__ == "__main__":
