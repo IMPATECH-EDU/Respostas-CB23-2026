@@ -1,12 +1,14 @@
-"""Seus testes do Marco 2 (veja a seção 5 do ENUNCIADO_MARCO2.md).
-
-Regras: pelo menos 4 testes seus (o exemplo abaixo não conta), uma docstring em cada teste
-dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual, math.isclose ou
-np.allclose, a não ser que a igualdade exata seja justamente o que você quer testar.
-"""
+"""Testes do Marco 2: compensação numérica e medição robusta."""
 import unittest
-
 from elevatoria.acumuladores import AcumuladorIngenuo
+import math
+from itertools import repeat
+from elevatoria.acumuladores import AcumuladorKahan
+from datetime import datetime
+import numpy as np
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import Registro
+from elevatoria.medicao import medir
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -18,9 +20,6 @@ class TestAcumuladorIngenuoExemplo(unittest.TestCase):
 
 
 
-import math
-from itertools import repeat
-from elevatoria.acumuladores import AcumuladorKahan
 
 
 class TestKahanRegressao(unittest.TestCase):
@@ -39,11 +38,6 @@ class TestKahanRegressao(unittest.TestCase):
         acumulador.adicionar_todos(parcelas)
         self.assertAlmostEqual(acumulador.total, math.fsum(parcelas), delta=0.5)
 
-from datetime import datetime
-import numpy as np
-from elevatoria.calibracao import CurvaCalibracao
-from elevatoria.dados import Registro
-from elevatoria.medicao import medir
 
 
 def _leituras(valores: list[float]) -> list[Registro]:

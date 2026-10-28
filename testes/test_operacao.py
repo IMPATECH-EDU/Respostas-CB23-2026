@@ -1,12 +1,12 @@
-"""Seus testes do Marco 3 (veja a seção 5 do ENUNCIADO_MARCO3.md).
-
-Regras: pelo menos 4 testes seus (o exemplo abaixo não conta), uma docstring em cada teste
-dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou math.isclose, a não
-ser que a igualdade exata seja justamente o que você quer testar.
-"""
+"""Testes do Marco 3: Newton, ponto de operação e convergência."""
 import unittest
-
 from elevatoria.raizes import Bisseccao
+import math
+from elevatoria.raizes import Newton
+from unittest.mock import Mock
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
+from elevatoria.raizes import ResultadoRaiz
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -19,8 +19,6 @@ class TestBisseccaoExemplo(unittest.TestCase):
 
 
 
-import math
-from elevatoria.raizes import Newton
 
 
 class TestNewtonRegressao(unittest.TestCase):
@@ -40,10 +38,6 @@ class TestNewtonRegressao(unittest.TestCase):
         self.assertTrue(resultado.convergiu)
         self.assertAlmostEqual(resultado.raiz, 7 ** (1/3), places=9)
 
-from unittest.mock import Mock
-from elevatoria.calibracao import CurvaCalibracao
-from elevatoria.operacao import ordem_convergencia, ponto_operacao
-from elevatoria.raizes import ResultadoRaiz
 
 
 class TestContratosOperacao(unittest.TestCase):

@@ -1,10 +1,4 @@
-"""Leitura do log SCADA da estação elevatória e preparação dos dados.
-
-Este módulo é a porta de entrada da aplicação: transforma o texto do log em registros
-estruturados e em séries numéricas. As funções marcadas com `NotImplementedError` são as
-issues abertas do Marco 1; as docstrings descrevem o contrato que cada uma deve cumprir.
-Não mude nomes nem assinaturas públicas: outros módulos e os testes dependem deles.
-"""
+"""Leitura do log SCADA, conversões e comparações de memória e tempo."""
 from __future__ import annotations
 
 import array
@@ -154,7 +148,7 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     - `"uint16"`, `"int32"`, `"int64"`, `"float32"`, `"float64"`: o `ndarray` convertido para
       esse `dtype`; conte só os dados (atributo `.nbytes`).
 
-    Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
+    Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros de 0 a 4095.
     """
     if (not isinstance(contagens, np.ndarray) or contagens.ndim != 1
             or not np.issubdtype(contagens.dtype, np.integer)):

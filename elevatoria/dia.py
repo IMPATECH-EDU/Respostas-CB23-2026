@@ -1,17 +1,4 @@
-"""Curvas da bomba por mínimos quadrados e o balanço do dia de operação (issue #10).
-
-Este módulo junta peças que já existem na base:
-
-- o registro de vazão do dia, a potência e as faixas tarifárias (de `fornecido/energia.py`,
-  da equipe de energia);
-- as regras de integração `Trapezio` e `Simpson` (de `elevatoria/integracao.py`, escritas por
-  um colega);
-- o NumPy ou o SciPy, para o ajuste de curvas (há mais de um caminho: veja `ajustar_polinomio`).
-
-As funções marcadas com `NotImplementedError` são a issue #10; as docstrings descrevem o
-contrato. Não mude nomes nem assinaturas públicas: o `marco4.py` e os testes dependem deles.
-Funções auxiliares privadas (`_nome`) são permitidas.
-"""
+"""Ajuste das curvas da bomba e balanço do dia de operação."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -39,7 +26,8 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     - a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
 
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
-    houver menos pontos que coeficientes (`len(x) < grau + 1`).
+    houver menos pontos que coeficientes (`len(x) < grau + 1`). Também rejeita
+    valores não finitos e graus não inteiros com `ValueError`.
     """
     x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
     if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
@@ -83,7 +71,9 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Todas as integrais usam `integrador.integrar_tabela(x, y)`.
 
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
-    faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
+    faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`. As entradas
+    devem ser vetores 1D finitos; violações também levantam `ValueError`.
+    Erros da potência e do integrador são propagados para quem chamou.
     """
     t, vazao = np.asarray(t, dtype=float), np.asarray(vazao, dtype=float)
     if t.ndim != 1 or vazao.ndim != 1 or t.size != vazao.size:

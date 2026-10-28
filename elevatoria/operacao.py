@@ -1,17 +1,4 @@
-"""Ponto de operação da bomba e diagnóstico dos métodos de raiz (issue #8).
-
-Este módulo junta peças que já existem na base:
-
-- `CurvaCalibracao` (de `elevatoria/calibracao.py`, Marco 2): a curva da bomba, interpolada
-  a partir do ensaio;
-- `Tubulacao` (de `fornecido/hidraulica.py`, da equipe de hidráulica): a curva do sistema;
-- `Bisseccao` e `Newton` (de `elevatoria/raizes.py`, escritos por um colega): os métodos de
-  raiz, que devolvem um `ResultadoRaiz`.
-
-As funções marcadas com `NotImplementedError` são a issue #8; as docstrings descrevem o
-contrato. Não mude nomes nem assinaturas públicas: o `marco3.py` e os testes dependem deles.
-Funções auxiliares privadas (`_nome`) são permitidas.
-"""
+"""Ponto de operação da bomba e estimativa da ordem de convergência."""
 from __future__ import annotations
 
 import math
@@ -44,7 +31,7 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     3. devolve `PontoOperacao(vazao=Q, altura=bomba(Q), resultado=...)`, com `Q` a raiz
        encontrada e `resultado` o `ResultadoRaiz` devolvido pelo resolvedor.
 
-    Levanta `ValueError` se `a >= b`, se `[a, b]` não estiver dentro do domínio da bomba
+    Levanta `ValueError` se os limites não forem finitos, se `a >= b`, se `[a, b]` não estiver dentro do domínio da bomba
     (`bomba.dominio`) ou se o resolvedor não convergir (`resultado.convergiu` falso). Um
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
@@ -76,7 +63,9 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
     quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
 
-    Levanta `ValueError` se houver menos de 3 erros acima do piso.
+    Levanta `ValueError` se houver menos de 3 erros acima do piso ou se os dois
+    primeiros erros selecionados forem iguais. `raiz` e `piso` devem ser finitos,
+    e `piso` deve ser não negativo; caso contrário, também levanta `ValueError`.
     """
     if not math.isfinite(raiz) or not math.isfinite(piso) or piso < 0:
         raise ValueError("raiz e piso devem ser finitos, com piso não negativo")

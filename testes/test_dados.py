@@ -1,11 +1,10 @@
-"""Seus testes do Marco 1 (veja a seção 6 do ENUNCIADO_MARCO1.md).
-
-Regras: pelo menos 8 testes seus (o exemplo abaixo não conta), uma docstring em cada teste
-dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.allclose.
-"""
+"""Testes do Marco 1: leitura, conversões e séries temporais."""
 import unittest
-
 from elevatoria.dados import por_tag
+import numpy as np
+from elevatoria.serie import SerieTemporal
+from elevatoria.dados import (ler_log, serie, criar_conversores, medir_memoria,
+                              converter_vetorizado)
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -17,8 +16,6 @@ class TestPorTagExemplo(unittest.TestCase):
 
 
 
-import numpy as np
-from elevatoria.serie import SerieTemporal
 
 
 class TestMediaMovelRegressao(unittest.TestCase):
@@ -45,8 +42,6 @@ class TestMediaMovelRegressao(unittest.TestCase):
         self.assertEqual(len(resultado), len(s))
         self.assertTrue(np.allclose(resultado, s))
 
-from elevatoria.dados import (ler_log, serie, criar_conversores, medir_memoria,
-                              converter_vetorizado)
 
 
 class TestContratosDados(unittest.TestCase):

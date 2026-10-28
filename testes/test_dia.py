@@ -1,12 +1,9 @@
-"""Seus testes do Marco 4 (veja a seção 5 do ENUNCIADO_MARCO4.md).
-
-Regras: pelo menos 4 testes seus (o exemplo abaixo não conta), uma docstring em cada teste
-dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.allclose, a não
-ser que a igualdade exata seja justamente o que você quer testar.
-"""
+"""Testes do Marco 4: ajuste e integração em malhas irregulares."""
 import unittest
-
 from elevatoria.integracao import Simpson
+from elevatoria.integracao import Trapezio
+import numpy as np
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -18,7 +15,6 @@ class TestSimpsonExemplo(unittest.TestCase):
 
 
 
-from elevatoria.integracao import Trapezio
 
 
 class TestTrapezioRegressao(unittest.TestCase):
@@ -34,8 +30,6 @@ class TestTrapezioRegressao(unittest.TestCase):
         area = Trapezio().integrar_tabela([0, 3, 4, 4.5], [2, 8, 10, 11])
         self.assertAlmostEqual(area, 29.25)
 
-import numpy as np
-from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 
 
 class TestContratosDia(unittest.TestCase):
