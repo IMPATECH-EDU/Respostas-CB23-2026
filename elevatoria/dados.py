@@ -23,13 +23,18 @@ from fornecido.cronometro import cronometrar
 # Issue #1: leitor do log
 # ---------------------------------------------------------------------------------------
 
-#: Padrão de uma linha válida do log, compilado com `re.compile(..., re.VERBOSE)` e com um
-#: comentário em cada parte. Grupos nomeados: `data` (AAAA-MM-DD), `hora` (HH:MM:SS),
-#: `nivel` (INFO, WARN ou ALARME), `tag` (1 ou 2 letras maiúsculas seguidas de 1 a 3
-#: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
-#: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
-#: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+
+LINHA = re.compile(
+    r"""
+    ^
+    (?P<data>[0-9]{4}-[0-9]{2}-[0-9]{2})\s+
+    (?P<hora>[0-9]{2}:[0-9]{2}:[0-9]{2})\s+
+    (?P<nivel>[A-Z]+)\s+
+    (?P<tag>[A-Z]{1,2}[0-9]{1,3})\s+
+    (?P<resto>contagens=[0-9]+)
+    $
+    """,
+    re.VERBOSE)
 
 
 @dataclass(frozen=True)
@@ -43,22 +48,46 @@ class Registro:
 
 
 def valida_tag(s: str) -> bool:
-    """`True` se a string inteira for uma tag válida (1 ou 2 maiúsculas e 1 a 3 dígitos).
+    return bool(re.fullmatch(r"[A-Z]{1,2}[0-9]{1,3}",s))
+    
 
-    Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
-    `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
-    """
-    raise NotImplementedError("issue #1: valida_tag")
+def ler_log(texto: str) -> tuple[list[Registro], list[str]]:    
+    registro = []
+    invalidas = []
+
+    for linha in texto.splitlines():
+        if not linha.strip():
+            continue
+        match = LINHA.fullmatch(linha)
+        if match:
+            dados = match.groupdict()
+            if valida_tag(dados["tag"]):
+                data_hora_str = f"{dados['data']} {dados['hora']}"
+                instante_dt = datetime.strptime(data_hora_str, "%Y-%m-%d %H:%M:%S")
+                contagem_val = int(dados["resto"].split('=')[1])
+
+                reg = Registro(
+                    instante = instante_dt
+                    nivel = dados["nivel"],
+                    tag = dadps["tag"],
+                    valores = {"contagens": contagem_val}
+                )
+                registros.append(reg)
+
+            else:
+                invalidas.append(linha)
+        else:
+            invalidas.append(linha)
+            
+    return registro, invalidas
 
 
-def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
+
     """Lê o texto do log e devolve `(registros, invalidas)`.
 
     - `registros`: lista de `Registro`, na ordem em que as linhas aparecem no texto;
     - `invalidas`: lista das linhas descartadas, exatamente como estavam no texto.
-
     Regras:
-
     - linhas vazias (ou só com espaços) são ignoradas e não contam como inválidas;
     - uma linha é inválida se não casar com `LINHA` (com `fullmatch`), se a data ou a hora
       forem impossíveis (por exemplo, mês 13) ou se o `resto` não tiver nenhum par
