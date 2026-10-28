@@ -63,7 +63,27 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if not np.isfinite(u_sistematica) or u_sistematica < 0:
+        raise ValueError("u_sistematica deve ser finita e não negativa")
+    if not np.isfinite(limiar) or limiar < 0:
+        raise ValueError("limiar deve ser finito e não negativo")
+    contagens = serie(registros, tag, "contagens")
+    if contagens.size < 2:
+        raise ValueError(f"a tag {tag!r} precisa de pelo menos duas leituras")
+    valores = np.asarray(curva(contagens), dtype=float)
+    if not np.all(np.isfinite(valores)):
+        raise ValueError("as leituras calibradas devem ser finitas")
+    mad = float(stats.median_abs_deviation(valores, scale="normal"))
+    if mad == 0:
+        raise ValueError(f"a MAD da tag {tag!r} é zero")
+    descartadas = np.abs((valores - np.median(valores)) / mad) > limiar
+    validas = valores[~descartadas]
+    if validas.size < 2:
+        raise ValueError(f"restaram menos de duas leituras válidas para {tag!r}")
+    incerteza = float(np.hypot(stats.sem(validas), u_sistematica))
+    return Medicao(tag, Medida(float(validas.mean()), incerteza),
+                   float(validas.std(ddof=1)), int(validas.size),
+                   np.flatnonzero(descartadas).tolist())
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +95,6 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(registros, "PT101", curva, u_sistematica).medida
+    recalque = medir(registros, "PT102", curva, u_sistematica).medida
+    return (recalque - succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
