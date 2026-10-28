@@ -49,7 +49,19 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if not math.isfinite(a) or not math.isfinite(b) or a >= b:
+        raise ValueError("o intervalo deve ter limites finitos com a < b")
+    minimo, maximo = bomba.dominio
+    if a < minimo or b > maximo:
+        raise ValueError(f"o intervalo [{a}, {b}] deve estar no domínio [{minimo}, {maximo}]")
+
+    def diferenca(vazao: float) -> float:
+        return float(bomba(vazao) - tubulacao.altura_sistema(vazao))
+
+    resultado = resolvedor.encontrar(diferenca, a, b)
+    if not resultado.convergiu:
+        raise ValueError("o resolvedor não convergiu para o ponto de operação")
+    return PontoOperacao(resultado.raiz, float(bomba(resultado.raiz)), resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +78,14 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    if not math.isfinite(raiz) or not math.isfinite(piso) or piso < 0:
+        raise ValueError("raiz e piso devem ser finitos, com piso não negativo")
+    limite = piso * max(1.0, abs(raiz))
+    erros = [abs(x - raiz) for x in historico if abs(x - raiz) > limite]
+    if len(erros) < 3:
+        raise ValueError("são necessários pelo menos três erros acima do piso")
+    anterior, atual, seguinte = erros[-3:]
+    denominador = math.log(atual / anterior)
+    if denominador == 0:
+        raise ValueError("erros consecutivos iguais não permitem estimar a ordem")
+    return math.log(seguinte / atual) / denominador

@@ -40,6 +40,64 @@ class TestNewtonRegressao(unittest.TestCase):
         self.assertTrue(resultado.convergiu)
         self.assertAlmostEqual(resultado.raiz, 7 ** (1/3), places=9)
 
+from unittest.mock import Mock
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
+from elevatoria.raizes import ResultadoRaiz
+
+
+class TestContratosOperacao(unittest.TestCase):
+    """Intervalos, falha do resolvedor e seleção dos erros de convergência."""
+
+    def test_intervalo_invertido_ou_vazio(self) -> None:
+        """Limites iguais ou invertidos são rejeitados antes de chamar o resolvedor."""
+        bomba = CurvaCalibracao([0, 50, 100], [50, 40, 20])
+        resolvedor = Mock()
+        for a, b in [(50, 50), (80, 20)]:
+            with self.subTest(a=a, b=b), self.assertRaises(ValueError):
+                ponto_operacao(bomba, Mock(), resolvedor, a, b)
+        resolvedor.encontrar.assert_not_called()
+
+    def test_intervalo_fora_do_dominio(self) -> None:
+        """Nenhuma extremidade do intervalo pode ultrapassar o domínio da bomba."""
+        bomba = CurvaCalibracao([0, 50, 100], [50, 40, 20])
+        for a, b in [(-1, 80), (20, 101)]:
+            with self.subTest(a=a, b=b), self.assertRaisesRegex(ValueError, "domínio"):
+                ponto_operacao(bomba, Mock(), Mock(), a, b)
+
+    def test_resolvedor_nao_converge(self) -> None:
+        """Uma aproximação retornada sem convergência não vira ponto de operação."""
+        bomba = CurvaCalibracao([0, 50, 100], [50, 40, 20])
+        resolvedor = Mock()
+        resolvedor.encontrar.return_value = ResultadoRaiz(50.0, 1, False, (50.0,))
+        with self.assertRaisesRegex(ValueError, "não convergiu"):
+            ponto_operacao(bomba, Mock(), resolvedor)
+
+    def test_preserva_resultado_e_funcao(self) -> None:
+        """A composição entrega bomba menos sistema e preserva o resultado do método."""
+        bomba = CurvaCalibracao([0, 50, 100], [50, 40, 20])
+        tubulacao = Mock()
+        tubulacao.altura_sistema.return_value = 40.0
+        resolvedor = Mock()
+        resposta = ResultadoRaiz(50.0, 3, True, (55.0, 51.0, 50.0))
+        resolvedor.encontrar.return_value = resposta
+        ponto = ponto_operacao(bomba, tubulacao, resolvedor, 20, 80)
+        funcao, a, b = resolvedor.encontrar.call_args.args
+        self.assertAlmostEqual(funcao(50), 0.0)
+        self.assertEqual((a, b), (20, 80))
+        self.assertIs(ponto.resultado, resposta)
+        self.assertAlmostEqual(ponto.altura, 40.0)
+
+    def test_piso_escalado_pela_raiz(self) -> None:
+        """O piso relativo filtra erros pequenos antes de selecionar os três últimos."""
+        self.assertAlmostEqual(ordem_convergencia([1100, 1010, 1001, 1000.01],
+                                                  1000, piso=1e-4), 1.0)
+
+    def test_faltam_erros_apos_filtro(self) -> None:
+        """Três aproximações não bastam se uma delas cai abaixo do piso relativo."""
+        with self.assertRaises(ValueError):
+            ordem_convergencia([1100, 1010, 1000.01], 1000, piso=1e-4)
+
 
 if __name__ == "__main__":
     unittest.main()
