@@ -29,8 +29,24 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
 
+# vamos alterar essa linha debaixo para atender ao padrão pedido acima.
+# LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+
+LINHA: re.Pattern = re.compile(
+    r"""
+    (?P<data>\d{4}-\d{2}-\d{2})    # data no formato AAAA-MM-DD
+    [ ]+                           # um ou mais espaços
+    (?P<hora>\d{2}:\d{2}:\d{2})    # hora no formato HH:MM:SS
+    [ ]+                           # um ou mais espaços
+    (?P<nivel>INFO|WARN|ALARME)    # nível do evento
+    [ ]+                           # um ou mais espaços
+    (?P<tag>[A-Z]{1,2}\d{1,3})     # tag: 1 ou 2 maiúsculas e 1 a 3 dígitos
+    [ ]+                           # um ou mais espaços
+    (?P<resto>\S.*)                # resto da linha, começando por não-espaço
+    """,
+    re.VERBOSE,
+)
 
 @dataclass(frozen=True)
 class Registro:
@@ -48,7 +64,8 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    return bool(re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s)) # vamos testar assim, lembrando que o antigo era:
+    # raise NotImplementedError("issue #1: valida_tag")
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
