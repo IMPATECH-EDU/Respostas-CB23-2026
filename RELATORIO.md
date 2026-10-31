@@ -91,3 +91,42 @@ que não existia, então `acumulada[j:] - acumulada[:-j]` começava na segunda j
 Correção: colocar um 0 no início da soma acumulada (`np.concatenate`) e usar `.view(type(self))` para manter o tipo. 
 Os testes de aceitação só verificavam o tipo e os erros, não o tamanho nem os valores. 
 Eles também não cobrem a janela igual ao tamanho da série (o código antigo devolvia vazio), caso coberto pelo meu `test_janela_max`.
+
+## Marco 2
+
+### Ambiente
+
+Saída da Etapa 0 do `python marco2.py` (Windows/PowerShell, mesmo venv do Marco 1):
+
+    === Etapa 0: ambiente ===
+    Python 3.13.13 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3468
+
+### R8 — Derivada numérica
+
+Para h grande, dominamos o erro de truncamento pela série de Taylor, então podemos concluir que o erro é proporcional a h;
+Na tabela, temos que nas 4 primeiras linhas o erro cai cerca de 10 vezes a cada passo.
+Para h pequeno, dominamos o erro de arredondamento, pois f(x+h) e f(x) são muito próximos, cerca de 225 kPa;
+A subtração perde algarismos significativos e o erro, da ordem de eps * |f| / h, cresce quando h fica menor.
+No nosso mínimo ficamos em h = 1e-5 (erro de 6.2e-10). Em h = 1e-14, `1000 + 1e-14 == 1000` é verdadeiro;
+Pois temos x + h igual a x em ponto flutuante.
+O numerador dá zero, a estimativa da derivada dá zero e o erro é a própria derivada (0.2134).
+
+### R9 — Issue #7
+
+Testes de regressão: `test_dez_decimos` (10 × 0.1 deve dar 1.0; o código antigo dava 0.9999999999999999) e
+`test_comparacao_kahan_ingenuo` (o erro do Kahan deve ser menor que o do ingênuo; os dois davam 1.88e-8).
+Motivo: t já é o resultado arredondado de soma + y; a expressão `t − (soma + y)` refaz a mesma conta, obtém o mesmo
+valor arredondado e dá t − t = 0, então a correção nunca era guardada. Na matemática, (t − soma) − y = t − (soma + y),
+mas, em ponto flutuante, t − soma mede o que de fato entrou na soma, e subtrair y isola o que se perdeu.
+Os testes de aceitação não capturaram o defeito porque o `test_acumuladores` passou com o código antigo, em que o
+Kahan se comportava como a soma ingênua: ele não usa nenhum caso em que a soma ingênua erra além da sua tolerância,
+e por isso não distingue um Kahan que compensa de um que não compensa.
+
+### R10 — Precisão × exatidão
+
+Precisão é o quanto as leituras se espalham (desvio). Exatidão é o quanto a média se aproxima do valor verdadeiro (viés).
+Para PT102, as duas curvas têm a mesma precisão (desvio 0.527 e 0.528 kPa),
+mas a spline é exata (380.0 kPa, viés 0.000) e a linear não (378.2 kPa, viés −1.830).
+A média de ~595 leituras reduz o erro aleatório (o erro padrão fica em torno de 0.527/√595 ≈ 0.02 kPa),
+mas o viés da linear é sistemático: vem do erro de interpolação da curva (até 2.88 kPa na Etapa 1(a)),
+que é o mesmo em todas as leituras próximas de 1790 contagens, por isso não se cancela na média.
