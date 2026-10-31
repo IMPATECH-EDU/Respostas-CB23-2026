@@ -34,6 +34,8 @@ Errados é um dicinário de lambdas que usam a váriavel k do laço de compreens
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
 
+O transmissor não responder linearmente às contagens, e a escala nomial (600/4095) supõe uma reta. Indo para fornecido/simulador.py, p_real(c) = 600*sin(0,5*pi*c/4095) não é linear. Para c ~1800 (média das contagens normais de PT102) a reta dá ~ 260 kPa e a curva verdadeira dá ~ 380 kPa. A escala nomial só acerta nos extremos (o e 600) e subestima no meio da faixa. (Usei o simulador só para entender a diferença, não para calcular).
+
 ### R5 — Previsão × medição (Etapa 3)
 
 Previsões registradas no commit: 16ceca0
