@@ -28,6 +28,8 @@ Para quem chama ler_log possa contar, registrar e investigar, porque ignorar em 
 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
 
+Errados é um dicinário de lambdas que usam a váriavel k do laço de compreensão. A lambda não gaurda o valor de k, só a variável. Quando ela é chamada, o laço já terminou e k vale o último fator, 0,1 (do FT201). Então errados["PT102"](4095) = 4095 * 0,1 = 409.5. Na criar_conversoes, cada lambda é criado dentro de _conversor(fator), e cada chamada tem seu próprio fator, que não muda depois (cada tag usa o fator da sua entrada), o que não gera o problema. 
+
 ### R4 — Escala nominal
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
