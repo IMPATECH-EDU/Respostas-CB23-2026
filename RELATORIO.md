@@ -7,15 +7,21 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
-<!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
+/home/lucas/venvs/prog2-venv/bin/python
+
+=== Etapa 0: ambiente ===
+Python 3.12.3 | NumPy 1.26.4 | fornecido 3.0
 
 ### R1 — Expressões regulares
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
 
+"PT1010", pois, com o padrão [A-Z]{1,2}\d{1,3}, apenas a correspondência inicial é exigida pelo re.match, enquanto re.fullmatch exige que a string inteira case. Se vlaida_tag usasse match, ela diria que tags como "PT1011" passariam e os assert da 1(d) falhariam.
+
 ### R2 — Linhas inválidas
 
 <!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
+
 
 ### R3 — Late binding
 
@@ -51,4 +57,7 @@ Previsões registradas no commit: 16ceca0
 
 ### R7 — Issue #4
 
-Quando fazíamos media_movel(30) ao invés de 571 = 600 - 30 + 1 valores, obtíamos só 570. Os testes TesteMediaMovelRegressão (principalmente teste_tamanho_600_janela_30) davam erro. Isso acontecia porque a soma acumulada estava começando do índice 0, e não no valor 0, então acumulada[janela:] - acumulada[:-janela] perde a primeira janela. Então, foi colocado um 0 no começo e retorno como SerieTemporal. Os testes estavam pegando porque estavam conferindo só tipos, erros, sem ver o tamanho dos intervalos. Um caso legal é que a janela igual a 1 deve ser do tamanho da série, e é coberto pelo teste teste_janela_igual_ao_tamanho.
+Quando fazíamos media_movel(30) ao invés de 571 = 600 - 30 + 1 valores, obtíamos só 570. Os testes TesteMediaMovelRegressão (principalmente teste_tamanho_600_janela_30) davam
+erro. Isso acontecia porque a soma acumulada estava começando do índice 0, e não no valor 0, então acumulada[janela:] - acumulada[:-janela] perde a primeira janela. Então, foi
+colocado um 0 no começo e retorno como SerieTemporal. Os testes estavam pegando porque estavam conferindo só tipos, erros, sem ver o tamanho dos intervalos. Um caso legal é
+que a janela igual a 1 deve ser do tamanho da série, e é coberto pelo teste teste_janela_igual_ao_tamanho.
