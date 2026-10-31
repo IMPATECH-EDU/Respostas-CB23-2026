@@ -215,7 +215,7 @@ def converter_map(contagens: list[int]) -> list[float]:
 
 def converter_vetorizado(contagens: np.ndarray) -> np.ndarray:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma operação vetorizada do NumPy."""
-    return np.asarray(contagens,dtype=float)*600/4095
+    return np.asarray(contagens, dtype=float) * 600 / 4095
 
 def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     """Tempo médio (s) de cada versão da conversão, em `k` repetições.
@@ -226,7 +226,7 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     """
     lista = contagens.tolist()
     return {"laço":cronometrar(converter_laco,lista,k=k), "compreensão": cronometrar(converter_compreensao,lista,k=k), "map+lambda": cronometrar(converter_map, lista,k=k),
-    "vetorizado": cronometrar(converter_vetorizado,lista,k=k)}
+    "vetorizado": cronometrar(converter_vetorizado,contagens,k=k)}
 
 
 #nunca fiquei tão feliz em ver um OK em toda a minha vida!!!
