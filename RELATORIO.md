@@ -104,6 +104,34 @@ de aceitação não pegaram o defeito. -->
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
-```
+
 
 A precisão (medida pelo desvio padrão) reflete a dispersão aleatória das leituras e é praticamente idêntica em ambos os modelos (~0,54 kPa), pois alterar a curva não altera o ruído do sensor; já a exatidão (medida pelo viés) é significativamente superior na spline (viés de -0,005 kPa contra -1,835 kPa na linear), pois ela se ajusta à resposta física não linear do transmissor. Tirar a média de 600 leituras reduz apenas as flutuações aleatórias do sinal, mas não elimina o erro sistemático (viés) do modelo linear — a média simplesmente faz a medição convergir com alta precisão para o valor incorreto do modelo.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+A Bissecção reduz a largura do intervalo rigorosamente pela metade a cada passo ($\frac{b - a}{2^k}$), dependendo exclusivamente da largura inicial ($13$) e da tolerância ($\text{tol} = 10^{-12}$). A chance de um ponto médio racional acertar exatamente a raiz e encerrar o laço antes do tempo é praticamente nula. Sem essa parada antecipada, o algoritmo é obrigado a dividir o intervalo até satisfazer $\frac{13}{2^k} < 10^{-12}$, o que resulta matematicamente em exatamente 44.
+
+Ordem de convergência 2 significa que o erro no passo seguinte é proporcional ao quadrado do erro atual.
+
+O Método de Newton falha quando encontra uma derivada nula ou próxima de zero ($f'(x_k) \approx 0$), causando divisão por zero ou arremessando o palpite para fora da região de interesse. A Bissecção não falha porque possui convergência global garantida pelo Teorema do Valor Intermediário desde que haja troca de sinal no intervalo 
+
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+Os testes de regressão criados para evidenciar a falha foram:
+1. `test_convergencia`: testa a recuperação e convergência do método na função f(x) = 1 - x² no intervalo [-1, 1.9].
+2. `test_newton_quantidade_iteracoes`: verifica se o número de iterações para f(x) = x² - 2 no intervalo [0, 2] é menor ou igual a 6.
+
+Ao calcular a derivada apenas uma vez no ponto médio inicial (x₀), a fórmula aplicada passa a ser x_{k+1} = x_k - f(x_k) / f'(x₀). Isso descaracteriza o Método de Newton verdadeiro (cuja tangente é atualizada a cada ponto x_k). Como a inclinação não acompanha a variação local da função, a redução do erro passa a ser proporcional ao erro do passo anterior (e_{k+1} ≈ C · e_k), tornando a convergência puramente linear (p ≈ 1) em vez de quadrática (p ≈ 2).
+
+Os testes de aceitação fornecidos não capturaram o defeito porque apenas verificavam se o método convergia (resultado.convergiu == True) e se o resultado final estava correto dentro da tolerância. Como o código com a derivada fixa ainda conseguia atingir a tolerância exigida antes de estourar o limite padrão de 100 iterações (levando 26 iterações em vez de 5), o teste passava sem acusar a perda de eficiência.
