@@ -31,19 +31,19 @@ from fornecido.cronometro import cronometrar
 #: aplicado com `LINHA.fullmatch(linha)`.
 
 # vamos alterar essa linha debaixo para atender ao padrão pedido acima.
-# LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+
 
 LINHA: re.Pattern = re.compile(
     r"""
-    (?P<data>\d{4}-\d{2}-\d{2})    # data no formato AAAA-MM-DD
-    [ ]+                           # um ou mais espaços
-    (?P<hora>\d{2}:\d{2}:\d{2})    # hora no formato HH:MM:SS
-    [ ]+                           # um ou mais espaços
-    (?P<nivel>INFO|WARN|ALARME)    # nível do evento
-    [ ]+                           # um ou mais espaços
-    (?P<tag>[A-Z]{1,2}\d{1,3})     # tag: 1 ou 2 maiúsculas e 1 a 3 dígitos
-    [ ]+                           # um ou mais espaços
-    (?P<resto>\S.*)                # resto da linha, começando por não-espaço
+    (?P<data>\d{4}-\d{2}-\d{2})    # Data no formato AAAA-MM-DD para ANO-MêS-DIA
+    [ ]+                           # Espaço 1+
+    (?P<hora>\d{2}:\d{2}:\d{2})    # Hora no formato HH:MM:SS para HORA-MINUTO-SEGUNDO
+    [ ]+                           # Espaço 1+
+    (?P<nivel>INFO|WARN|ALARME)    # Nível
+    [ ]+                           # Espaço 1+
+    (?P<tag>[A-Z]{1,2}\d{1,3})     # Tag: 1 ou 2 letras maiúsculas e 1 a 3 dígitos
+    [ ]+                           # Espaço 1+
+    (?P<resto>\S.*)                # Resto da linha, iniciando com um não-espaço
     """,
     re.VERBOSE,
 )
@@ -64,8 +64,11 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    return bool(re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s)) # vamos testar assim, lembrando que o antigo era:
+    return bool(re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s)) # Vamos testar assim, lembrando que o antigo era:
     # raise NotImplementedError("issue #1: valida_tag")
+    # O que está sendo feito agora? Basicamente, se utilizássemos o re.match, ele verificaria apenas o início da string.
+    # Então, se a string fosse inválida, mas começasse com uma tag válida, o re.match ainda assim retornaria um match. Dessa forma, utilizaremos
+    # o re.fullmatch, que verifica se toda a string corresponde ao padrão esperado. 
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -86,7 +89,33 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+    registros: list[Registro] = []
+    invalidas: list[str] = []
+    for linha in texto.splitlines(): 
+        if not linha.strip(): # Se a linha estiver vazia, só com espaços em branco, pularemos para a próxima linha.
+            continue
+        if not (linha_boa:= LINHA.fullmatch(linha)): # Se a linha não casar com o padrão, adicionamos ela à lista de inválidas e pulamos para a próxima.
+            invalidas.append(linha)
+            continue
+        instante_log = datetime.strptime(f"{linha_boa['data']} {linha_boa['hora']}", "%Y-%m-%d %H:%M:%S") # Montado o instante com a data e hora linha válida.
+        try:
+            instante_log = datetime.strptime(
+                f"{linha_boa['data']} {linha_boa['hora']}", "%Y-%m-%d %H:%M:%S"
+            )
+        except ValueError:
+            invalidas.append(linha)
+            continue
+        if not (pares:= re.findall(r"(\w+)=(\S+)", linha_boa['resto'])): # Aqui vamos mapear pares chave=valor no grupo 'resto'. Se não tiver nenhum, a linha é inválida.
+            invalidas.append(linha)
+            continue
+        valores: dict[str, float | str] = {} 
+        for chave, valor in pares:
+            try:
+                valores[chave] = float(valor) # Convertendo para float quando possível.
+            except ValueError:
+                valores[chave] = valor 
+        registros.append(Registro(instante_log, linha_boa["nivel"], linha_boa["tag"], valores))
+    return registros, invalidas
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
