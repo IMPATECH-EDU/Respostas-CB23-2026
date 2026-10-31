@@ -22,6 +22,7 @@ Python 3.12.3 | NumPy 1.26.4 | fornecido 3.0
 
 <!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
 
+Para quem chama ler_log possa contar, registrar e investigar, porque ignorar em silêncio apagaria a evidência. No log da hora vieram 4 linhas corrompidas (falhas de comunicação com a RTU e linhas truncadas). Se a RTU de uma bomba comçasse a falhar e as linhas fossem jogadas foram sem aviso, o operador só iria ver uma série com buracos, sem saber que a comunicação está caindo.
 
 ### R3 — Late binding
 
