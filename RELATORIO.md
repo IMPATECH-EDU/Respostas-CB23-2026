@@ -42,11 +42,15 @@ Previsões registradas no commit: 16ceca0
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | 18 | |
-| Tempo do laço / tempo vetorizado | 30 | |
-| Tempo da compreensão / tempo do laço | 0,8 | |
+| Memória da lista / memória do `uint16` | 18 | 36,000,056/2,000,000 = 18 |
+| Tempo do laço / tempo vetorizado | 30 | 67.06/1.08 = 62 |
+| Tempo da compreensão / tempo do laço | 0,8 | 63.37/67.06 = 0,94  |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
+
+A maior diferença foi o tempo laço/vetorizado: foi quase o dobro. O vetorizado foi mais rápido do que eu esperava. o laço roda no interpretador, elemento por elmento, criando um float a cada conta, mas o numpy faz o laço em memória contígua. (add: estava testando o código e passar uma lista no lugar do ndarray para o vetorizado fazia o tempo ser 33x maior!). 
+O uint16 guarda de 0 a 65535 e 4095 * 20 = 81900 passa, mas o numpy não avisa e pega o módulo (65536), que é 16364. Com o int do python dá certo. Assim, para contagens o uint16, e para pressão o float64.
+
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
