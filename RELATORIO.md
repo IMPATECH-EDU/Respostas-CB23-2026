@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — Francisco Renan Vale Cardoso (3523)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -9,9 +9,23 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
 
+```
+/home/renan/venvs/prog2-venv/bin/python
+=== Etapa 0: ambiente ===
+Python 3.12.3 | NumPy 2.5.4 | fornecido 4.0
+(falta coisa ainda)
+```
+
 ### R1 — Expressões regulares
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
+
+A string "PT101 ", uma das inválidas, é aceita por re.match e rejeitada por re.fullmatch. Isso
+ocorre pois o re.match busca se a string começa com um trecho que casa com a expressão regular. 
+Por outro lado, o re.fullmatch exige que a string inteira case com o padrão da expressão regular.
+Se usássemos re.match em valida_tag, strings que começam com uma sequência válida mas possuem um
+resto qualquer passariam na validação. Isso viola o contrato, que diz que a tag tem de ter 1 ou 2
+letras maiúsculas e de 1 a 3 dígitos, e não mais que isso.
 
 ### R2 — Linhas inválidas
 

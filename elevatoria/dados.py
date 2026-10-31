@@ -29,7 +29,17 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+LINHA: re.Pattern = re.compile(r'''
+    (?P<data>\d{4}-\d{2}-\d{2})         # Data: AAAA-MM-DD, ano, mês e dia separados por hífen
+    [ ]+                                # Espaço para separar
+    (?P<hora>\d{2}:\d{2}:\d{2})         # Hora: HH:MM:SS, horas, minutos e segundos separados por dois pontos
+    [ ]+                                # Espaço para separar
+    (?P<nivel>INFO|WARN|ALARME)         # Nível: INFO, WARN ou ALARME
+    [ ]+                                # Espaço para separar
+    (?P<tag>[A-Z]{1,2}\d{1,3})          # Tag: tag com 1 ou 2 letras maiúsculas seguidas de 1 a 3 dígitos
+    [ ]+                                # Espaço para separar
+    (?P<resto>\S.*)                     # Resto: primeiro caractere diferente de espaço e os próximos, caso houverem, podem ser qualquer um (menos \n)
+''', re.VERBOSE)
 
 
 @dataclass(frozen=True)
@@ -42,13 +52,32 @@ class Registro:
     valores: dict[str, float | str]
 
 
+#: Tag do instrumento: 1 ou 2 letras maiúsculas seguidas de 1 a 3 dígitos
+_TAG: re.Pattern = re.compile(r'[A-Z]{1,2}\d{1,3}')
+
+
 def valida_tag(s: str) -> bool:
     """`True` se a string inteira for uma tag válida (1 ou 2 maiúsculas e 1 a 3 dígitos).
 
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    return _TAG.fullmatch(s) is not None
+
+
+def _converte_float(string: str) -> str | float:
+    """Converte uma string em float quando possível
+    
+    Retorna a string como float, se a conversão pode ser feita, ou retorna a mesma string
+    """
+    try:
+        return float(string)
+    except ValueError:
+        return string
+
+
+#: Compilando o patern para avaliar o grupo da linha do texto
+_PARES = re.compile(r'(\w+)=(\S+)')
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -69,7 +98,34 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+
+    invalidas, registros = [], []
+    pdr_data_hora = "%Y-%m-%d %H:%M:%S"         # Strimg que o datetime usará para avaliar se uma linha do log possui darta possível
+    texto_linhas = texto.split("\n")
+
+    for linha in texto_linhas:
+        if linha.strip() == "":
+            continue
+        casa_padrão = LINHA.fullmatch(linha)            # Testando se a linha casa com o padrão
+        if casa_padrão is None:
+            invalidas.append(linha)                     # Se a linha não casa com o padrão, ela deve ser adicionada como inválida (1)
+            continue
+        valores = _PARES.findall(casa_padrão["resto"])
+        if not valores:
+            invalidas.append(linha)
+            continue 
+        datahora = f'{casa_padrão["data"]} {casa_padrão["hora"]}'
+        try:
+            instante = datetime.strptime(datahora, pdr_data_hora)
+        except ValueError:
+            invalidas.append(linha)
+            continue
+        registros.append(Registro(instante, 
+                                  casa_padrão["nivel"],
+                                  casa_padrão["tag"],
+                                  {chave: _converte_float(valor) for chave, valor in valores }))
+
+    return (registros, invalidas)
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
