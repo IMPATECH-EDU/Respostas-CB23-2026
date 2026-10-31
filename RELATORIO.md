@@ -56,13 +56,15 @@ O uint16 guarda de 0 a 65535 e 4095 * 20 = 81900 passa, mas o numpy não avisa e
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | SerieTemporal | |
-| `s[1:]` | Serie Temporal | |
-| `s * 2` | Serie Temporal | |
-| `s.sum()` | float64 | |
-| `s[0]` | float64 | |
+| `s + s` | SerieTemporal | SerieTemporal |
+| `s[1:]` | Serie Temporal | SerieTemporal |
+| `s * 2` | Serie Temporal | SerieTemporal|
+| `s.sum()` | float64 | SerieTemporal |
+| `s[0]` | float64 | float64 |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
+
+O que mais me surpreendeu foi o s.sum(). Esperava que o tipo fosse um número simples do python, e não uma SerieTemporal de zero dimensões (um ponto?). Operações e reduções do numpy usam a classe do array original para criar o resultado, e a subclasse se mantém. Para usar o total como um número comum faço float(s.sum()).
 
 ### R7 — Issue #4
 
