@@ -18,6 +18,8 @@ import math
 from dataclasses import dataclass
 from typing import Sequence
 
+import numpy as np
+
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.raizes import MetodoRaiz, ResultadoRaiz
 from fornecido.hidraulica import Tubulacao
@@ -49,7 +51,21 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    inicio, fim = bomba.dominio
+    if a < inicio or b > fim:
+        raise ValueError(f"[{a}, {b}] não está dentro do domínio da bomba [{inicio}, {fim}]")
+
+    # Bomba menos sistema: a raiz é o ponto de operação
+
+    def diferenca(vazao: float) -> float:
+        return bomba(vazao) - tubulacao.altura_sistema(vazao)
+
+    resultado = resolvedor.encontrar(diferenca, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"o resolvedor não convergiu em {resultado.iteracoes} iterações")
+    return PontoOperacao(vazao=resultado.raiz, altura=float(bomba(resultado.raiz)), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +82,18 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    raiz = float(raiz)
+
+    # Erros acima do piso, na ordem do histórico
+
+    erros = np.abs(np.asarray(historico, dtype=float) - raiz)
+    erros = erros[erros > piso * max(1.0, abs(raiz))]
+    if erros.size < 3:
+        raise ValueError(f"preciso de pelo menos 3 erros acima do piso; tenho {erros.size}")
+
+    # Razão entre os logaritmos dos três últimos erros
+
+    e0, e1, e2 = erros[-3:]
+    if e0 == e1:
+        raise ValueError("dois erros consecutivos iguais: a razão de convergência fica indefinida")
+    return float(np.log(e2 / e1) / np.log(e1 / e0))
