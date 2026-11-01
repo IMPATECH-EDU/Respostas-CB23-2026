@@ -118,12 +118,13 @@ class Newton(MetodoRaiz):
         """Uma raiz de `f` pelo método de Newton, começando no ponto médio de `[a, b]`."""
         x = 0.5 * (a + b)
         historico = [x]
-        # Cada derivada numérica custa duas avaliações de f, e f pode ser cara (na Tubulacao,
-        # cada avaliação resolve Colebrook). Por isso a derivada é calculada uma vez só.
-        derivada = self._derivada(f, x)
+        # A derivada é recalculada em cada iteração para acompanhar o ponto atual.
         for k in range(1, self.max_iter + 1):
+            derivada = self._derivada(f, x)
+
             if derivada == 0:
                 raise ValueError(f"derivada nula em x = {x}: o método de Newton não pode continuar")
+            
             x_novo = x - f(x) / derivada
             historico.append(x_novo)
             if abs(x_novo - x) < self.tol:
