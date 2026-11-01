@@ -41,11 +41,11 @@ Previsões registradas no commit: 3a0f239
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` | np.ndarray | |
+| `s[1:]` | np.ndarray | |
+| `s * 2` | np.ndarray | |
+| `s.sum()` | np.uint64 | |
+| `s[0]` | np.uint16 | |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
 
