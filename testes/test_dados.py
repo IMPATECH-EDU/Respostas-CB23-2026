@@ -17,6 +17,12 @@ class TestLerLogAdicionais(unittest.TestCase):
         registros, invalidas = ler_log(valida + "\n" + impossivel)
         self.assertEqual(len(registros), 1)
         self.assertEqual(invalidas, [impossivel])
+    def test_ignorar_linha_so_com_espacos(self):
+        """Linha só com espaços não vira registro nem entra nas inválidas."""
+        valida = "2026-10-05 08:00:00 INFO PT101 contagens=131"
+        registros, invalidas = ler_log(valida + "\n   \n")
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(len(invalidas), 0)
 
 
 class TestPorTagExemplo(unittest.TestCase):
