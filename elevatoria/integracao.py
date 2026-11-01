@@ -66,8 +66,13 @@ class Trapezio(Integrador):
         """
         x, y = _validar_tabela(x, y)
         # O SCADA registra uma leitura a cada 15 min, então o passo é o mesmo em toda a tabela.
-        h = x[1] - x[0]
-        return float(h * (0.5 * y[0] + y[1:-1].sum() + 0.5 * y[-1]))
+        area = 0
+        for i in range(len(x) -1):
+            h = x[i+1]-x[i]
+            areazinha = h*(y[i+1]+y[i])*0.5
+            area = area + areazinha
+
+        return area
 
 
 class Simpson(Integrador):

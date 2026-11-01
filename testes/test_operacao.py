@@ -21,7 +21,7 @@ class TestBisseccaoExemplo(unittest.TestCase):
         self.assertEqual((resultado.raiz, resultado.iteracoes), (1.0, 0))
 
     def test_convergencia(self):
-        "Vamos mostrar que a função encontrar foi implementada erroneamente e por isso, não converge, às ves, mesmo para funções simples"
+        "Vamos mostrar que a função encontrar foi implementada erroneamente e por isso, não converge, às vezes, mesmo para funções simples"
         def f(x):
             return 1 - x**2
         a = Newton()

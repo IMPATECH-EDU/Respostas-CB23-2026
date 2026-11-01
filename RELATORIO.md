@@ -135,3 +135,26 @@ Os testes de regressão criados para evidenciar a falha foram:
 Ao calcular a derivada apenas uma vez no ponto médio inicial (x₀), a fórmula aplicada passa a ser x_{k+1} = x_k - f(x_k) / f'(x₀). Isso descaracteriza o Método de Newton verdadeiro (cuja tangente é atualizada a cada ponto x_k). Como a inclinação não acompanha a variação local da função, a redução do erro passa a ser proporcional ao erro do passo anterior (e_{k+1} ≈ C · e_k), tornando a convergência puramente linear (p ≈ 1) em vez de quadrática (p ≈ 2).
 
 Os testes de aceitação fornecidos não capturaram o defeito porque apenas verificavam se o método convergia (resultado.convergiu == True) e se o resultado final estava correto dentro da tolerância. Como o código com a derivada fixa ainda conseguia atingir a tolerância exigida antes de estourar o limite padrão de 100 iterações (levando 26 iterações em vez de 5), o teste passava sem acusar a perda de eficiência.
+
+
+```markdown
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+Ao integrar o dia de uma vez, os saltos descontínuos da tarifa (às 18h e 21h) ficam dentro do intervalo de integração. Essa falta de suavidade da integranda viola as premissas teóricas das regras compostas, degradando a ordem de convergência do Trapézio e do Simpson para cerca de 1. Ao integrar cada faixa separadamente, os pontos de descontinuidade alinham-se aos limites de integração; com a função suave dentro de cada faixa, as ordens teóricas 2 e 4 são recuperadas.
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+```
+
+- **Testes de regressão:** `test_para_trapezio_com_malha_nao_uniforme` e `test_intervalos_malha_nao_uniforme`.
+- **Causa do defeito:** Em `Trapezio.integrar_tabela`, o código fixava o passo em `h = x[1] - x[0]` para todo o vetor, ignorando larguras variáveis `x[i+1] - x[i]` em malhas não uniformes.
+- **Por que os testes de aceitação não pegaram:** Os testes fornecidos utilizavam uma malha sintética perfeitamente uniforme (passo fixo de 1,5 h), na qual `x[1] - x[0]` coincidia com o passo de todos os intervalos.
+- **Incompatibilidade do Simpson:** As 8 leituras perdidas pelo SCADA tornaram a malha irregular (intervalos alternando entre 15 e 30 min). A classe `Simpson` exige malha estritamente uniforme e número ímpar de pontos, disparando `ValueError` com os dados do registro do dia.
