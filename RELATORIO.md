@@ -27,7 +27,7 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+Previsões registradas no commit: 3a0f239
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
