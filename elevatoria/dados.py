@@ -129,7 +129,10 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
     de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    # Primeiro, a compreensão de conjunto para obter todas as tags:
+    conjunto_tags = {r.tag for r in registros} 
+    # Segundo, a compreensão de dicionário para contar os registros por tag:
+    return{tag: len(por_tag(registros, tag)) for tag in conjunto_tags}
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
