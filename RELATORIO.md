@@ -26,31 +26,49 @@ O dicionário `errados` utiliza o mesmo fator de conversão `k` para todas as su
 
 A escala nominal produz aproximadamente 262 kPa porque, no `marco1.py`, as contagens de `PT102` são convertidas por meio de um fator linear (`600/4095`). Entretanto, no `fornecido/simulador.py`, a função `c_real` utiliza arco-seno para gerar as contagens a partir da pressão, enquanto `p_real` utiliza seno na relação direta. Essa diferença explica por que a conversão nominal linear não recupera o valor de referência de 380 kPa.
 
-### R5 — Previsão(*Estimativa retrospectiva) × medição (Etapa 3)
+### R5 — Previsão × medição (Etapa 3)
 
 Não registrei as previsões em um commit antes das medições. As estimativas desta tabela foram reconstruídas posteriormente, com base no comportamento esperado das estruturas e operações.
 
 | Grandeza | Estimativa retrospectiva | Medido |
 | --- | --- | --- |
 | Memória da lista / memória do `uint16` |10x|18,00x|
-| Tempo do laço / tempo vetorizado |10x|19,21x|
-| Tempo da compreensão / tempo do laço |1x|1,04x|
+| Tempo do laço / tempo vetorizado |10x|15,56x|
+| Tempo da compreensão / tempo do laço |1x|0,76x|
 
-A maior diferença entre as estimativas retrospectivas e as medições ocorreu na razão entre o tempo do laço e o tempo vetorizado: 10× estimados contra 19,21× medidos. A `list` ocupou cerca de 18 vezes mais memória que `uint16`, pois armazena referências para objetos Python, enquanto cada elemento `uint16` ocupa 2 bytes. O produto 4095 × 20 = 81900 ultrapassa o máximo de 65535; o *overflow* corresponde a retirar uma volta de 65536, resultando em 16364. Escolheria `uint16` para contagens de 0 a 4095 e `float64` para pressões com valores decimais.
+A maior diferença entre as estimativas retrospectivas e as medições ocorreu na relação entre a memória da lista e a memória do `uint16`: 10x estimados contra 18x medidos. A `list` ocupou cerca de 18 vezes mais memória que `uint16`, pois armazena referências para objetos Python, enquanto cada elemento `uint16` ocupa 2 bytes. O produto 4095 × 20 = 81900 ultrapassa o máximo de 65535; o *overflow* corresponde a retirar uma volta de 65536, resultando em 16364. Escolheria `uint16` para contagens de 0 a 4095 e `float64` para pressões com valores decimais.
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
 Como não registrei os tipos previstos antes da implementação, a coluna de previsão abaixo foi reconstruída retrospectivamente.
 
-| Expressão | Tipo previsto (*retrospectivamente) | Tipo observado |
+| Expressão | Tipo previsto (estimativa retrospectiva) | Tipo observado |
 | --- | --- | --- |
-| `s + s` |SerieTemporal|SerieTemporal|
-| `s[1:]` |SerieTemporal|SerieTemporal|
-| `s * 2` |SerieTemporal|SerieTemporal|
-| `s.sum()` |float64|SerieTemporal|
-| `s[0]` |float64|float64|
+| `s + s` |`SerieTemporal`|`SerieTemporal`|
+| `s[1:]` |`SerieTemporal`|`SerieTemporal`|
+| `s * 2` |`SerieTemporal`|`SerieTemporal`|
+| `s.sum()` |`float64`|`SerieTemporal`|
+| `s[0]` |`float64`|`float64`|
 
 O resultado de `s.sum()` me chamou a atenção porque eu esperava que a soma de todos os elementos retornasse um valor escalar. Entretanto, o resultado observado foi um objeto `SerieTemporal` de dimensão zero (`shape == ()`). Isso mostra que a operação preservou o tipo da subclasse `SerieTemporal`, mesmo produzindo um único valor.
 
 ### R7 — Issue #4
 
 O defeito fazia `media_movel` retornar um resultado a menos: para uma série de 5 elementos e uma janela de 3, retornava 2 valores em vez dos 3 esperados. O teste `test_media_movel_tamanho_retornado` verifica a quantidade de resultados, enquanto `test_media_movel_valores_janela_2` confere as médias de `[10, 20, 30]`, que devem ser `[15, 25]`. A causa era a diferença entre fatias da soma acumulada sem um zero inicial; a correção foi inserir `0.0` no início para calcular também a primeira janela. Os testes de aceitação verificavam o tipo de retorno e os parâmetros inválidos, mas não esses casos específicos, cobertos pelos meus testes próprios.
+
+## Marco 2
+
+### Ambiente
+
+Python 3.14.3, NumPy 2.5.3, SciPy 1.18.1, fornecido 4.0 e matrícula 3460.
+
+### R8 — Derivada numérica
+
+Quando o valor de \(h\) diminui, a aproximação da derivada fica inicialmente mais precisa, pois o erro de truncamento é reduzido. Porém, quando \(h\) fica muito pequeno, os valores utilizados na subtração ficam muito próximos, causando perda de algarismos significativos. Como essa diferença é dividida por \(h\), o erro de arredondamento acaba aumentando. Em \(h=10^{-14}\), `1000 + 1e-14` resulta em `1000`, fazendo com que o numerador seja zero e o erro absoluto fique igual ao valor da derivada exata.
+
+### R9 — Issue #7
+
+O erro estava no cálculo da variável `correcao`: como `t` já armazenava o resultado da soma `self._soma + y`, a expressão original acabava subtraindo o mesmo valor de si próprio, resultando em zero. Embora as expressões sejam algebricamente equivalentes, a ordem das operações importa em ponto flutuante, pois cada operação pode introduzir arredondamentos. Os testes de aceitação não identificaram o problema porque utilizavam somas simples, com poucas parcelas. Para verificar essa falha, foram criados os testes `test_milhao_de_pulsos` e `test_compensacao_de_parcelas_pequenas`, que falhavam antes da correção.
+
+### R10 — Precisão × exatidão
+
+Ambas as curvas apresentaram praticamente a mesma precisão, como mostram os desvios padrão: 0,548 kPa para a linear e 0,549 kPa para a spline. Porém, isso não significa que tenham a mesma exatidão, pois a curva linear apresentou um viés de -1,828 kPa, enquanto a spline apresentou apenas 0,001 kPa. Isso mostra que a curva linear produziu valores abaixo da referência. Mesmo com quase 600 medições, o aumento da quantidade de dados não elimina o viés sistemático causado pela calibração.
