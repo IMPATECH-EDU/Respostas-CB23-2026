@@ -23,7 +23,12 @@ class TestLerLogAdicionais(unittest.TestCase):
         registros, invalidas = ler_log(valida + "\n   \n")
         self.assertEqual(len(registros), 1)
         self.assertEqual(len(invalidas), 0)
-
+    def test_invalidar_linha_sem_par_chave_valor(self):
+        """Linha que casa com LINHA vai para as inválidas se não tem chave=valor."""
+        sem_par = "2026-10-05 08:00:00 INFO PT101 contag"
+        registros, invalidas = ler_log(sem_par)
+        self.assertEqual(registros, []) # usando [] em vez de 0 para mostrar o conteúdo se tiver alguma falha.
+        self.assertEqual(invalidas, [sem_par])
 
 class TestPorTagExemplo(unittest.TestCase):
     """Exemplo do formato. `por_tag` é código existente da base."""
