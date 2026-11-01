@@ -120,18 +120,40 @@ def etapa3() -> None:
     # (a) Memória: imprima uma tabela com estrutura, bytes por elemento, bytes totais e a
     #     razão em relação à lista.
     memoria = medir_memoria(contagens)
-    _todo("3(a) tabela")
+
+    # Código que usei da IA. Não tinha experiência criando tabelas bem estruturadas.
+    bytes_lista = memoria["list"]
+    print(f"{'Estrutura':<12} | {'Bytes/elem':<12} | {'Bytes Totais':<15} | {'Razão (list/X)':<15}")
+    print("-" * 62)
+    for estrutura, b_totais in memoria.items():
+        b_elem = b_totais / n
+        razao = bytes_lista / b_totais
+        print(f"{estrutura:<12} | {b_elem:<12.2f} | {b_totais:<15,d} | {razao:<15.2f}x")
+
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
 
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
-    _todo("3(b) tabela")
+
+    t_laco = tempos["laço"]
+    print(f"\n{'Versão':<15} | {'Tempo (ms)':<12} | {'Aceleração':<12}")
+    print("-" * 45)
+    for versao, t_seg in tempos.items():
+        t_ms = t_seg * 1000  # converte segundos para milissegundos
+        aceleracao = t_laco / t_seg if t_seg > 0 else 0
+        print(f"{versao:<15} | {t_ms:<12.4f} | {aceleracao:<12.2f}x")
+
     assert tempos["laço"] / tempos["vetorizado"] >= 5
 
     # (c) Tipos e overflow: imprima os dois resultados.
     misto = np.array([1, 2.5, "a"])
     estouro = np.array([4095], dtype=np.uint16) * 20
+
+    print("\n--- (c) Tipos e Overflow ---")
+    print(f"Tipos (misto): {misto} -> dtype: {misto.dtype} (kind='{misto.dtype.kind}')")
+    print(f"Estouro de uint16 (overflow): {estouro[0]} (sem overflow seria {4095 * 20})")
+
     assert misto.dtype.kind == "U"
     assert estouro[0] == 16364 and 4095 * 20 == 81900
 
@@ -142,20 +164,36 @@ def etapa4(registros: list) -> None:
     s = serie(registros, "PT102", "contagens")
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
+    # Basta imprimir cada um. Os arrays do numpy já possuem o método .std(ddof)
+    print(f"(a) Média: {s.mean():.2f} | Desvio padrão (ddof=1): {s.std(ddof=1):.2f} | Amplitude: {s.amplitude():.2f}")
     assert len(s) == 600 and s.amplitude() > 300
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
+
     mm = s.media_movel(30)
+
+    print(f"(b) Média Móvel (30 pts) -> Tamanho: {len(mm)} | Mín: {mm.min():.2f} | Máx: {mm.max():.2f}")
+    print(f"    Série Original       -> Tamanho: {len(s)}  | Mín: {s.min():.2f}  | Máx: {s.max():.2f}")
+
     assert len(mm) == 571
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
+
+    print(f"(c) Reamostrado: {len(por_minuto)} pontos (1 por min) | Média reamostrada: {por_minuto.mean():.4f} | Média original: {s.mean():.4f}")
+
     assert len(por_minuto) == 60
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+
+    print("\n(d) Tipos devolvidos pelas operações:")
+    print(f"    s + s   : {type(s + s).__name__}")
+    print(f"    s[1:]   : {type(s[1:]).__name__}")
+    print(f"    s * 2   : {type(s * 2).__name__}")
+    print(f"    s.sum() : {type(s.sum()).__name__}")
+    print(f"    s[0]    : {type(s[0]).__name__}")
 
 
 def main(matricula: int = MATRICULA) -> None:

@@ -210,6 +210,10 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
     """
 
+    # Verifica se contagens não é um ndarray 1D de inteiros
+    if not isinstance(contagens, np.ndarray) or contagens.ndim != 1 or contagens.dtype.kind not in ("i", "u"):
+        raise ValueError("contagens deve ser um np.ndarray 1D com elementos inteiros.")
+    
     # Processamos os componentes do dicionário:
     lista = contagens.tolist()
     t_lista = sys.getsizeof(lista) + sum(sys.getsizeof(x) for x in lista)
