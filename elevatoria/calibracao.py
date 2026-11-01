@@ -71,7 +71,9 @@ class CurvaCalibracao:
         pontos = np.asarray(x, dtype=float)
         self._conferir_dominio(pontos)
         valores = self._interpolador(pontos)
+        
         return float(valores) if pontos.ndim == 0 else np.asarray(valores)
+    
 
     def derivada(self, x: float) -> float:
         """Derivada exata do interpolador em `x`."""

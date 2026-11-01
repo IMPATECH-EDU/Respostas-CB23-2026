@@ -40,6 +40,7 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     exige, `tubulacao.altura_sistema(Q)`. Esta função:
 
     1. define `f(Q) = bomba(Q) - tubulacao.altura_sistema(Q)`;
+    
     2. resolve `f(Q) = 0` com `resolvedor.encontrar(f, a, b)`;
     3. devolve `PontoOperacao(vazao=Q, altura=bomba(Q), resultado=...)`, com `Q` a raiz
        encontrada e `resultado` o `ResultadoRaiz` devolvido pelo resolvedor.
@@ -49,7 +50,27 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    def f(Q):
+        return bomba(Q) - tubulacao.altura_sistema(Q)
+    if a >= b:
+        raise ValueError('O limite inferior não pode ser igual ou superior ao superior ')
+    if not (bomba.dominio[0]<= a <= bomba.dominio[1]) or not (bomba.dominio[0] <= b <= bomba.dominio[1]):
+        raise ValueError('os limites inferior e superiore devem estar dentro do domínio da bomba')
+
+    
+    raiz = resolvedor.encontrar(f, a, b)
+
+    if raiz.convergiu == False:
+        raise ValueError('Não existe o ponto de operação no intervalo fornecido')
+
+  
+    raiz_obtida = raiz.raiz
+    return PontoOperacao(vazao = raiz_obtida, altura = bomba(raiz_obtida), resultado= raiz)
+    
+
+
+
+    
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +87,16 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    lista_de_erros = []
+    for i in  range(len(historico)):
+        erro = abs(historico[len(historico)-1-i] - raiz)
+        if erro > piso*max(1, abs(raiz)):
+            lista_de_erros.append(erro)
+        if len(lista_de_erros) == 3:
+            break
+    if len(lista_de_erros) < 3:
+        raise ValueError('O método de cálculo de ordem de convergência não pôde ser implementado devido à falta de 3 erros acima de piso*max(1, abs(raiz))')
+
+    p = math.log(lista_de_erros[0]/lista_de_erros[1])/math.log(lista_de_erros[1]/lista_de_erros[2])
+    return p
+    
