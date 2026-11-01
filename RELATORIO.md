@@ -76,3 +76,13 @@ Testes de regressão: `test_um_milhao_de_decimos_de_litro`, `test_kahan_bem_melh
 ### R10 — Precisão × exatidão
 
 Os desvios são praticamente iguais (linear 0,569 kPa, spline 0,571 kPa): a precisão, isto é, a dispersão das leituras em torno da própria média, não depende da curva. Já o viés (média menos 380 kPa) é -1,812 kPa na linear e 0,018 kPa na spline: a exatidão, isto é, a proximidade do valor verdadeiro, é bem pior na linear. O erro padrão da média é só cerca de 0,023 kPa (desvio/√595), então a média de quase 600 leituras reduz o erro aleatório, mas não o viés: ele vem da interpolação linear (erro máximo de 2,88 kPa), é sistemático e igual em todas as leituras, e por isso não se cancela ao tirar a média.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção gasta sempre 44 iterações porque o intervalo inicial é o mesmo ([2, 15], largura 13) e cada iteração o divide ao meio: o número de passos é ⌈log2(13/tol)⌉ = 44 para tol = 1e-12, e não depende de f nem do Reynolds. Ordem de convergência 2 significa e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada iteração. Com Re = 1e4, os erros foram 2,9e+00 → 5,0e-02 → 2,3e-05 → 5,0e-12 e a ordem estimada deu 2,00. O Newton falha e a bissecção não quando a derivada é zero (ou quase) em alguma aproximação, ou quando o ponto inicial é ruim e as iterações divergem, como em f(x) = x^(1/3), de raiz 0, em que cada passo dobra a distância. A bissecção só precisa da troca de sinal em [a, b] e sempre converge.
+
+### R12 — Issue #9
+
+Testes de regressão: `test_poucas_iteracoes_para_a_raiz_de_dois`, `test_derivada_recalculada_a_cada_iteracao`, `test_erro_cai_com_o_quadrado_a_cada_passo` e `test_colebrook_re_1e4_com_cinco_ou_seis_iteracoes`; os quatro falhavam antes da correção. Com a derivada calculada só no ponto inicial, a iteração vira `x ← x − f(x)/f'(x0)` (método da corda): o erro é multiplicado a cada passo por um fator constante, ≈ |1 − f'(raiz)/f'(x0)|, que não é zero, então a convergência é linear. Recalculando f'(x_k), esse fator tende a zero e o erro passa a cair com o quadrado do anterior. Os testes de aceitação só conferem se a raiz sai certa (a corda também chega, com mais passos) e não contam iterações nem medem a ordem; no Colebrook com Re = 1e4 são 5 iterações após a correção, contra 10 antes. Correção: mover `derivada = self._derivada(f, x)` para dentro do laço.
