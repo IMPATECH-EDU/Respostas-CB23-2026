@@ -5,7 +5,18 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import por_tag
+from elevatoria.dados import ler_log, por_tag
+
+class TestLerLogAdicionais(unittest.TestCase):
+    """Regras para o contrato de ler_log que os testes de aceitação não verificam."""
+
+    def test_data_impossivel(self):
+        """Uma linha com mês impossível casa com LINHA, mas vai para as inválidas."""
+        valida = "2026-10-05 08:00:00 INFO PT101 contagens=131"
+        impossivel = "2026-13-05 08:00:00 INFO PT101 contagens=131"
+        registros, invalidas = ler_log(valida + "\n" + impossivel)
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(invalidas, [impossivel])
 
 
 class TestPorTagExemplo(unittest.TestCase):
