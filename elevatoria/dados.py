@@ -97,7 +97,7 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
         if not (linha_boa:= LINHA.fullmatch(linha)): # Se a linha não casar com o padrão, adicionamos ela à lista de inválidas e pulamos para a próxima.
             invalidas.append(linha)
             continue
-        instante_log = datetime.strptime(f"{linha_boa['data']} {linha_boa['hora']}", "%Y-%m-%d %H:%M:%S") # Montado o instante com a data e hora linha válida.
+        # instante_log = datetime.strptime(f"{linha_boa['data']} {linha_boa['hora']}", "%Y-%m-%d %H:%M:%S") # Montado o instante com a data e hora linha válida.
         try:
             instante_log = datetime.strptime(
                 f"{linha_boa['data']} {linha_boa['hora']}", "%Y-%m-%d %H:%M:%S"
