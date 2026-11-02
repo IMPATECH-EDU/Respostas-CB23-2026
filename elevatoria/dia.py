@@ -49,7 +49,6 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
             f"Número de pontos ({x_arr.size}) é menor do que o necessário ({grau + 1}) para grau {grau}."
         )
 
-    # Devolve coeficientes em ordem crescente [c0, c1, ..., c_grau]
     coefs = np.polynomial.polynomial.polyfit(x_arr, y_arr, grau)
     return np.asarray(coefs, dtype=float)
 
@@ -92,37 +91,32 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     if t_arr.size != q_arr.size:
         raise ValueError(f"t e vazao devem ter o mesmo tamanho. Recebido {t_arr.size} e {q_arr.size}.")
 
-    # Validação da presença dos limites das faixas tarifárias no vetor t
     limites_obrigatorios = {0.0, 18.0, 21.0, 24.0}
-    for faixa in FAIXAS_TARIFARIAS:
-        limites_obrigatorios.add(float(faixa.inicio))
-        limites_obrigatorios.add(float(faixa.fim))
+    for inicio, fim, _ in FAIXAS_TARIFARIAS:
+        limites_obrigatorios.add(float(inicio))
+        limites_obrigatorios.add(float(fim))
 
     for lim in limites_obrigatorios:
         if not np.any(np.isclose(t_arr, lim)):
             raise ValueError(f"O limite de faixa {lim}h não está presente nos instantes de t.")
 
-    # 1. Altura, rendimento e potência
     altura = np.polynomial.polynomial.polyval(q_arr, coef_altura)
     rendimento = np.polynomial.polynomial.polyval(q_arr, coef_rendimento)
     potencia = np.vectorize(potencia_eletrica)(q_arr, altura, rendimento)
 
-    # 2. Volume acumulado (m³) = 3.6 * ∫ Q dt (com Q em L/s e t em h)
     int_q = integrador.integrar_tabela(t_arr, q_arr)
     volume_m3 = float(3.6 * int_q)
 
-    # 3. Energia total acumulada (kWh) = ∫ P dt (com P em kW e t em h)
     energia_kwh = float(integrador.integrar_tabela(t_arr, potencia))
 
-    # 4. Custos por faixa tarifária
     custos_faixas = []
-    for faixa in FAIXAS_TARIFARIAS:
-        mascara = (t_arr >= faixa.inicio) & (t_arr <= faixa.fim)
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        mascara = (t_arr >= inicio) & (t_arr <= fim)
         t_faixa = t_arr[mascara]
         pot_faixa = potencia[mascara]
 
         int_pot_faixa = integrador.integrar_tabela(t_faixa, pot_faixa)
-        custo_faixa = float(faixa.tarifa * int_pot_faixa)
+        custo_faixa = float(tarifa * int_pot_faixa)
         custos_faixas.append(custo_faixa)
 
     custo_total = float(sum(custos_faixas))
