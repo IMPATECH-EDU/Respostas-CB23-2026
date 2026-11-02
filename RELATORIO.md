@@ -63,7 +63,7 @@ Python 3.14.3, NumPy 2.5.3, SciPy 1.18.1, fornecido 4.0 e matrícula 3460.
 
 ### R8 — Derivada numérica
 
-Quando o valor de \(h\) diminui, a aproximação da derivada fica inicialmente mais precisa, pois o erro de truncamento é reduzido. Porém, quando \(h\) fica muito pequeno, os valores utilizados na subtração ficam muito próximos, causando perda de algarismos significativos. Como essa diferença é dividida por \(h\), o erro de arredondamento acaba aumentando. Em \(h=10^{-14}\), `1000 + 1e-14` resulta em `1000`, devido a precisão limitada dos números de ponto flutuante, fazendo com que o numerador seja zero e o erro absoluto fique igual ao valor da derivada exata.
+Quando o valor de \(h\) diminui, a aproximação da derivada fica inicialmente mais precisa, pois o erro de truncamento é reduzido. Porém, quando \(h\) fica muito pequeno, os valores utilizados na subtração ficam muito próximos, causando perda de algarismos significativos. Como essa diferença é dividida por \(h\), o erro de arredondamento acaba aumentando. Em \(h=10^{-14}\), `1000 + 1e-14` resulta em `1000`, devido à precisão limitada dos números de ponto flutuante, fazendo com que o numerador seja zero e o erro absoluto fique igual ao valor da derivada exata.
 
 ### R9 — Issue #7
 
@@ -81,3 +81,13 @@ A bissecção começa sempre com o mesmo intervalo `[2, 15]` e a mesma tolerânc
 ### R12 — Issue #9
 
 Antes da correção, a derivada era calculada apenas no primeiro ponto e permanecia fixa durante as iterações. Por isso, em vez de convergir quadraticamente, o Newton convergia de forma linear e precisava de 10 iterações. Os testes do professor não identificavam o problema porque verificavam apenas se o método encontrava a raiz, sem avaliar sua velocidade. Para identificar essa falha, criamos os testes `test_newton_com_derivada_exata` e `test_newton_com_derivada_numerica`, que falhavam antes da correção e passaram depois.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+Quando integramos o custo do dia inteiro de uma vez, acabamos incluindo as mudanças bruscas de tarifa na mesma integral, o que prejudica a precisão dos métodos. Na execução, as ordens foram `1,00` para o trapézio e `0,65` para Simpson. Ao separar a integração por faixas tarifárias, recuperamos as ordens `2,00` e `4,00`, respectivamente, pois evitamos essas descontinuidades dentro dos intervalos.
+
+### R14 — Issue #11
+
+O trapézio subestimava o volume porque usava a largura do primeiro intervalo em todos os cálculos, mesmo com intervalos de 15 e 30 minutos causados pelas falhas do SCADA. Antes da correção, calculou `3560,1 m³`, com erro de `8,43%`; depois, chegou a `3890,0 m³`, com erro de apenas `0,05%`, próximo dos `3888,0 m³` de conferência. Os testes de aceitação utilizavam malhas uniformes; nossos testes foram `test_trapezio_usa_largura_de_cada_intervalo` e `test_trapezio_com_vazao_constante`. O Simpson não podia ser usado diretamente porque exige pontos igualmente espaçados.
