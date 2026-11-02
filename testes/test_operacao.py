@@ -4,12 +4,13 @@ Regras: pelo menos 4 testes seus (o exemplo abaixo não conta), uma docstring em
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou math.isclose, a não
 ser que a igualdade exata seja justamente o que você quer testar.
 """
+import math
 import unittest
 
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.operacao import ordem_convergencia, ponto_operacao
 from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import Tubulacao
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -23,6 +24,29 @@ class TestBisseccaoExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+
+class TestNewtonRegressao(unittest.TestCase):
+    """Desempenho e convergência quadrática previstos para o método de Newton."""
+
+    def test_colebrook_converge_em_ate_seis_iteracoes(self) -> None:
+        """Colebrook com Re = 10⁴ converge em até seis iterações com tol = 1e-12."""
+        fator, resultado = fator_atrito_colebrook(1e4, 0.15e-3 / 0.20, Newton(tol=1e-12))
+        self.assertTrue(resultado.convergiu)
+        self.assertAlmostEqual(fator, 0.03202, delta=5e-5)
+        self.assertLessEqual(resultado.iteracoes, 6)
+
+    def test_ordem_quadratica_com_derivada_analitica(self) -> None:
+        """Newton com derivada analítica apresenta ordem próxima de dois para x² - 2."""
+        resultado = Newton(tol=1e-12, df=lambda x: 2.0 * x).encontrar(
+            lambda x: x * x - 2.0, 0.0, 2.0
+        )
+        raiz = math.sqrt(2.0)
+        self.assertTrue(resultado.convergiu)
+        self.assertAlmostEqual(resultado.raiz, raiz, places=11)
+        # Evita estimar a ordem com erros já próximos do arredondamento.
+        ordem = ordem_convergencia(resultado.historico, raiz, piso=1e-10)
+        self.assertAlmostEqual(ordem, 2.0, delta=0.1)
 
 
 class TestPontoOperacaoContrato(unittest.TestCase):
