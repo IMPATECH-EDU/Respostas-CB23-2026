@@ -63,6 +63,12 @@ class TestMedia(unittest.TestCase):
         r = s.reamostrar(3)
         self.assertEqual(len(r), 2)
         self.assertTrue(np.allclose(r, [2.0, 5.0]))
+    def test_janela_igual_ao_tamanho(self):
+        """Com janela igual a len(série) o resultado tem 1 valor, que é a média de tudo."""
+        s = SerieTemporal.de_lista([2, 4, 6, 8])
+        mm = s.media_movel(4)
+        self.assertEqual(len(mm), 1)
+        self.assertAlmostEqual(float(mm[0]), 5.0)
 
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
