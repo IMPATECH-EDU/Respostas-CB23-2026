@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.linalg import solve_triangular
 
 from elevatoria.integracao import Integrador
 from fornecido.energia import FAIXAS_TARIFARIAS, potencia_eletrica
@@ -39,9 +40,33 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     - a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
 
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
-    houver menos pontos que coeficientes (`len(x) < grau + 1`).
+    houver menos pontos que coeficientes (`len(x) < grau + 1`). Também levanta `ValueError` se
+    `grau` não for inteiro ou se houver menos valores **distintos** de `x` que coeficientes: com
+    abscissas repetidas o polinômio não fica determinado.
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError(f"x e y devem ser vetores 1D do mesmo tamanho; recebi {x.shape} e {y.shape}")
+    if isinstance(grau, bool) or not isinstance(grau, (int, np.integer)):
+        raise ValueError(f"o grau deve ser um inteiro; recebi {grau!r}")
+    if grau < 0:
+        raise ValueError(f"o grau não pode ser negativo; recebi {grau}")
+    n_coef = grau + 1
+    if x.size < n_coef:
+        raise ValueError(f"grau {grau} tem {n_coef} coeficientes, mas só há {x.size} pontos")
+    if np.unique(x).size < n_coef:
+        raise ValueError(f"grau {grau} pede {n_coef} valores distintos de x; "
+                         f"há só {np.unique(x).size}")
+
+    # Mínimos quadrados pela fatoração QR, sem montar as equações normais VᵀV c = Vᵀy: elas
+    # elevariam ao quadrado o número de condição da matriz de Vandermonde V.
+    V = np.vander(x, n_coef, increasing=True)
+    # As colunas 1, x, x², ... têm tamanhos muito diferentes (no ensaio, x vai a 100 e x² a
+    # 10 000). Dividir cada coluna pela sua norma equilibra a matriz; no fim, desfaz-se a escala.
+    escala = np.linalg.norm(V, axis=0)
+    Q, R = np.linalg.qr(V / escala)             # V/escala = Q·R, Q ortonormal, R triangular
+    return solve_triangular(R, Q.T @ y) / escala
 
 
 @dataclass(frozen=True)
