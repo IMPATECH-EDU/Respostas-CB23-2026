@@ -6,7 +6,11 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.integracao import Simpson
+import numpy as np
+
+from elevatoria.integracao import Simpson, Trapezio
+from fornecido.energia import vazao_registrada
+from fornecido.simulador import gerar_demanda
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -17,8 +21,33 @@ class TestSimpsonExemplo(unittest.TestCase):
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+# ---------------------------------------------------------------------------------------
+# Issue #11: testes de regressão do trapézio (escritos antes da correção)
+# ---------------------------------------------------------------------------------------
+class TestTrapezioComFalhas(unittest.TestCase):
+    """Issue #11: o trapézio tem que respeitar a largura de cada intervalo da tabela."""
+
+    def test_reta_em_malha_irregular(self):
+        """O trapézio é exato para uma reta, qualquer que seja o espaçamento dos pontos."""
+        x = np.array([0.0, 1.0, 3.0])                # intervalos de largura 1 e 2
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, 2 * x + 1), 12.0)
+
+    def test_apagar_leituras_de_uma_reta(self):
+        """Tirar leituras de uma vazão que varia em linha reta não muda o volume."""
+        t = np.arange(0.0, 24.0 + 1e-9, 0.25)
+        q = 40.0 + 0.5 * t
+        manter = np.ones(t.size, dtype=bool)
+        manter[[5, 6, 40, 77]] = False               # um buraco de 45 min e dois de 30 min
+        completo = Trapezio().integrar_tabela(t, q)
+        self.assertAlmostEqual(Trapezio().integrar_tabela(t[manter], q[manter]), completo)
+
+    def test_volume_do_dia_com_falhas(self):
+        """O registro com 8 leituras perdidas dá quase o mesmo volume que o registro completo."""
+        t, q = vazao_registrada(3484)
+        t_completo, q_completo = gerar_demanda(3484)
+        com_falhas = Trapezio().integrar_tabela(t, q)
+        completo = Trapezio().integrar_tabela(t_completo, q_completo)
+        self.assertLess(abs(com_falhas / completo - 1), 0.005)
 
 
 if __name__ == "__main__":
