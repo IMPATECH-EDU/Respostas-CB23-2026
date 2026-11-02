@@ -35,7 +35,7 @@ Previsões registradas no commit: 3a0f239
 | Tempo do laço / tempo vetorizado | 40x | cerca de 10,7 vezes |
 | Tempo da compreensão / tempo do laço | 68% | 52% |
 
-<!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
+A maior diferença foi no tempo do laço / tempo vetorizado. Para isso, temos a conta * 600 / 4095,percorrendo e criando um vetor de um milhão de elementos. A versão do Python e a variação entre execuções também são motivos. uint16 * 20 dá 16364 porque 4095 × 20 dá 81900, que passa do máximo (65535) e o valor dá a volta: 81900 − 65536 = 16364. Para as contagens (0 a 4095) escolheria uint16, que ocupa só 2 bytes por número, convertendo para um tipo maior antes de multiplicar, para evitar o overflow. Para os kPa escolheria float64, por guardar mais dígitos.
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
