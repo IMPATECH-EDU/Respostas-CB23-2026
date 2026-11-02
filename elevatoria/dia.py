@@ -29,19 +29,29 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     coeficientes estão em ordem **crescente**: avalie o polinômio com
     `np.polynomial.polynomial.polyval(x, coeficientes)`.
 
-    O NumPy e o SciPy oferecem mais de um método para resolver esse problema, e a escolha é
-    sua. Alguns pontos de partida, para ler na documentação:
-
-    - `np.polynomial.polynomial.polyfit`;
-    - `np.polyfit` (atenção: devolve os coeficientes em ordem **decrescente**);
-    - `np.linalg.lstsq` ou `scipy.linalg.lstsq`, aplicados à matriz
-      `np.vander(x, grau + 1, increasing=True)`;
-    - a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
-
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x_arr = np.asarray(x, dtype=float)
+    y_arr = np.asarray(y, dtype=float)
+
+    if x_arr.ndim != 1 or y_arr.ndim != 1:
+        raise ValueError("Os vetores x e y devem ser unidimensionais (1D).")
+
+    if x_arr.size != y_arr.size:
+        raise ValueError(f"x e y devem ter o mesmo tamanho. Recebido: {x_arr.size} e {y_arr.size}.")
+
+    if grau < 0:
+        raise ValueError(f"O grau do polinômio deve ser não negativo. Recebido: {grau}.")
+
+    if x_arr.size < grau + 1:
+        raise ValueError(
+            f"Número de pontos ({x_arr.size}) é menor do que o necessário ({grau + 1}) para grau {grau}."
+        )
+
+    # Devolve coeficientes em ordem crescente [c0, c1, ..., c_grau]
+    coefs = np.polynomial.polynomial.polyfit(x_arr, y_arr, grau)
+    return np.asarray(coefs, dtype=float)
 
 
 @dataclass(frozen=True)
@@ -76,4 +86,50 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t_arr = np.asarray(t, dtype=float)
+    q_arr = np.asarray(vazao, dtype=float)
+
+    if t_arr.size != q_arr.size:
+        raise ValueError(f"t e vazao devem ter o mesmo tamanho. Recebido {t_arr.size} e {q_arr.size}.")
+
+    # Validação da presença dos limites das faixas tarifárias no vetor t
+    limites_obrigatorios = {0.0, 18.0, 21.0, 24.0}
+    for faixa in FAIXAS_TARIFARIAS:
+        limites_obrigatorios.add(float(faixa.inicio))
+        limites_obrigatorios.add(float(faixa.fim))
+
+    for lim in limites_obrigatorios:
+        if not np.any(np.isclose(t_arr, lim)):
+            raise ValueError(f"O limite de faixa {lim}h não está presente nos instantes de t.")
+
+    # 1. Altura, rendimento e potência
+    altura = np.polynomial.polynomial.polyval(q_arr, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(q_arr, coef_rendimento)
+    potencia = np.vectorize(potencia_eletrica)(q_arr, altura, rendimento)
+
+    # 2. Volume acumulado (m³) = 3.6 * ∫ Q dt (com Q em L/s e t em h)
+    int_q = integrador.integrar_tabela(t_arr, q_arr)
+    volume_m3 = float(3.6 * int_q)
+
+    # 3. Energia total acumulada (kWh) = ∫ P dt (com P em kW e t em h)
+    energia_kwh = float(integrador.integrar_tabela(t_arr, potencia))
+
+    # 4. Custos por faixa tarifária
+    custos_faixas = []
+    for faixa in FAIXAS_TARIFARIAS:
+        mascara = (t_arr >= faixa.inicio) & (t_arr <= faixa.fim)
+        t_faixa = t_arr[mascara]
+        pot_faixa = potencia[mascara]
+
+        int_pot_faixa = integrador.integrar_tabela(t_faixa, pot_faixa)
+        custo_faixa = float(faixa.tarifa * int_pot_faixa)
+        custos_faixas.append(custo_faixa)
+
+    custo_total = float(sum(custos_faixas))
+
+    return ResumoDia(
+        volume_m3=volume_m3,
+        energia_kwh=energia_kwh,
+        custo_reais=custo_total,
+        custo_por_faixa=tuple(custos_faixas),
+    )
