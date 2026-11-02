@@ -23,7 +23,7 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### R4 — Escala nominal
 
-<!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
+A pressão do recalque com a escala nominal (a reta, c·600/4095) dá 262 kPa, mas o valor de conferência é 380 kPa. A hipótese, então, é de que o transmissor não segue uma reta, mas alguma outra curva que só coincide com a reta em 0 e em 4095 contagens. Em fornecido/simulador.py (funções p_real e c_real), temos que o transmissor não segue uma reta, mas sim uma função seno. Rodando c_real(380), temos cerca de 1788 contagens. Na escala nominal, isso dá 262 kPa, que é diferente de 380, então a reta não representa mesmo o transmissor. 
 
 ### R5 — Previsão × medição (Etapa 3)
 
