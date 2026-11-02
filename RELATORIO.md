@@ -31,9 +31,9 @@ Previsões registradas no commit: 3a0f239
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | 18x | |
-| Tempo do laço / tempo vetorizado | 40x | |
-| Tempo da compreensão / tempo do laço | 68% | |
+| Memória da lista / memória do `uint16` | 18x | cerca de 18 vezes |
+| Tempo do laço / tempo vetorizado | 40x | cerca de 10,7 vezes |
+| Tempo da compreensão / tempo do laço | 68% | 52% |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
