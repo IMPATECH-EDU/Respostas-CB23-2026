@@ -41,13 +41,13 @@ A maior diferença foi no tempo do laço / tempo vetorizado. Para isso, temos a 
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | np.ndarray | |
-| `s[1:]` | np.ndarray | |
-| `s * 2` | np.ndarray | |
-| `s.sum()` | np.uint64 | |
-| `s[0]` | np.uint16 | |
+| `s + s` | np.ndarray | SerieTemporal |
+| `s[1:]` | np.ndarray | SerieTemporal |
+| `s * 2` | np.ndarray | SerieTemporal |
+| `s.sum()` | np.uint64 | SerieTemporal |
+| `s[0]` | np.uint16 | float64 |
 
-<!-- Explique o resultado que mais surpreendeu você. -->
+O que mais me surpreendeu foi o s[0] sair float64. Eu esperava uint16, pois ascontagens são positivas e cabem em 16 bits, mas ler_log converte os números para float e de_lista converte de novo com `dtype=float`, então a série nunca tem inteiros. Eu também errei s + s, s[1:] e s * 2, pensei que seriam np.ndarray, mas agora entendi que o NumPy cria o resultado a partir da própria SerieTemporal, daí a subclasse fica sendo a mesma. Em s.sum(), errei a mesma coisa. Pensei que seria np.uint64 e saiu SerieTemporal, então foi mais por falta de atenção.
 
 ### R7 — Issue #4
 
