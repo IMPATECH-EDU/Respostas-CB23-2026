@@ -20,7 +20,7 @@ Por exemplo, uma falha de comunicação com a RTU poderia interromper as leitura
 
 ### R3 — Late binding
 
-As lambdas de `errados` consultam `k` quando são chamadas. Ao terminar a compreensão, essa variável contém o fator 0.1, por isso retorna 409,5 que é resultado de `4095 * 0.1`. 
+As lambdas de `errados` consultam `k` quando são chamadas. Ao terminar a compreensão, essa variável contém o fator 0.1, por isso retorna 409,5 que é resultado de `4095 * 0.1`.
 Em `criar_conversores`, `fator=fator` é avaliado na criação de cada lambda, preservando o fator da tag.
 
 ### R4 — Escala nominal
@@ -99,3 +99,23 @@ Para PT102, os desvios foram 0,536 kPa com a curva linear e 0,537 kPa com a spli
 Os viéses foram -1,806 kPa e +0,024 kPa, respectivamente. A spline ficou mais próxima dos 380 kPa de referência e foi mais exata.
 Depois de descartar cinco espúrias, a média usa 595 leituras, o que reduz o erro aleatório da média, mas não elimina o viés da curva de calibração.
 O erro da interpolação linear se repete nas conversões e permanece mesmo ao aumentar o número de leituras.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+Nos três casos, a bissecção usa [2,15] e tol=1e-12, e a largura é 13/2^k depois de k divisões.
+São necessárias 44 divisões para ficar abaixo da tolerância, independentemente do Reynolds nesses casos.
+Newton usou 5, 4 e 3 iterações, com ordens estimadas 2,00, 1,98 e 2,00.
+Para Re=10⁴, os erros 5,0e-2 → 2,3e-5 → 5,0e-12 ilustram e_{k+1}≈C·e_k².
+Essa ordem quadrática significa aproximadamente dobrar os dígitos corretos por passo, perto da raiz.
+Para x³−1 em [-2,2], Newton com df=3x² começa com derivada nula em zero. A bissecção encontra a raiz 1.
+
+### R12 — Issue #9
+
+As regressões são test_colebrook_converge_em_ate_seis_iteracoes
+e test_ordem_quadratica_com_derivada_analitica, commitadas em 10c0db1 antes da correção 1b69838.
+A derivada ficava fixa no ponto inicial, embora as aproximações mudassem a cada passo.
+Em geral, isso mantém um termo linear no erro, e_{k+1}≈c·e_k, produzindo ordem próxima de 1.
+Recalculá-la em cada aproximação restaurou a ordem próxima de 2 observada na execução.
+A aceitação conferia os resultados finais, sem exigir rapidez nem ordem do histórico real de Newton.
