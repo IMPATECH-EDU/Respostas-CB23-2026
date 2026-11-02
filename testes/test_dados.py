@@ -6,6 +6,8 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 import unittest
 
 from elevatoria.dados import ler_log, por_tag
+from elevatoria.serie import SerieTemporal
+import numpy as np
 
 class TestLerLogAdicionais(unittest.TestCase):
     """Regras para o contrato de ler_log que os testes de aceitação não verificam."""
@@ -36,6 +38,19 @@ class TestPorTagExemplo(unittest.TestCase):
     def test_lista_vazia(self):
         """Sem registros, por_tag devolve uma lista vazia."""
         self.assertEqual(por_tag([], "PT101"), [])
+
+class TestMedia(unittest.TestCase):
+    """Testes de regressão da issue #4 (media_movel)."""
+
+    def test_serie_de_seis(self):
+        """Média móvel de [2,4,...,12] com janela 2 deve ter 5 valores: [3,5,7,9,11]."""
+        s = SerieTemporal.de_lista([2, 4, 6, 8, 10, 12])
+        self.assertTrue(np.allclose(s.media_movel(2), [3, 5, 7, 9, 11])) 
+
+    def test_tamanho_600_janela_30(self):
+        """Série de 600 pontos com janela 30 deve render 571 valores."""
+        s = SerieTemporal.de_lista(np.arange(600.0))
+        self.assertEqual(len(s.media_movel(30)), 571)
 
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
