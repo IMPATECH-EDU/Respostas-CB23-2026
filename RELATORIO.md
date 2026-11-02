@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — João Filipe Mota Ferreira (3475)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -15,7 +15,7 @@ Python 3.13.15 | NumPy 2.5.4 | fornecido 1.0
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
 `"PT101aa"`
-Se utilizássesmos `re.match`, haveria falsos positivos, uma vez que ele não verifica a string em sua totalidade e strings com excessos seriam considerados, mesmo quando não deviam
+Se utilizássesmos `re.match`, haveria falsos positivos, uma vez que ele não verifica a string em sua totalidade e strings com excessos seriam considerados, mesmo quando não deviam.
 
 ### R2 — Linhas inválidas
 

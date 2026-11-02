@@ -19,6 +19,23 @@ class TestPorTagExemplo(unittest.TestCase):
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
+from elevatoria.serie import SerieTemporal
+import numpy as np
+
+class TestSerieTemporalCustom(unittest.TestCase):
+    def setUp(self):
+        self.s = SerieTemporal.de_lista([1.0, 4.0, 9.0, 16.0, 25.0])
+
+    def test_media_movel_tamanho_e_valores(self):
+        mm_2 = self.s.media_movel(2)
+        self.assertEqual(len(mm_2), 4)
+        self.assertTrue(np.allclose(mm_2, [2.5, 6.5, 12.5, 20.5]))
+
+        mm_3 = self.s.media_movel(3)
+        self.assertEqual(len(mm_3), 3)
+        self.assertTrue(np.allclose(mm_3, [14/3, 29/3, 50/3]))
+
+    
 
 if __name__ == "__main__":
     unittest.main()
