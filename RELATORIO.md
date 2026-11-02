@@ -49,11 +49,11 @@ Previsões registradas no commit: d8bc5f0 <!-- cole o hash curto do commit de pr
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` | `ndarray` | |
+| `s[1:]` | `ndarray` | |
+| `s * 2` | `ndarray` | |
+| `s.sum()` | `ndarray` | |
+| `s[0]` | `float64` | |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
 
