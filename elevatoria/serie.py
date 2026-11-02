@@ -32,12 +32,13 @@ class SerieTemporal(np.ndarray):
         """
         if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
-        acumulada = np.cumsum(self)
-        return (acumulada[janela:] - acumulada[:-janela]) / janela
+        cumsum = np.cumsum(np.insert(self, 0, 0.0))
+        res = (cumsum[janela:] - cumsum[:-janela]) / janela
+        return res.view(SerieTemporal)
 
     def variacao(self) -> SerieTemporal:
         """Diferenças entre pontos consecutivos (`n - 1` valores)."""
-        return np.diff(self)
+        return np.diff(self).view(SerieTemporal)
 
     def amplitude(self) -> float:
         """Máximo menos mínimo da série, como `float`."""
@@ -51,7 +52,7 @@ class SerieTemporal(np.ndarray):
         desvio = float(self.std(ddof=1))
         if desvio == 0.0:
             raise ValueError("não é possível normalizar uma série de desvio zero")
-        return (self - self.mean()) / desvio
+        return ((self - self.mean()) / desvio).view(SerieTemporal)
 
     def reamostrar(self, k: int) -> SerieTemporal:
         """Médias de blocos consecutivos de `k` pontos: `len(self) // k` valores.
@@ -60,4 +61,8 @@ class SerieTemporal(np.ndarray):
         completam um bloco são descartados. Usa `reshape`, sem laços. Levanta `ValueError`
         se `k < 1` ou `k > len(self)`.
         """
-        raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")
+        if k < 1 or k > len(self):
+            raise ValueError(f"k deve estar entre 1 e {len(self)}; recebi {k}")
+        n_blocos = len(self) // k
+        truncado = self[: n_blocos * k]
+        return truncado.reshape(n_blocos, k).mean(axis=1).view(SerieTemporal)
