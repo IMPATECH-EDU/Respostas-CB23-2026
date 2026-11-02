@@ -87,14 +87,16 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
                 instante = datetime.strptime(f"{linha.group("data")} {linha.group("hora")}", "%Y-%m-%d %H:%M:%S")
                 nivel = linha.group("nivel")
                 tag = linha.group("tag")
+                pares = re.findall(r"(\w+)=(\S+)", linha.group("resto"))
+                if not pares:
+                    invalidas.append(linha_bruta)
+                    continue
                 valores = dict()
-                for par in linha.group('resto').split():
-                    _temp = re.fullmatch(r"(\w+)=(\S+)", par)
-                    chave, valor = _temp[1], _temp[2]
+                for chave, valor_texto in pares:
                     try:
-                        valor = float(valor)
+                        valor: float | str = float(valor_texto)
                     except ValueError:
-                        pass
+                        valor = valor_texto
                     valores[chave] = valor
                 registros.append(Registro(instante, nivel, tag, valores))
                 continue
