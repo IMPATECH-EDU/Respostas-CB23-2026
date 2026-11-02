@@ -113,22 +113,26 @@ def etapa3() -> None:
     memoria = medir_memoria(contagens)
     bytes_lista = memoria["list"]
 
+    print()
     print(f"{'Estrutura':<12} | {'Bytes/elem':>10} | {'Bytes totais':>12} | {'Razão (vs list)':>15}")
-    print("-" * 57)
+    print("-" * 58)
 
     for estrutura, total_bytes in memoria.items():
         bytes_por_elem = total_bytes / n
         razao = total_bytes / bytes_lista
         
-        print(f"{estrutura:<12} | {bytes_por_elem:>10.1f} | {total_bytes:>12} | {razao:>14.2%}")
+        print(f"{estrutura:<12} | {bytes_por_elem:>10.1f} | {total_bytes:>12} | {razao:>15.2%}")
+    print()
 
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
+    
 
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
     tempo_laco = tempos["laço"]
 
+    print()
     print(f"{'Método':<15} | {'Tempo (ms)':>12} | {'Aceleração (vs laço)':>20}")
     print("-" * 53)
 
@@ -137,6 +141,8 @@ def etapa3() -> None:
         aceleracao = tempo_laco / tempo_s
         
         print(f"{metodo:<15} | {tempo_ms:>12.3f} | {aceleracao:>19.1f}x")
+    print()
+    
     assert tempos["laço"] / tempos["vetorizado"] >= 5
 
     # (c) Tipos e overflow: imprima os dois resultados.
@@ -155,11 +161,18 @@ def etapa4(registros: list) -> None:
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
     assert len(s) == 600 and s.amplitude() > 300
+    print(f"Média: {s.mean()} | Desvio: {s.std(ddof=1)} | Amplitude: {s.amplitude()}")
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
     assert len(mm) == 571
+    print()
+    print(f"{'Valor':<10} | {'Média movel':>15} | {'Série':>15}")
+    print("-" * (10 + 15 + 15 + 3 * 2))
+    print(f"{'Mínimo':<10} | {mm.min():>15.3f} | {s.min():>15}")
+    print(f"{'Máximo':<10} | {mm.max():>15.3f} | {s.max():>15}")
+    print()
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
@@ -167,7 +180,11 @@ def etapa4(registros: list) -> None:
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    print(type(s+s).__name__)
+    print(type(s[1:]).__name__)
+    print(type(s * 2).__name__)
+    print(type(s.sum()).__name__)
+    print(type(s[0]).__name__)
 
 
 def main(matricula: int = MATRICULA) -> None:

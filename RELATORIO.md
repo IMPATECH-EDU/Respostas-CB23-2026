@@ -15,7 +15,7 @@ Python 3.13.15 | NumPy 2.5.4 | fornecido 1.0
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
 `"PT101aa"`
-Se utilizássesmos `re.match`, haveria falsos positivos, uma vez que ele não verifica a string em sua totalidade e strings com excessos seriam considerados, mesmo quando não deviam.
+Se utilizássesmos `re.match`, haveria falsos positivos, uma vez que ele não verifica a string em sua totalidade e strings com excessos seriam considerados, mesmo quando não deviam
 
 ### R2 — Linhas inválidas
 
@@ -49,14 +49,16 @@ Previsões registradas no commit: d8bc5f0 <!-- cole o hash curto do commit de pr
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | `ndarray` | |
-| `s[1:]` | `ndarray` | |
-| `s * 2` | `ndarray` | |
-| `s.sum()` | `ndarray` | |
-| `s[0]` | `float64` | |
+| `s + s` | `ndarray` |`SerieTemporal` |
+| `s[1:]` | `ndarray` |`SerieTemporal` |
+| `s * 2` | `ndarray` | `SerieTemporal` |
+| `s.sum()` | `ndarray` | `SerieTemporal` |
+| `s[0]` | `float64` | `float64` |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
+Surpreende-me o fato de que a maioria das operações sobre objetos do tipo `SerieTemporal` não tenham retorando um `ndarray`, mesmo sem que os métodos  da superclasse tenham sido sobrescrevidos. Isso parece ser um comportamento específico do numpy: em testes próprios, criar uma subclasse de `list` e somar duas instâncias ainda retorna uma `list` do Python, e não uma instância da classe filha.
 
 ### R7 — Issue #4
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
+O sintoma observado foi que havia menos valores no resultado da média móvel do que o esperado, como verificado pelo `test_media_movel_tamanho_e_valores`. O motivo é que o código original ignorava o primeiro valor da média móvel: a soma acumulada só considerava a partir do indice `janela`, que é o (janela+1)-ésimo item. Os testes de aceitação não pegaram o defeito porque a única coisa que faziam era verificar se o valor retornado era SerieTemporal e testar valores inválidos para `janela`. Além disso, o novo teste também verifica se o resultado produzido condiz com o esperado.
