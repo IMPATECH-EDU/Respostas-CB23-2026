@@ -90,23 +90,37 @@ situação em que o Newton falha e a bissecção não. -->
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
 
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+
 ## Declaração de uso de IA
 
 <!-- Exigida pela política de IA do plano de ensino de CB23. O enunciado do projeto autoriza
 IA para ajudar a escrever o código. Revise e complete antes de marcar o PR como pronto. -->
 
-**Onde usei.** Usei o Claude (Anthropic) no código dos Marcos 1 a 3:
+**Onde usei.** Usei o Claude (Anthropic) no código dos Marcos 1 a 4:
 
 - `elevatoria/dados.py` (issues #1 a #3): a IA partiu do meu rascunho de `LINHA`, `ler_log`,
   `contagem_por_tag`, `serie` e `criar_conversores`, corrigiu `valida_tag` e `serie`, trocou a
   lambda com valor padrão de `criar_conversores` por uma closure e escreveu a issue #3;
 - `elevatoria/serie.py` (correção da #4 e `reamostrar`), `elevatoria/acumuladores.py` (#7),
-  `elevatoria/medicao.py` (#6), `elevatoria/raizes.py` (#9) e `elevatoria/operacao.py` (#8);
+  `elevatoria/medicao.py` (#6), `elevatoria/raizes.py` (#9), `elevatoria/operacao.py` (#8),
+  `elevatoria/integracao.py` (#11) e `elevatoria/dia.py` (#10);
 - os trechos completados do `marco1.py` e todos os testes de `testes/`;
 - as mensagens de commit e o rascunho da descrição do PR.
 
 **Como usei.** A IA escreveu o código e os testes a partir dos enunciados e das docstrings,
-rodou os testes e os três scripts e conferiu que cada teste de regressão falhava antes da
+rodou os testes e os quatro scripts e conferiu que cada teste de regressão falhava antes da
 correção correspondente. As previsões do R5 e do R6 são minhas.
 <!-- Complete com o que você leu, executou e conferiu na sua máquina, e com a forma como
-escreveu as respostas R1 a R12. -->
+escreveu as respostas R1 a R14. -->
