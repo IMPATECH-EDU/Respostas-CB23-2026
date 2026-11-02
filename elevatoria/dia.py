@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from numpy.polynomial import polynomial as P
 from scipy.linalg import solve_triangular
 
 from elevatoria.integracao import Integrador
@@ -99,6 +100,37 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Todas as integrais usam `integrador.integrar_tabela(x, y)`.
 
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
-    faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
+    faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`. Um `ValueError` do
+    integrador (por exemplo, `Simpson` com leituras faltando) não é tratado: ele chega a quem
+    chamou `dia_de_operacao`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t = np.asarray(t, dtype=float)
+    vazao = np.asarray(vazao, dtype=float)
+    if t.ndim != 1 or t.shape != vazao.shape:
+        raise ValueError(f"t e vazao devem ser vetores 1D do mesmo tamanho; recebi {t.shape} e {vazao.shape}")
+    limites = sorted({a for a, _, _ in FAIXAS_TARIFARIAS} | {b for _, b, _ in FAIXAS_TARIFARIAS})
+    faltando = [limite for limite in limites if not np.any(t == limite)]
+    if faltando:
+        raise ValueError(f"o registro não tem leitura nos limites das faixas {faltando} h")
+
+    altura = P.polyval(vazao, coef_altura)
+    rendimento = P.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)          # kW em cada instante
+
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)            # (L/s)·h = 3,6 m³
+    energia = integrador.integrar_tabela(t, potencia)
+    custos = tuple(tarifa * _integral_na_faixa(integrador, t, potencia, inicio, fim)
+                   for inicio, fim, tarifa in FAIXAS_TARIFARIAS)
+    return ResumoDia(volume_m3=float(volume), energia_kwh=float(energia),
+                     custo_reais=float(sum(custos)), custo_por_faixa=custos)
+
+
+def _integral_na_faixa(integrador: Integrador, t: np.ndarray, y: np.ndarray,
+                       inicio: float, fim: float) -> float:
+    """Integral de `y` só com os instantes `inicio <= t <= fim` (os dois limites entram).
+
+    A tarifa salta às 18 h e às 21 h. Dentro de uma faixa ela é constante e sai da integral;
+    uma integral que atravessasse o salto perderia a ordem da regra (Etapa 1(b) do marco4.py).
+    """
+    dentro = (t >= inicio) & (t <= fim)
+    return float(integrador.integrar_tabela(t[dentro], y[dentro]))
