@@ -49,7 +49,24 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"Intervalo inválido: a ({a}) deve ser menor que b ({b}).")
+
+    dom_min, dom_max = bomba.dominio
+    if a < dom_min or b > dom_max:
+        raise ValueError(f"Intervalo [{a}, {b}] fora do domínio da bomba [{dom_min}, {dom_max}].")
+
+    def f(q: float) -> float:
+        return float(bomba(q) - tubulacao.altura_sistema(q))
+
+    res = resolvedor.encontrar(f, a, b)
+    if not res.convergiu:
+        raise ValueError("O resolvedor de raízes não convergiu para o resultado esperado.")
+
+    q_raiz = float(res.raiz)
+    h_bomba = float(bomba(q_raiz))
+
+    return PontoOperacao(vazao=q_raiz, altura=h_bomba, resultado=res)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +83,18 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    limite_piso = piso * max(1.0, abs(raiz))
+    erros = [abs(float(x) - float(raiz)) for x in historico]
+    erros_validos = [e for e in erros if e > limite_piso]
+
+    if len(erros_validos) < 3:
+        raise ValueError(
+            f"Número insuficiente de erros válidos acima do piso ({len(erros_validos)} encontrados, necessário pelo menos 3)."
+        )
+
+    e_km1, e_k, e_kp1 = erros_validos[-3], erros_validos[-2], erros_validos[-1]
+
+    denom = math.log(e_k / e_km1)
+    num = math.log(e_kp1 / e_k)
+
+    return float(num / denom)
