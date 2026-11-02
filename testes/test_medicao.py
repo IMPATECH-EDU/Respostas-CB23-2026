@@ -5,6 +5,9 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual, math.isc
 np.allclose, a não ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import Registro
+from elevatoria.medicao import medir
 
 from elevatoria.acumuladores import AcumuladorIngenuo
 
@@ -38,8 +41,26 @@ class TestRegressãoAcumuladorKahan(unittest.TestCase):
         for _ in range(10):
             acumulador.adicionar(1e-16)
         self.assertGreater(acumulador.total, 1.0)
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #7 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+class TestContrato(unittest.TestCase):
+    """Testes de contrato para a função medir (Issue #6)."""
+
+    def test_erro_u_sistematica_negativa(self):
+        """u_sistematica negativa deve levantar ValueError."""
+        registros = [
+            Registro("2026-10-19T10:00:00", "PT101", "INFO", {"contagens": 1000}),
+            Registro("2026-10-19T10:00:01", "PT101", "INFO", {"contagens": 1005}),
+        ]
+        curva = CurvaCalibracao([0, 2047.5, 4095], [0, 300, 600], "linear")
+        with self.assertRaises(ValueError):
+            medir(registros, "PT101", curva, u_sistematica=-1.0)
+
+    def test_menos_de_duas_leituras_erro(self):
+        """Menos de duas leituras na tag tem que levantar ValueError."""
+        registros = [Registro("2026-10-19T10:00:00", "PT101", "INFO", {"contagens": 1000})]
+        curva = CurvaCalibracao([0, 2047.5, 4095], [0, 300, 600], "linear")
+        with self.assertRaises(ValueError):
+            medir(registros, "PT101", curva, u_sistematica=0.0)
 
 
 if __name__ == "__main__":
