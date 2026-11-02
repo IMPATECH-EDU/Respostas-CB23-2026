@@ -89,3 +89,17 @@ Em h = 1e-14, `1000 + 1e-14 == 1000` é `True`, pois o espaçamento entre floats
 * Precisão = dispersão das leituras em torno da própria média; Exatidão = proximidade dessa média ao valor real. 
 * Para PT102 as duas curvas têm a mesma precisão, mas exatidões bem diferentes. 
 * A média de aproximadamente 600 leituras reduz só o erro aleatório, já que seu sinal é variável e se cancela. O viés da curva linear é sistemático, note que todas as leituras por volta de 380 kPa passam pelo mesmo trecho da reta, o que erra a curva real sempre na mesma direção, assim a média converge para o valor errado.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+* A bissecção só depende do intervalo e de `tol`, uma vez que `[2, 15]` cai à metade a cada iteração até a largura ficar menor que 1e-12, e log2(13 / 1e-12) ≈ 43,6 dá 44 iterações, portanto a função e o Reynolds não interferem nesse resultado.
+* Ordem 2 significa `e_{k+1} ≈ C·e_k²`, ou seja, o número de dígitos corretos dobra a cada iteração. Para Re = 1e4, os erros vão de 5,0e-02 para 2,3e-05 e depois 5,0e-12, com ordem estimada 2,00.
+* A situação que o Newton falha e a bissecção não falha pode ser a função `arctan(x)` no intervalo `[-2, 5]`: aqui, o Newton parte de 1,5, a tangente quase horizontal o joga cada vez mais longe da raiz, e em x ≈ 3,9e6 a derivada numérica dá zero (`ValueError`). Enqunto isso, a bissecção só precisa da troca de sinal para achar a raiz 0.
+
+### R12 — Issue #9
+
+* Testes de regressão: `test_colebrook_re_1e4_em_ate_6_iteracoes` e `test_derivada_reavaliada_a_cada_iteracao`.
+* Causa: com a derivada `d` fixa em `x_0`, o erro segue `e_{k+1} ≈ (1 - f'(r)/d)·e_k`, que é um fator constante e não `e_k²`, e daí a convergência linear. Antes da correção, para Re = 1e4, cada erro era cerca de 0,04 vezes o anterior (1,9e-03, 7,6e-05, 2,9e-06), com ordem 0,99 e 10 iterações. Calculando a derivada em cada `x_k`, são 5 iterações e ordem 2,00.
+* Os testes de aceitação só olham `convergiu` e o valor da raiz, que continua certo porque a iteração ainda converge para ela; nenhum confere o número de iterações nem a ordem.
