@@ -63,7 +63,7 @@ Python 3.14.3, NumPy 2.5.3, SciPy 1.18.1, fornecido 4.0 e matrícula 3460.
 
 ### R8 — Derivada numérica
 
-Quando o valor de \(h\) diminui, a aproximação da derivada fica inicialmente mais precisa, pois o erro de truncamento é reduzido. Porém, quando \(h\) fica muito pequeno, os valores utilizados na subtração ficam muito próximos, causando perda de algarismos significativos. Como essa diferença é dividida por \(h\), o erro de arredondamento acaba aumentando. Em \(h=10^{-14}\), `1000 + 1e-14` resulta em `1000`, fazendo com que o numerador seja zero e o erro absoluto fique igual ao valor da derivada exata.
+Quando o valor de \(h\) diminui, a aproximação da derivada fica inicialmente mais precisa, pois o erro de truncamento é reduzido. Porém, quando \(h\) fica muito pequeno, os valores utilizados na subtração ficam muito próximos, causando perda de algarismos significativos. Como essa diferença é dividida por \(h\), o erro de arredondamento acaba aumentando. Em \(h=10^{-14}\), `1000 + 1e-14` resulta em `1000`, devido a precisão limitada dos números de ponto flutuante, fazendo com que o numerador seja zero e o erro absoluto fique igual ao valor da derivada exata.
 
 ### R9 — Issue #7
 
@@ -71,4 +71,13 @@ O erro estava no cálculo da variável `correcao`: como `t` já armazenava o res
 
 ### R10 — Precisão × exatidão
 
-Ambas as curvas apresentaram praticamente a mesma precisão, como mostram os desvios padrão: 0,548 kPa para a linear e 0,549 kPa para a spline. Porém, isso não significa que tenham a mesma exatidão, pois a curva linear apresentou um viés de -1,828 kPa, enquanto a spline apresentou apenas 0,001 kPa. Isso mostra que a curva linear produziu valores abaixo da referência. Mesmo com quase 600 medições, o aumento da quantidade de dados não elimina o viés sistemático causado pela calibração.
+Ambas as curvas apresentaram praticamente a mesma precisão, como mostram os desvios-padrão: `0,548 kPa` para a linear e `0,549 kPa` para a spline. Porém, isso não significa que tenham a mesma exatidão, pois a curva linear apresentou um viés de `-1,828 kPa`, enquanto a spline apresentou apenas `0,001 kPa`. Isso mostra que a curva linear produziu valores abaixo da referência. Mesmo com quase 600 medições, o aumento da quantidade de dados não elimina o viés sistemático causado pela calibração.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção começa sempre com o mesmo intervalo `[2, 15]` e a mesma tolerância, por isso precisou das mesmas `44 iterações` nos três valores de Reynolds. Neste caso, o Newton foi mais rápido e apresentou ordem de convergência próxima de 2, ou seja, o erro diminui aproximadamente ao quadrado a cada iteração. Porém, pode falhar quando a derivada no ponto atual é zero, pois precisa dividir por ela. A bissecção ainda pode funcionar se houver troca de sinal e continuidade no intervalo.
+### R12 — Issue #9
+
+Antes da correção, a derivada era calculada apenas no primeiro ponto e permanecia fixa durante as iterações. Por isso, em vez de convergir quadraticamente, o Newton convergia de forma linear e precisava de 10 iterações. Os testes do professor não identificavam o problema porque verificavam apenas se o método encontrava a raiz, sem avaliar sua velocidade. Para identificar essa falha, criamos os testes `test_newton_com_derivada_exata` e `test_newton_com_derivada_numerica`, que falhavam antes da correção e passaram depois.
