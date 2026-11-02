@@ -52,6 +52,18 @@ class TestMedia(unittest.TestCase):
         s = SerieTemporal.de_lista(np.arange(600.0))
         self.assertEqual(len(s.media_movel(30)), 571)
 
+    def test_reamostrar(self):
+        """Blocos de 2 em [1..6] resultam nas médias [1.5, 3.5, 5.5]."""
+        s = SerieTemporal.de_lista([1, 2, 3, 4, 5, 6])
+        self.assertTrue(np.allclose(s.reamostrar(2), [1.5, 3.5, 5.5]))
+
+    def test_reamostrar_e_descarta(self):
+        """Em [1..7] com k=3 o ponto 7 sobra e é descartado. O resultado é [2, 5]."""
+        s = SerieTemporal.de_lista([1, 2, 3, 4, 5, 6, 7])
+        r = s.reamostrar(3)
+        self.assertEqual(len(r), 2)
+        self.assertTrue(np.allclose(r, [2.0, 5.0]))
+
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
