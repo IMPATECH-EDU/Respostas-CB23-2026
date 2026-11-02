@@ -41,7 +41,16 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if grau<0:
+        raise ValueError(f"Grau não pode ser negativo, recebi {grau}")
+    if len(x)<grau+1:
+        raise ValueError(f"É preciso no mínimo {grau + 1} pontos para ajustar o polinômio, recebi {len(x)}")
+    coeficientes = np.polyfit(x, y, grau)[::-1]
+    return coeficientes
 
 
 @dataclass(frozen=True)
@@ -76,4 +85,20 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    if len(t)!=len(vazao):
+        raise ValueError(f"'t' e 'vazao' devem ter o mesmo número de elementos, recebi 't' = {len(t)} e 'vazao' = {len(vazao)}")
+    for x in (0,18,21,24):
+        if x not in t: 
+            raise ValueError(f"Todos os limites de faixa (0, 18, 21 e 24 h) devem estar em 't', não recebi {x}h")
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento) 
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+    custo_por_faixa = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        i_inicio = np.where(t==inicio)[0][0]
+        i_fim = np.where(t==fim)[0][0]
+        custo_por_faixa.append(tarifa * integrador.integrar_tabela(t[i_inicio:i_fim+1], potencia[i_inicio:i_fim+1]))
+    custo_por_faixa=tuple(custo_por_faixa)
+    return ResumoDia(volume, energia, sum(custo_por_faixa), custo_por_faixa)
