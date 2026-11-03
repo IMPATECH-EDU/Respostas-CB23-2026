@@ -67,7 +67,6 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     - `invalidas`: lista das linhas descartadas, exatamente como estavam no texto.
 
     Regras:
-
     - linhas vazias (ou só com espaços) são ignoradas e não contam como inválidas;
     - uma linha é inválida se não casar com `LINHA` (com `fullmatch`), se a data ou a hora
       forem impossíveis (por exemplo, mês 13) ou se o `resto` não tiver nenhum par
@@ -78,7 +77,55 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+
+    registros: list[Registro] = []
+    invalidas: list[str] = []
+
+    for linha in texto.splitlines():
+        # Linhas vazias são ignoradas
+        if not linha.strip():
+            continue
+
+        # Verifica se a linha casa inteiramente com o padrão LINHA
+        match = LINHA.fullmatch(linha)
+        if not match:
+            invalidas.append(linha)
+            continue
+
+        # Extrai os grupos nomeados encontrados pelo Regex
+        dados = match.groupdict()
+
+        # O 'resto' deve conter pelo menos um par chave=valor
+        pares_brutos = re.findall(r"(\w+)=(\S+)", dados["resto"])
+        if not pares_brutos:
+            invalidas.append(linha)
+            continue
+
+        # Validar data e hora com datetime.strptime 
+        try:
+            instante = datetime.strptime(f"{dados['data']} {dados['hora']}", "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            invalidas.append(linha)
+            continue
+
+        # Converter os valores de cada par para float se possível, senão manter como str
+        valores: dict[str, float | str] = {}
+        for chave, valor_str in pares_brutos:
+            try:
+                valores[chave] = float(valor_str)
+            except ValueError:
+                valores[chave] = valor_str
+
+        # Cria o objeto Registro e adiciona na lista de válidos
+        reg = Registro(
+            instante=instante,
+            nivel=dados["nivel"],
+            tag=dados["tag"],
+            valores=valores
+        )
+        registros.append(reg)
+
+    return registros, invalidas
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
