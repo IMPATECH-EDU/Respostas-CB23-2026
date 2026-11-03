@@ -9,9 +9,33 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
 
+Path do python e Etapa 0:
+
+No linux do IMPATECH.
+``` 
+-> which python                               
+/home/al.souza.pedro/venvs/prog2-venv/bin/python
+```
+``` 
+-> python marco1.py
+=== Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.4 | fornecido 4.0
+``` 
+No meu windows pessoal.
+``` 
+-> (Get-Command python).Path
+C:\Users\pedro\venvs\prog2-venv\Scripts\python.exe
+```
+```
+-> python marco1.py
+=== Etapa 0: ambiente ===
+Python 3.13.5 | NumPy 2.4.6 | fornecido 4.0
+```
+
 ### R1 — Expressões regulares
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
+re.match aceita 'PT103weubcwo9ien\n\nscv658212r5', mas re.fullmacth rejeita. Usar re.macth permite falsos positivos, já todos os positivos de fullmatch está contido em todos os positivos de match (O contrário não vale).
 
 ### R2 — Linhas inválidas
 
