@@ -63,16 +63,47 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError("u_sistematica tem que ser não-negativa.")
+    contagens = serie(registros, tag, "contagens") # Obtendo as contagens da tag do marco 1. 
+    if len(contagens) < 2:
+        raise ValueError("A tag deve ter 2 leituras no mínimo.")
+    pressao = curva(contagens) # Convertendo as contagens em pressão usando a curva de calibração. 
+    mediana = float(np.median(pressao))
+    mad =float(stats.median_abs_deviation(pressao, scale="normal"))
+    if mad == 0:
+        raise ValueError("MAD das leituras é zero.")
+
+    z_rob = (pressao - mediana) / mad
+    espurias = np.where(np.abs(z_rob) > limiar)[0].tolist()
+    leituras_validas = pressao[np.abs(z_rob) <= limiar]
+
+    if len(leituras_validas) < 2:
+        raise ValueError("Temos menos de 2 leituras válidas após descartar espúrias.")
+    media = float(np.mean(leituras_validas))
+    desvio = float(np.std(leituras_validas, ddof=1))
+    erropadrao = float(stats.sem(leituras_validas)) 
+    u_total = float(np.sqrt(erropadrao**2 + u_sistematica**2))
+    return Medicao(
+        tag=tag,
+        medida=Medida(media, u_total),
+        desvio=desvio,
+        n_validas=len(leituras_validas),
+        espurias=espurias,
+    )
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
                        u_sistematica: float = 1.5) -> Medida:
-    """Altura manométrica da bomba, em metros, com a sua incerteza.
+   """Altura manométrica da bomba, em metros, com a sua incerteza.
 
     `H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)`, em que `P_PT101` e
     `P_PT102` são as `medida`s de `medir` para as duas tags, em kPa (o fator 1000 converte
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
-    """
-    raise NotImplementedError("issue #6: altura_manometrica")
+   """
+   P_PT101 = medir(registros, "PT101", curva, u_sistematica)
+   P_PT102 = medir(registros, "PT102", curva, u_sistematica)
+   H = (P_PT102.medida - P_PT101.medida) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
+   return H
+

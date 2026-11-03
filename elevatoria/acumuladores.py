@@ -65,7 +65,8 @@ class AcumuladorKahan(Acumulador):
         """Acrescenta `x` à soma, compensando o arredondamento."""
         y = float(x) - self._correcao
         t = self._soma + y
-        self._correcao = t - (self._soma + y)   # o que se perdeu ao arredondar soma + y
+        # A conta feita abaixo estava errada anteriormente, por isso o AcumuladorKahan não estava funcionando. Agora o erro está formulado corretamente.
+        self._correcao = (t-self._soma)-y #o que se perdeu ao arredondar soma + y
         self._soma = t
 
     @property
