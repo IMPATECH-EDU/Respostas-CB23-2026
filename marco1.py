@@ -99,7 +99,10 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
 
     # (f) Converta a média das contagens normais de PT102 (até 2000) com a escala nominal
     #     (certos["PT102"]) e imprima ao lado de verdade["pressao_recalque"].
-    p_nominal = _todo("2(f)")
+    normais = [r.valores["contagens"] for r in com_compreensao if r.valores["contagens"] <= 2000]
+    media = sum(normais) / len(normais)
+    p_nominal = certos["PT102"](media)
+    print(f"PT102 (escala nominal): {p_nominal:.1f}  |  pressão de recalque real: {verdade['pressao_recalque']}")
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
 
 
