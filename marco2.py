@@ -23,7 +23,7 @@ from elevatoria.acumuladores import (Acumulador, AcumuladorIngenuo, AcumuladorIn
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.dados import ler_log
 from elevatoria.medicao import altura_manometrica, medir
-from marco1 import MATRICULA # achei legal que puxa direto
+from marco1 import MATRICULA
 
 
 def etapa0() -> None:
