@@ -2,8 +2,9 @@
 
 O fluxo de trabalho (fork, branch, Pull Request) e as regras da casa estão no `README.md`
 deste repositório; as regras gerais do projeto (uso de IA, antiplágio e prazo final de
-23/11/2026), no documento principal da disciplina. Este arquivo descreve só o Marco 4. Data
-sugerida para concluí-lo: **16/11**.
+23/11/2026), no documento principal da disciplina. Este arquivo descreve só o Marco 4, **o
+último marco do projeto**. Data sugerida para concluí-lo: **16/11**; o prazo final do projeto
+inteiro é **23/11/2026**.
 
 ## A situação
 
@@ -191,6 +192,23 @@ Resolve as issues #10 e #11 do enunciado.
 - [ ] Os testes de regressão da #11 falhavam antes da correção.
 - [ ] O `RELATORIO.md` tem a seção "Marco 4", com as respostas R13 e R14.
 - [ ] Todo o código foi executado, testado e lido por você, inclusive o gerado com ajuda de IA.
+
+### Entrega final do projeto
+
+O Marco 4 é o último: com ele, o projeto está completo. Até **23/11/2026**, tire o PR do modo
+rascunho: no GitHub, clique em **Ready for review**. O que estiver na sua branch nessa data é
+a entrega do projeto. Antes disso, confira o projeto inteiro:
+
+- [ ] `git pull --no-rebase --no-edit upstream main` seguido de
+      `git diff upstream/main --stat -- fornecido/ marco2.py marco3.py marco4.py` não mostra
+      nada (você não alterou o código fornecido nem os scripts).
+- [ ] `python -m unittest discover -v` roda sem falhas, com os testes de aceitação dos quatro
+      marcos e os seus.
+- [ ] `python marco1.py`, `python marco2.py`, `python marco3.py` e `python marco4.py` rodam
+      sem exceções, com a sua matrícula.
+- [ ] O `RELATORIO.md` tem as seções dos quatro marcos, com as respostas R1 a R14.
+- [ ] A descrição do PR tem as seções dos quatro marcos.
+- [ ] O PR saiu do modo rascunho (**Ready for review**) até 23/11/2026.
 
 ## 8. Material complementar (opcional)
 
