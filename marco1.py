@@ -83,7 +83,11 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
 
     # (d) Com re.sub e uma lambda como repl, troque pulsos=N por volume_L=V (V = N * 0,1,
     #     com uma casa decimal; por exemplo, pulsos=3892 vira volume_L=389.2).
-    convertido = _todo("2(d)")
+    convertido = re.sub(
+        r"pulsos=(\d+)",
+        lambda m: f"volume_L={int(m.group(1)) * 0.1:.1f}",
+        texto,
+    )
     assert convertido.count("volume_L=") == 600 and "pulsos=" not in convertido
 
     # (e) Late binding: a versão errada (não corrija esta linha) e a sua.
