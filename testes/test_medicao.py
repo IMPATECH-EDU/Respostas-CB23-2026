@@ -89,5 +89,12 @@ class TestMedida(unittest.TestCase):
         with self.assertRaises(ValueError):
             medir(registros, "pressao", curva)
 
+class TestComportamentoDerivada(unittest.TestCase):
+    """Testando o comportamento da derivada para h pequeno"""
+
+    def test_derivada_h_pequeno(self):
+        """Verifica se 1000 + 1e-14 == 1000"""
+        self.assertEqual(1000 + 1e-14, 1000)
+
 if __name__ == "__main__":
     unittest.main()

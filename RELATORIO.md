@@ -103,7 +103,10 @@ Python 3.13.15 | NumPy 2.5.3 | SciPy 1.18.0 | fornecido 4.0 | matrícula 3549
 ```
 ### R8 — Derivada numérica
 
-
+Para calcular a derivada, estamos tomando a definição $\frac{f(x+h) - f(x)}{h}$, e diminuindo os valores de $h$, tomando uma espécie de limite.
+Conforme $h$ diminui a partir de um valor relativamente grande, o erro também diminui, até alcançar um ponto de equilíbrio entre o truncamento e o erro de arredondamento ($h$ = 1e-05), depois volta a aumentar para $h$ pequeno, onde a diferença entre $f(x+h)$ e $f(x)$ fica muito pequeno, e é aumentado pela divisão por $h$.
+Temos $c = 1000$, onde $c$ é um `float` de precisão dupla. E o intervalo entre números que podemos representar com esse tipo de dado é da ordem de $10^{-13}$, assim, quando $h = 10^{-14}$, a soma em ponto flutuante arredonda de volta para 1000, de onde $x + h = x$. Tomando então $f(x+h) - f(x) = f(x) - f(x) = 0$, temos que a derivada zera, e portanto o erro é a própria derivada.
+Adicionei um teste em `testes\test_medicao`, verificando que `1000 + 1e-14 == 1000` retorna `True`.
 <!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
 depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
 é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
