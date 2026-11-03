@@ -73,11 +73,11 @@ Python 3.14.3 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 3.0 | matrícula 3518
 
 ### R8 — Derivada numérica
 
-De h = 1 até h = 1e-5 o erro cai 10x a cada passo (de 1,66e-05 para 6,2e-10), e o erro dominante é o truncamento da diferença adiante, que é proporcional a h. 
+De h = 1 até h = 1e-5 o erro cai de 1,66e-05 para 6,2e-10, e o erro dominante é o truncamento da diferença adiante, que é proporcional a h. 
 
 Depois de 1e-5, o erro volta a crescer (5,1e-09 em 1e-6, 2,1e-01 em 1e-14), pois o dominante é o erro de arredondamento, já que `f(x + h) - f(x)` subtrai dois números quase iguais e perde algarismos significativos, então esse erro é dividido por um h cada vez menor. 
 
-Em h = 1e-14, `1000 + 1e-14 == 1000` é `True`, pois o espaçamento entre floats perto de 1000 é ~1,1e-13. Por isso `f(x + h) - f(x)` vira 0 e a aproximação vale 0, tornando o erro igual a própria derivada: 0,2134.
+Em h = 1e-14, `1000 + 1e-14 == 1000` é `True`, pois o espaçamento entre floats perto de 1000 é ~1,1e-13. Por isso `f(x + h) - f(x)` vira 0 e a aproximação vale 0, tornando o erro igual à própria derivada: 0,2134.
 
 ### R9 — Issue #7
 
@@ -87,7 +87,7 @@ Em h = 1e-14, `1000 + 1e-14 == 1000` é `True`, pois o espaçamento entre floats
 ### R10 — Precisão × exatidão
 
 * Precisão = dispersão das leituras em torno da própria média; Exatidão = proximidade dessa média ao valor real. 
-* Para PT102 as duas curvas têm a mesma precisão, mas exatidões bem diferentes. 
+* Para PT102 as duas curvas têm a mesma precisão/desvio, mas exatidões/viéses bem diferentes: desvio de 0,508 na linear e 0,510 na spline; viés de −1,874 na linear e −0,044 na spline.
 * A média de aproximadamente 600 leituras reduz só o erro aleatório, já que seu sinal é variável e se cancela. O viés da curva linear é sistemático, note que todas as leituras por volta de 380 kPa passam pelo mesmo trecho da reta, o que erra a curva real sempre na mesma direção, assim a média converge para o valor errado.
 
 ## Marco 3
@@ -96,7 +96,7 @@ Em h = 1e-14, `1000 + 1e-14 == 1000` é `True`, pois o espaçamento entre floats
 
 * A bissecção só depende do intervalo e de `tol`, uma vez que `[2, 15]` cai à metade a cada iteração até a largura ficar menor que 1e-12, e log2(13 / 1e-12) ≈ 43,6 dá 44 iterações, portanto a função e o Reynolds não interferem nesse resultado.
 * Ordem 2 significa `e_{k+1} ≈ C·e_k²`, ou seja, o número de dígitos corretos dobra a cada iteração. Para Re = 1e4, os erros vão de 5,0e-02 para 2,3e-05 e depois 5,0e-12, com ordem estimada 2,00.
-* A situação que o Newton falha e a bissecção não falha pode ser a função `arctan(x)` no intervalo `[-2, 5]`: aqui, o Newton parte de 1,5, a tangente quase horizontal o joga cada vez mais longe da raiz, e em x ≈ 3,9e6 a derivada numérica dá zero (`ValueError`). Enqunto isso, a bissecção só precisa da troca de sinal para achar a raiz 0.
+* A situação que o Newton falha e a bissecção não falha pode ser a função `arctan(x)` no intervalo `[-2, 5]`: aqui, o Newton parte de 1,5, a tangente quase horizontal o joga cada vez mais longe da raiz, e em x ≈ 3,9e6 a derivada numérica dá zero (`ValueError`). Enquanto isso, a bissecção só precisa da troca de sinal para achar a raiz 0.
 
 ### R12 — Issue #9
 
@@ -115,6 +115,6 @@ Em h = 1e-14, `1000 + 1e-14 == 1000` é `True`, pois o espaçamento entre floats
 ### R14 — Issue #11
 
 * Testes de regressão: `test_trapezio_malha_nao_uniforme` e `test_volume_do_dia_com_leituras_perdidas`.
-* Causa: `Trapezio.integrar_tabela` usava `h = x[1] - x[0]` em toda a tabela, supondo que as leituras eram sempre a cada 15 min. O problemas é que tem 89 de 97 leituras, com intervalos de 15 e 30 min, e cada intervalo de 30 min era contado como 15. O volume deu 3547,37 m³ contra 3888,00 m³ (erro de 8,76%), mas considerando a largura de cada intervalo, deu 3896,50 m³ e erro de 0,22%.
+* Causa: `Trapezio.integrar_tabela` usava `h = x[1] - x[0]` em toda a tabela, supondo que as leituras eram sempre a cada 15 min. O problema é que tem 89 de 97 leituras, com intervalos de 15 e 30 min, e cada intervalo de 30 min era contado como 15. O volume deu 3547,37 m³ contra 3888,00 m³ (erro de 8,76%), mas considerando a largura de cada intervalo, deu 3896,50 m³ e erro de 0,22%.
 * Os testes de aceitação só chamam `integrar_tabela` em malhas uniformes (`np.linspace` e `T` a cada 1,5 h), em que o passo fixo dá o resultado certo.
 * A regra de Simpson exige malha uniforme, porque os pesos 1, 4, 2, ..., 4, 1 supõem o mesmo h em toda a tabela. O registro tem dois intervalos diferentes, então `Simpson.integrar_tabela` levanta `ValueError`, embora 89 seja ímpar.

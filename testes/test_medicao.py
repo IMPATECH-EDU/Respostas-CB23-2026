@@ -45,6 +45,7 @@ class TestMedir(unittest.TestCase):
     """Dois testes para a função `medir` que não são feitos pelos testes de aceitação."""
 
     def setUp(self):
+        """Construção dos atributos para os outros testes."""
         t0 = datetime(2027, 1, 7, 21, 58, 0)
         self.curva = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
         self.registros = lambda contagens: [Registro(t0 + timedelta(seconds=13 * i), "INFO", "PT101", {"contagens": float(c)}) for i, c in enumerate(contagens)]

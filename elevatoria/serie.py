@@ -64,3 +64,4 @@ class SerieTemporal(np.ndarray):
             raise ValueError(f"k deve estar entre 1 e {len(self)}; recebi {k}")
         blocos = len(self) // k
         return self[: blocos * k].reshape(blocos, k).mean(axis=1)
+    

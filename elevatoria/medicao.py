@@ -11,6 +11,7 @@ As funções marcadas com `NotImplementedError` são a issue #6; as docstrings d
 contrato. Não mude nomes nem assinaturas públicas: o `marco2.py` e os testes dependem deles.
 Funções auxiliares privadas (`_nome`) são permitidas.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -31,77 +32,87 @@ GRAVIDADE = 9.81
 
 @dataclass(frozen=True)
 class Medicao:
-   """Resultado da medição de uma grandeza a partir do log."""
+    """Resultado da medição de uma grandeza a partir do log."""
 
-   tag: str
-   medida: Medida        # média das leituras válidas, com a incerteza total
-   desvio: float         # desvio padrão amostral (ddof=1) das leituras válidas: a precisão
-   n_validas: int        # número de leituras válidas (sem as espúrias)
-   espurias: list[int]   # índices das leituras descartadas, em ordem crescente
-
-
-def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao, u_sistematica: float = 0.0, limiar: float = 6.0) -> Medicao:
-   """Mede a grandeza registrada pela `tag` no log.
-   Passos:
-
-   1. obtém as contagens da `tag` (chave `"contagens"`) com `serie`, do Marco 1;
-   2. converte as contagens com a `curva`;
-   3. descarta as leituras espúrias pelo z robusto: `z = (x - mediana) / MAD`, com a MAD
-      calculada por `scipy.stats.median_abs_deviation(x, scale="normal")`; uma leitura é
-      espúria se `|z| > limiar`. Os índices em `espurias` são posições na série da tag
-     (a primeira leitura da tag tem índice 0);
-   4. com as leituras válidas, calcula a média, o desvio padrão amostral (`ddof=1`) e o erro
-      padrão da média (`scipy.stats.sem`);
-   5. devolve uma `Medicao` cuja `medida` é `Medida(média, u)`, com
-      `u = sqrt(erro_padrao² + u_sistematica²)`.
-
-   `u_sistematica` é a incerteza do instrumento, que não diminui com o número de leituras.
-
-      Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
-   for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
-   fora do domínio) não é tratado: ele chega a quem chamou `medir`.
-   """
-
-   if u_sistematica < 0:
-      raise ValueError("u sistemática menor que 0")
-
-   contagens = serie(registros, tag, 'contagens')
-
-   if len(contagens) < 2:
-      raise ValueError("tag com menos de 2 contagens")
-
-   contagens2 = np.array([curva(c) for c in contagens])
-   mad = stats.median_abs_deviation(contagens2, scale="normal")
-
-   if mad == 0:
-      raise ValueError("MAD igual a 0")
-
-   z = (contagens2 - np.median(contagens2)) / mad
-   mask = np.abs(z) > limiar
-   espurias = np.flatnonzero(mask)
-   validas = contagens2[~mask]
-
-   if len(validas) < 2:
-      raise ValueError("Menos de 2 leituras válidas")
-
-   media = float(np.mean(validas))
-   std_dev = float(np.std(validas, ddof=1))
-   erro_padrao = float(stats.sem(validas))
-   u = np.sqrt(erro_padrao ** 2 + u_sistematica ** 2)
-
-   return Medicao(tag, Medida(media, float(u)), std_dev, len(validas), espurias.tolist())
+    tag: str
+    medida: Medida  # média das leituras válidas, com a incerteza total
+    desvio: float  # desvio padrão amostral (ddof=1) das leituras válidas: a precisão
+    n_validas: int  # número de leituras válidas (sem as espúrias)
+    espurias: list[int]  # índices das leituras descartadas, em ordem crescente
 
 
-def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao, u_sistematica: float = 1.5) -> Medida:
-   """Altura manométrica da bomba, em metros, com a sua incerteza.
+def medir(
+    registros: list[Registro],
+    tag: str,
+    curva: CurvaCalibracao,
+    u_sistematica: float = 0.0,
+    limiar: float = 6.0,
+) -> Medicao:
+    """Mede a grandeza registrada pela `tag` no log.
+    Passos:
 
-   `H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)`, em que `P_PT101` e
-   `P_PT102` são as `medida`s de `medir` para as duas tags, em kPa (o fator 1000 converte
-   para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
-   com `Medida`, que propaga as incertezas.
-   """
-   P_PT101 = medir(registros, 'PT101', curva, u_sistematica).medida
-   P_PT102 = medir(registros, 'PT102', curva, u_sistematica).medida
-   H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
+    1. obtém as contagens da `tag` (chave `"contagens"`) com `serie`, do Marco 1;
+    2. converte as contagens com a `curva`;
+    3. descarta as leituras espúrias pelo z robusto: `z = (x - mediana) / MAD`, com a MAD
+       calculada por `scipy.stats.median_abs_deviation(x, scale="normal")`; uma leitura é
+       espúria se `|z| > limiar`. Os índices em `espurias` são posições na série da tag
+      (a primeira leitura da tag tem índice 0);
+    4. com as leituras válidas, calcula a média, o desvio padrão amostral (`ddof=1`) e o erro
+       padrão da média (`scipy.stats.sem`);
+    5. devolve uma `Medicao` cuja `medida` é `Medida(média, u)`, com
+       `u = sqrt(erro_padrao² + u_sistematica²)`.
 
-   return H
+    `u_sistematica` é a incerteza do instrumento, que não diminui com o número de leituras.
+
+       Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
+    for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
+    fora do domínio) não é tratado: ele chega a quem chamou `medir`.
+    """
+
+    if u_sistematica < 0:
+        raise ValueError("u sistemática menor que 0")
+
+    contagens = serie(registros, tag, "contagens")
+
+    if len(contagens) < 2:
+        raise ValueError("tag com menos de 2 contagens")
+
+    contagens2 = np.array([curva(c) for c in contagens])
+    mad = stats.median_abs_deviation(contagens2, scale="normal")
+
+    if mad == 0:
+        raise ValueError("MAD igual a 0")
+
+    z = (contagens2 - np.median(contagens2)) / mad
+    mask = np.abs(z) > limiar
+    espurias = np.flatnonzero(mask)
+    validas = contagens2[~mask]
+
+    if len(validas) < 2:
+        raise ValueError("Menos de 2 leituras válidas")
+
+    media = float(np.mean(validas))
+    std_dev = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))
+    u = np.sqrt(erro_padrao**2 + u_sistematica**2)
+
+    return Medicao(
+        tag, Medida(media, float(u)), std_dev, len(validas), espurias.tolist()
+    )
+
+
+def altura_manometrica(
+    registros: list[Registro], curva: CurvaCalibracao, u_sistematica: float = 1.5
+) -> Medida:
+    """Altura manométrica da bomba, em metros, com a sua incerteza.
+
+    `H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)`, em que `P_PT101` e
+    `P_PT102` são as `medida`s de `medir` para as duas tags, em kPa (o fator 1000 converte
+    para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
+    com `Medida`, que propaga as incertezas.
+    """
+    P_PT101 = medir(registros, "PT101", curva, u_sistematica).medida
+    P_PT102 = medir(registros, "PT102", curva, u_sistematica).medida
+    H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
+
+    return H
