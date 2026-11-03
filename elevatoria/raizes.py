@@ -129,4 +129,5 @@ class Newton(MetodoRaiz):
             if abs(x_novo - x) < self.tol:
                 return ResultadoRaiz(x_novo, k, True, tuple(historico))
             x = x_novo
+            derivada = self._derivada(f, x) # Calcula a derivada novamente, para tratar desta na próxima iteração.
         return ResultadoRaiz(x, self.max_iter, False, tuple(historico))
