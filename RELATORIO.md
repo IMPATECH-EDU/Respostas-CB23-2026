@@ -8,14 +8,24 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 ### Ambiente
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
-Código rodado no windows.
 
-Path do python:
+Path do python e Etapa 0:
+
+No linux do IMPATECH.
+``` 
+-> which python                               
+/home/al.souza.pedro/venvs/prog2-venv/bin/python
+```
+``` 
+-> python marco1.py
+=== Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.4 | fornecido 4.0
+``` 
+No meu windows pessoal.
 ``` 
 -> (Get-Command python).Path
 C:\Users\pedro\venvs\prog2-venv\Scripts\python.exe
 ```
-Etapa 0 do marco1.py:
 ```
 -> python marco1.py
 === Etapa 0: ambiente ===
