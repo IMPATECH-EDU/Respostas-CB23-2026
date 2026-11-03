@@ -59,8 +59,8 @@ Previsões registradas no commit: 2993572
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
-A maior diferença foi no tempo: previ 2 vezes e deu 43,1 (laço 91 ms, vetorizado 2 ms). O laço faz um milhão de voltas no interpretador do Python, e o NumPy faz a mesma conta de uma vez, em código compilado. A memória também passou longe (previ 1,2 e deu 18,0): cada item da lista ocupa 36 bytes, e no `uint16` são 2.
-`uint16 * 20` dá 16364 porque o `uint16` só guarda de 0 a 65535 e 4095 × 20 = 81900; o valor estoura e recomeça do zero (81900 − 65536 = 16364). Para contagens eu usaria `uint16` (0 a 4095 cabe em 2 bytes) e para kPa, `float64`, porque a pressão tem casas decimais.
+A maior diferença foi no tempo: previ 2 vezes e deu 43,1 (laço 92 ms, vetorizado 2 ms), porque o laço roda um milhão de voltas no Python e o NumPy faz tudo de uma vez, em código compilado. Na memória previ 1,2 e deu 18,0: cada item da lista ocupa 36 bytes, e no `uint16` são 2.
+`uint16 * 20` dá 16364 porque o `uint16` só vai até 65535 e 4095 × 20 = 81900; o valor estoura e recomeça do zero (81900 − 65536 = 16364). Usaria `uint16` para contagens (0 a 4095) e `float64` para kPa, que têm casas decimais.
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
@@ -80,4 +80,4 @@ Previ `ndarray` para tudo e errei: `s + s`, `s[1:]` e `s * 2` devolveram `SerieT
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 
-Sintoma: `media_movel(30)` em 600 pontos devolvia 570 valores, e não 571, e o `assert` do `marco1.py` falhava. Testes de regressão: `test_tamanho_do_resultado` e os outros quatro de `TestMediaMovelRegressao` (5 FAIL antes da correção). Causa: o `np.cumsum` não começa em zero, então `acumulada[janela:] - acumulada[:-janela]` perde a primeira janela. Correção: colocar `0.0` na frente da soma acumulada com `np.concatenate` e devolver `SerieTemporal` com `.view`. Os testes de aceitação só conferem o tipo, as janelas inválidas e que a série original não muda, nunca o tamanho nem os valores. Um caso que eles não cobrem é janela igual ao tamanho da série (dava 0 valores), que o `test_janela_igual_ao_tamanho` cobre.
+Sintoma: `media_movel(30)` em 600 pontos devolvia 570 valores, e não 571. Testes de regressão: `test_tamanho_do_resultado` e mais quatro da classe `TestMediaMovelRegressao`, que davam FAIL antes da correção. Causa: o `np.cumsum` não começa em zero, então a diferença `acumulada[janela:] - acumulada[:-janela]` perde a primeira janela. Correção: pôr `0.0` no início da soma acumulada (`np.concatenate`) e devolver `SerieTemporal` com `.view`. Os testes de aceitação só conferem o tipo, as janelas inválidas e que a série não muda, não o tamanho nem os valores. Outro caso não coberto: janela igual ao tamanho da série (dava 0 valores), coberto por `test_janela_igual_ao_tamanho`.
