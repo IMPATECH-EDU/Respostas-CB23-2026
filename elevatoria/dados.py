@@ -55,12 +55,9 @@ class Registro:
 
 
 def valida_tag(s: str) -> bool:
-    """`True` se a string inteira for uma tag válida (1 ou 2 maiúsculas e 1 a 3 dígitos).
+    """`True` se a string inteira for uma tag válida (1 ou 2 maiúsculas e 1 a 3 dígitos)."""
 
-    Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
-    `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
-    """
-    raise NotImplementedError("issue #1: valida_tag")
+    return re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s) is not None
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
