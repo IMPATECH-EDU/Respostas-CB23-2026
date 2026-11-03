@@ -35,7 +35,7 @@ LINHA: re.Pattern = re.compile(
     \s+                            # Separador: um ou mais espaços
     (?P<hora>\d{2}:\d{2}:\d{2})    # Hora: 2:2:2 números (HH:MM:SS)
     \s+                            # Separador: um ou mais espaços
-    (?P<nivel>[A-Z]+)              # Nível: n letras maiúsculas (n > 0)
+    (?P<nivel>INFO|WARN|ALARME)    # Nível: INFO, WARN ou ALARME
     \s+                            # Separador: um ou mais espaços
     (?P<tag>[A-Z]{1,2}\d{1,3})     # Tag: 1 a 2 letras maiúsculas seguidas de 1 a 3 números
     \s+                            # Separador: um ou mais espaços
