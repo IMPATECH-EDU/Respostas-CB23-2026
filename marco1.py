@@ -49,7 +49,8 @@ def etapa1(texto: str, verdade: dict) -> list:
     assert por_nivel == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
-    total = _todo("1(c)")
+    total = serie(registros, "FT201", "pulsos").sum()
+    print(f"Volume bombeado: {total * 0.1:.1f} L")
     assert total == verdade["pulsos_total"]
 
     # (d) valida_tag.
