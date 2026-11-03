@@ -113,11 +113,19 @@ depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e
 
 ### R9 — Issue #7
 
+Para determinar o problema da Issue #7, montei os seguintes testes em `test_medicao`: `test_soma_1000x1e_6`; `test_soma_um_milhao_de_decimos`; `test_soma_dez_mil_de_decimos`.
+A causa do erro estava no fato de que `t` recebia o valor `self._soma + y` e depois `correção` recebia `t - (self._soma + y)`, ou seja, `t - t = 0`. Portanto, `self._correcao` permanecia zerada e a correção da soma de Kahan não era utilizada.
+Trocando a outra expressão por `self._correcao = t - self._soma - y`, fazemos as contas em uma ordem diferente, assim garantindo que a corração pegue o erro e corrija logo a seguir.
+Os testes de aceitação não pegam o erro porque somam apenas 10 termos e utilizam `math.isclose()` para fazer a verificação, assim passam. Por isso fiz testes que somam mais termos e utilizam `AssertAlmostEqual` para fazer a verificação.
+
 <!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
 t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
 de aceitação não pegaram o defeito. -->
 
 ### R10 — Precisão × exatidão
+
+O desvio padrão é uma medida de precisão, como as duas curvas tem inclinações semelhantes, seus desvios ficaram parecidos. Enquanto isso, o viés é uma medida de exatidão, é a diferença entre a média estimada e a pressão de referência, ou seja, mede o quanto que a estimativa difere do valor verdadeiro.
+
 
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
