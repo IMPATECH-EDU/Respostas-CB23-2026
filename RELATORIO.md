@@ -132,3 +132,23 @@ A média de quase 600 leituras reduz a variação aleatória, mas não corrige o
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bisseção sempre começa com o mesmo intervalo ($[2,15]$), e quando o tamanho do intervalo vai ficando menor (cortado pela metade a cada iteração), esse tamanho fica menor que $10^{-12}$. Por isso, são necessárias $(\lceil\log_2(13/10^{-12})\rceil=44)$. O número de Reynolds muda a função e, portanto, a posição da raiz, mas nunca muda o intervalo inicial, portanto, o número de iterações deve ser o mesmo.
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+### R12 — Issue #9
+
+Implementei os testes de regressão em `test_operacao.py`: `test_newton_recalcula_derivada` e `test_newton_sem_derivada`.
+Ambos os testes falhavam antes da mudança na função `encontrar` da classe `Newton`, mas agora passaram a funcionar.
+Estavamos utilizando apenas a derivada numérica no ponto inicial (ponto médio do intervalo), ao invés de recalcular a derivada, ainda faziamos progresso na convergência, pois a função (que também é utilizada na recorrência) era atualizada, mas como a derivada não estava sendo atualizada, tinhamos apenas uma inclinação ao longo de todos os cálculos, tornando a convergência bastante lenta.
+Os testes de aceitação não pegaram o erro na convergência pois não verificam o número de passos que a função utilizou durante as contas. Por isso os testes implementados focam nesse aspecto.
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
