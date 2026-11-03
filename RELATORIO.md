@@ -103,3 +103,18 @@ Em h = 1e-14, `1000 + 1e-14 == 1000` é `True`, pois o espaçamento entre floats
 * Testes de regressão: `test_colebrook_re_1e4_em_ate_6_iteracoes` e `test_derivada_reavaliada_a_cada_iteracao`.
 * Causa: com a derivada `d` fixa em `x_0`, o erro segue `e_{k+1} ≈ (1 - f'(r)/d)·e_k`, que é um fator constante e não `e_k²`, e daí a convergência linear. Antes da correção, para Re = 1e4, cada erro era cerca de 0,04 vezes o anterior (1,9e-03, 7,6e-05, 2,9e-06), com ordem 0,99 e 10 iterações. Calculando a derivada em cada `x_k`, são 5 iterações e ordem 2,00.
 * Os testes de aceitação só olham `convergiu` e o valor da raiz, que continua certo porque a iteração ainda converge para ela; nenhum confere o número de iterações nem a ordem.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+* As ordens 2 e 4 supõem um integrando suave em cada subintervalo. O custo de uma vez tem saltos às 18 h e às 21 h, quando a tarifa muda entre 0,50 e 1,50 R$/kWh.
+* Nos n da Etapa 1(b), o salto cai dentro de um subintervalo, e o erro ali é proporcional a h × salto, não importa a regra. Por isso a ordem observada foi 1,00 no trapézio e 0,65 no Simpson, que fica irregular porque o peso dos nós vizinhos ao salto alterna entre 4 e 2.
+* Por faixa, a tarifa é constante e a potência é suave em cada integral, então o salto fica nos extremos dos intervalos e não dentro deles. Voltam as ordens 2,00 e 4,00, com erro em n = 110 de 6,3e-04 no trapézio e 8,1e-08 no Simpson.
+
+### R14 — Issue #11
+
+* Testes de regressão: `test_trapezio_malha_nao_uniforme` e `test_volume_do_dia_com_leituras_perdidas`.
+* Causa: `Trapezio.integrar_tabela` usava `h = x[1] - x[0]` em toda a tabela, supondo que as leituras eram sempre a cada 15 min. O problemas é que tem 89 de 97 leituras, com intervalos de 15 e 30 min, e cada intervalo de 30 min era contado como 15. O volume deu 3547,37 m³ contra 3888,00 m³ (erro de 8,76%), mas considerando a largura de cada intervalo, deu 3896,50 m³ e erro de 0,22%.
+* Os testes de aceitação só chamam `integrar_tabela` em malhas uniformes (`np.linspace` e `T` a cada 1,5 h), em que o passo fixo dá o resultado certo.
+* A regra de Simpson exige malha uniforme, porque os pesos 1, 4, 2, ..., 4, 1 supõem o mesmo h em toda a tabela. O registro tem dois intervalos diferentes, então `Simpson.integrar_tabela` levanta `ValueError`, embora 89 seja ímpar.
