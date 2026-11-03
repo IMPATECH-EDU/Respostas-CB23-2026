@@ -16,6 +16,7 @@ import fornecido
 from fornecido.simulador import gerar_log
 from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
                               medir_tempos, serie, valida_tag)
+from fornecido.testes_aceitacao.test_aceitacao_m2 import registros
 
 MATRICULA = 3472  # troque pelo seu número de matrícula
 
@@ -44,7 +45,7 @@ def etapa1(texto: str, verdade: dict) -> list:
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
-    por_nivel = _todo("1(b)")
+    por_nivel = {n: sum(1 for r in registros if r.nivel == n) for n in {"INFO", "WARN", "ALARME"}}
     assert por_nivel == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
