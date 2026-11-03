@@ -59,3 +59,25 @@ O que mais me surpreendeu foi o s[0] sair float64. Eu esperava uint16, pois as c
 
 ### R7, Issue #4
 1) media_movel(30) na série de 600 pontos deu 570 valores, não 571. 2) test_tamanho_600_janela_30 e test_serie_de_seis. 3) acumulada[i] é a soma até o ponto i. Sem um zero no início, acumulada[i+janela] - acumulada[i] dava a soma de self[i+1 : i+janela+1] e perdia a primeira janela. 4) Coloquei um zero na frente da soma acumulada, para a diferença ser self[i : i+janela], com n - janela + 1 valores. 5) test_media_movel_tipo_e_erros só vê que o retorno é SerieTemporal e que as janelas 0 e 6 levantam ValueError. Nenhum teste de aceitação verifica tamanho/valores. 6) o valor da primeira janela. Com [2,4,6,8,10,12] e janela 2, o código antigo devolvia [5,7,9,11], sem o 3 inicial; test_serie_de_seis cobre isso. 
+
+## Marco 2
+
+### Ambiente
+```
+C:\Users\franc\projetos\Respostas-CB23-2026\.venv\Scripts\python.exe
+Python 3.11.0 | NumPy 2.4.6 | SciPy 1.17.1
+``` 
+
+### R8 — Derivada numérica
+
+O erro total une o erro de truncamento (Série de Taylor) e o de arredondamento (precisão finita). Para h grande, domina o erro de truncamento, que diminui com a redução de h ao aproximar a secante da tangente. Para h < 1e-5, domina o erro de arredondamento por cancelamento catastrófico. Em h = 1e-14, a operação 1000 + 1e-14 excede os (aproximadamente) 16 dígitos de precisão da mantissa do float64 e é arredondada para 1000.0, resultando em f(x+h) - f(x) = 0. A derivada aproximada passa a ser 0 e o erro absoluto passa a ser igual ao valor da própria derivada real.
+
+### R9 — Issue #7
+
+Testes: test_duzentosk_pulsos e test_parcelas_pequenas_nao_somem. A causa é justamente a ordem em que as coisas foram avaliadas. Em Kahan, o acumulador novo é t = s+y. Se compensarmos com t-(s+y), o computador vai fazer simplesmente t-t, resultando sempre em 0 e desperdiçando o efeito de compensação. Depois de corrigido, temos então (t-s)-y, em que primeiro vamos pelo parênteses e depois isolamos a parcela de y que foi efetivamente absorvida por t. Tirando y disso, o resultado vai guardar a diferença exata do arredondamento. Os testes de aceitação não pegaram o defeito antes porque executavam sequências curtas e com valores próximos, em que o erro acumulado ficava dentro da margem de tolerância.
+
+### R10 — Precisão × exatidão
+
+A precisão mede a dispersão dos dados em torno da média (dada pelo desvio padrão), já a exatidão mede o quão próxima essa média está do valor real (obtido pelo viés). Tendo o mesmo desvio padrão, as curvas linear e spline têm a mesma precisão, mas a spline é mais exata por ter um viés menor. A média de 600 leituras reduz só o erro aleatório (o ruído do sinal), diminuindo o erro padrão da média. Ela não elimina o viés da curva linear porque ele representa um erro sistemático estrutural, que vem do uso de uma reta de calibração em um sensor não linear. Nesse caso, calcular a média de 600 pontos apenas faz o resultado convergir com maior precisão para o valor incorreto gerado pelo modelo.
+
+
