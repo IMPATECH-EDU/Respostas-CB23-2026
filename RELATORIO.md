@@ -35,6 +35,7 @@ Python 3.13.5 | NumPy 2.4.6 | fornecido 4.0
 ### R1 — Expressões regulares
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
+re.match aceita 'PT103weubcwo9ien\n\nscv658212r5', mas re.fullmacth rejeita. Usar re.macth permite falsos positivos, já todos os positivos de fullmatch está contido em todos os positivos de match (O contrário não vale).
 
 ### R2 — Linhas inválidas
 
