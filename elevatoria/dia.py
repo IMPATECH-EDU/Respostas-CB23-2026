@@ -12,6 +12,7 @@ As funções marcadas com `NotImplementedError` são a issue #10; as docstrings 
 contrato. Não mude nomes nem assinaturas públicas: o `marco4.py` e os testes dependem deles.
 Funções auxiliares privadas (`_nome`) são permitidas.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -41,21 +42,28 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or len(x) != len(y):
+        raise ValueError("x e y não são vetores 1D de mesmo tamanho.")
+    if grau < 0:
+        raise ValueError("Grau menor que 0.")
+    if len(x) < grau + 1:
+        raise ValueError("Há menos pontos que coeficientes.")
+    return np.polynomial.polynomial.polyfit(x, y, grau)
 
 
 @dataclass(frozen=True)
 class ResumoDia:
     """Balanço do dia de operação."""
 
-    volume_m3: float                    # volume bombeado (m³)
-    energia_kwh: float                  # energia consumida (kWh)
-    custo_reais: float                  # custo da energia (R$): a soma de custo_por_faixa
+    volume_m3: float  # volume bombeado (m³)
+    energia_kwh: float  # energia consumida (kWh)
+    custo_reais: float  # custo da energia (R$): a soma de custo_por_faixa
     custo_por_faixa: tuple[float, ...]  # custo de cada faixa, na ordem de FAIXAS_TARIFARIAS
 
 
-def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
-                    coef_rendimento: np.ndarray, integrador: Integrador) -> ResumoDia:
+def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray, coef_rendimento: np.ndarray, integrador: Integrador) -> ResumoDia:
     """Volume, energia e custo de um dia de operação a partir do registro de vazão.
 
     `t` (h) e `vazao` (L/s) são o registro do dia; `coef_altura` e `coef_rendimento` são os
@@ -76,4 +84,18 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t = np.asarray(t, dtype=float)
+    vazao = np.asarray(vazao, dtype=float)
+    if t.ndim != 1 or vazao.ndim != 1 or len(t) != len(vazao):
+        raise ValueError("t e vazao não são vetores 1D de mesmo tamanho.")
+    contem = [x for x in (0, 18, 21, 24) if x not in t]
+    if len(contem) != 0:
+        raise ValueError("Há limites de faixa que não são instantes de t.")
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+    custo_por_faixa = [x[2] * integrador.integrar_tabela(t[(t >= x[0]) & (t <= x[1])], potencia[(t >= x[0]) & (t <= x[1])]) for x in FAIXAS_TARIFARIAS]
+    custo_reais = sum(custo_por_faixa)
+    return ResumoDia(volume, energia, custo_reais, tuple(custo_por_faixa))
