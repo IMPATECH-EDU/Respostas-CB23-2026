@@ -6,6 +6,9 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
+import numpy as np
+
+from elevatoria.dia import ajustar_polinomio
 from elevatoria.integracao import Simpson, Trapezio
 
 
@@ -39,6 +42,39 @@ class TestTrapezioRegressao(unittest.TestCase):
         integral = Trapezio().integrar_tabela(x, y)
         # Integral de x entre 0 e 6: 6**2 / 2 = 18.
         self.assertAlmostEqual(integral, 18.0)
+
+
+class TestAjustarPolinomioContrato(unittest.TestCase):
+    """Casos do contrato de ajuste não cobertos pelos testes de aceitação."""
+
+    def test_grau_zero_retorna_media(self) -> None:
+        """O ajuste de grau zero retorna a média dos valores em um ndarray 1D."""
+        coef = ajustar_polinomio([0.0, 1.0, 2.0], [2.0, 4.0, 9.0], 0)
+        self.assertIsInstance(coef, np.ndarray)
+        self.assertEqual(coef.shape, (1,))
+        self.assertAlmostEqual(coef[0], 5.0)
+
+    def test_rejeita_grau_negativo(self) -> None:
+        """Um grau negativo levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0], [1.0, 2.0], -1)
+
+    def test_rejeita_vetores_invalidos(self) -> None:
+        """Entradas 2D ou com tamanhos diferentes levantam ValueError."""
+        casos = [
+            ([[0.0, 1.0]], [1.0, 2.0]),
+            ([0.0, 1.0], [[1.0, 2.0]]),
+            ([0.0, 1.0], [1.0]),
+        ]
+        for x, y in casos:
+            with self.subTest(x=x, y=y):
+                with self.assertRaises(ValueError):
+                    ajustar_polinomio(x, y, 0)
+
+    def test_aceita_minimo_de_pontos(self) -> None:
+        """Um ajuste de grau dois aceita exatamente três pontos."""
+        coef = ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 6.0, 17.0], 2)
+        self.assertTrue(np.allclose(coef, [1.0, 2.0, 3.0]))
 
 
 if __name__ == "__main__":
