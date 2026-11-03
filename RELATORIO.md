@@ -124,7 +124,9 @@ de aceitação não pegaram o defeito. -->
 
 ### R10 — Precisão × exatidão
 
-O desvio padrão é uma medida de precisão, como as duas curvas tem inclinações semelhantes, seus desvios ficaram parecidos. Enquanto isso, o viés é uma medida de exatidão, é a diferença entre a média estimada e a pressão de referência, ou seja, mede o quanto que a estimativa difere do valor verdadeiro.
+A aproximação linear traça linhas retas entre os pontos da função, enquanto o spline aproxima a função por um polinômio. Além disso, sabemos que o desvio padrão é uma medida de precisão, e também que, o viés é uma medida de exatidão, é a diferença entre a média estimada e a pressão de referência, ou seja, mede o quanto que a estimativa difere do valor verdadeiro.
+A partir disso, notamos que a spline consegue fazer aproximações mais exatas, já que aproxima a função por um polinômio. Ao mesmo tempo, ambas possuem um desvio padrão semelhante, ou seja, têm a capacidade de aproximar os pontos de uma função com uma precisão semelhante.
+A média de quase 600 leituras reduz a variação aleatória, mas não corrige o erro sistemático da curva, já que, se cada leitura, convertida com uma curva, tende a "subestimar" a o valor da pressão, a média dos pontos dessa curva manterá essa subestimação, assim propagando o erro. E é por isso que a spline pode ter média e desvio bastante parecidos mas um viés bem diferente.
 
 
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
