@@ -59,7 +59,8 @@ Previsões registradas no commit: 2993572
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
-
+A maior diferença foi no tempo: previ 2 vezes e deu 43,1 (laço 91 ms, vetorizado 2 ms). O laço faz um milhão de voltas no interpretador do Python, e o NumPy faz a mesma conta de uma vez, em código compilado. A memória também passou longe (previ 1,2 e deu 18,0): cada item da lista ocupa 36 bytes, e no `uint16` são 2.
+`uint16 * 20` dá 16364 porque o `uint16` só guarda de 0 a 65535 e 4095 × 20 = 81900; o valor estoura e recomeça do zero (81900 − 65536 = 16364). Para contagens eu usaria `uint16` (0 a 4095 cabe em 2 bytes) e para kPa, `float64`, porque a pressão tem casas decimais.
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
