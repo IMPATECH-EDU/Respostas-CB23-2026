@@ -36,9 +36,7 @@ class TestAcumuladorKahan(unittest.TestCase):
         acumulador = AcumuladorKahan()
         acumulador.adicionar_todos([0.1]*2_000_000)
         valor = acumulador.total
-        if isclose(valor, 200_000.0):
-            # Mantendo o padrão do inglês que vem do assert
-            self.fail(f"{valor} is different from {200_000.0}")
+        self.assertTrue(isclose(valor, 200_000.0, rel_tol=1e-12))
 
 
 
