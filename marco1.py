@@ -115,10 +115,10 @@ def etapa3() -> None:
     # (a) Memória: imprima uma tabela com estrutura, bytes por elemento, bytes totais e a
     #     razão em relação à lista.
     memoria = medir_memoria(contagens)
-    print(f"{'Estrutura':<12}{'B/elemento':>12}{'Bytes totais':>16}{'Lista / estrutura':>16}")
-    print("-" * 56)
+    print(f"{'Estrutura':<12}{'B/elemento':>12}{'Bytes totais':>16}{'Lista / estrutura':>20}")
+    print("-" * 61)
     for estrutura, total in memoria.items():
-        print(f"{estrutura:<12}{total / n:>12.2f}{total:>16,}{memoria['list']/total:>16.6f}")
+        print(f"{estrutura:<12}{total / n:>12.2f}{total:>16,}{memoria['list']/total:>20.6f}")
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
 
