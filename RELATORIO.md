@@ -119,3 +119,22 @@ A derivada ficava fixa no ponto inicial, embora as aproximações mudassem a cad
 Em geral, isso mantém um termo linear no erro, e_{k+1}≈c·e_k, produzindo ordem próxima de 1.
 Recalculá-la em cada aproximação restaurou a ordem próxima de 2 observada na execução.
 A aceitação conferia os resultados finais, sem exigir rapidez nem ordem do histórico real de Newton.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+A tarifa tem saltos às 18h e às 21h, tornando o custo descontínuo no dia inteiro.
+Nos intervalos dos saltos, o erro pode ser O(h), dominando o erro da parte suave.
+Integrando de uma vez, observei ordens de 1,00 no trapézio e 0,65 em Simpson.
+Por faixas, a tarifa fica constante e a potência integrada é suave, recuperando as hipóteses dos métodos, assim o trapézio voltou pra ordem 2,00 e Simpson pra ordem 4,00.
+Na função suave, as ordens observadas já eram 2,01 e 4,06, próximas das teóricas.
+
+### R14 — Issue #11
+
+As regressões são test_trapezio_constante_malha_irregular
+e test_trapezio_reta_malha_irregular, commitadas em f08882b antes da correção 9fbe756.
+A fórmula antiga usava a largura do primeiro intervalo para toda a tabela.
+A correção soma as áreas usando cada largura real, calculada por np.diff(x).
+A aceitação usava malhas uniformes para o trapézio, nas quais o defeito não aparecia.
+Simpson exige espaçamento uniforme, mas o registro tem intervalos de 15 e 30 minutos.
