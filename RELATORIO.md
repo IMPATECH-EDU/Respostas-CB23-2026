@@ -40,6 +40,7 @@ re.match aceita 'PT103weubcwo9ien\n\nscv658212r5', mas re.fullmacth rejeita. Usa
 ### R2 — Linhas inválidas
 
 <!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
+Ainda que uma linha não seja útil para as medições, o sensor pode comunicar um erro por mensagem. Essa linha é corrompida do ponto de vista do tratamento dos dados, mas contém informação relevante. Basta ver uma das linhas corrompidas "### Falha de comunicação com o RTU ###" de exemplo.
 
 ### R3 — Late binding
 
