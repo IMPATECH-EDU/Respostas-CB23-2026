@@ -6,7 +6,8 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 """
 import unittest
 
-from elevatoria.acumuladores import AcumuladorIngenuo
+from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
+from math import isclose
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -19,6 +20,26 @@ class TestAcumuladorIngenuoExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #7 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+class TestAcumuladorKahan(unittest.TestCase):
+    """Testa o acumulador de Kahan."""
+
+    def test_acumulação_exata_1(self):
+        """Testa a acumulação usando assertAlmostEqual"""
+        acumulador = AcumuladorKahan()
+        acumulador.adicionar_todos([0.1]*1_000_000)
+        valor = acumulador.total
+        self.assertAlmostEqual(valor, 100_000.0)
+
+    def test_acumulação_exata_2(self):
+        """Testa a acumulação usando o math.isclose"""
+        acumulador = AcumuladorKahan()
+        acumulador.adicionar_todos([0.1]*2_000_000)
+        valor = acumulador.total
+        if isclose(valor, 200_000.0):
+            # Mantendo o padrão do inglês que vem do assert
+            self.fail(f"{valor} is different from {200_000.0}")
+
 
 
 if __name__ == "__main__":
