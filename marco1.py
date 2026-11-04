@@ -119,12 +119,16 @@ def etapa3() -> None:
     print("-" * 61)
     for estrutura, total in memoria.items():
         print(f"{estrutura:<12}{total / n:>12.2f}{total:>16,}{memoria['list']/total:>20.6f}")
+    print('')
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
 
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
-    _todo("3(b) tabela")
+    print(f"{'Versão':<14}{'Tempo (ms)':>14}{'Aceleração vs laço':>22}")
+    print("-" * 50)
+    for versao, t in tempos.items():
+        print(f"{versao:<14}{t * 1000:>14.2f}{tempos['laço'] / t:>22.2f}")
     assert tempos["laço"] / tempos["vetorizado"] >= 5
 
     # (c) Tipos e overflow: imprima os dois resultados.
