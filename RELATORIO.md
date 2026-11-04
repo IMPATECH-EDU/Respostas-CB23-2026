@@ -50,6 +50,7 @@ Ao definirmos uma função lambda, criamos um escopo onde podemos definir variá
 ### R4 — Escala nominal
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
+Nossa função de conversão é linear, mas a conversão real se da pela expressão c = 4095 · (2/π) · arcsin(p / 600), como pode ser visto em c_real em simulador.py.
 
 ### R5 — Previsão × medição (Etapa 3)
 
