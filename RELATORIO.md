@@ -54,7 +54,7 @@ Nossa função de conversão é linear, mas a conversão real se da pela express
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+Previsões registradas no commit: abaa37e <!-- cole o hash curto do commit de previsões -->
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
