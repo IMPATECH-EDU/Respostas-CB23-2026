@@ -137,7 +137,9 @@ por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 
 ### R11 — Bissecção × Newton
 
-A bisseção sempre começa com o mesmo intervalo ($[2,15]$), e quando o tamanho do intervalo vai ficando menor (cortado pela metade a cada iteração), esse tamanho fica menor que $10^{-12}$. Por isso, são necessárias $(\lceil\log_2(13/10^{-12})\rceil=44)$. O número de Reynolds muda a função e, portanto, a posição da raiz, mas nunca muda o intervalo inicial, portanto, o número de iterações deve ser o mesmo.
+A bisseção sempre começa com o mesmo intervalo $([2,15])$, e quando o tamanho do intervalo vai ficando menor (cortado pela metade a cada iteração), esse tamanho fica menor que $10^{-12}$. Por isso, são necessárias $(\lceil\log_2(13/10^{-12})\rceil=44)$. O número de Reynolds muda a função e, portanto, a posição da raiz, mas nunca muda o intervalo inicial, portanto, o número de iterações deve ser o mesmo.
+A ordem de convergência de 2 significa que, perto da raiz, o erro segue sendo de aproximadamente $(e_{k+1}\approx C e_k^2)$, ou seja, não desaparecem, mas decrescem bastante rápido. 
+Um exemplo de quando o método de Newton falha, mas o da Bissecção continua funcionando é para $f(x) = x^{3} + 1$ no intervalo $([-2,2])$. Nessas condições, Newton começa no ponto médio do intervalo $(x=0)$, onde a derivada é nula $(f'(0) = 0)$, e portanto não consegue avançar. Já o método da bisseção divide os intervalos pela metade sucessivamente e nota que $f(-2) < 0$ e $f(2) > 0$, portanto, pode encontrar a raiz (e de fato encontra).
 
 <!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
 quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
