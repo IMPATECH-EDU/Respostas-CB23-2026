@@ -64,7 +64,7 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
 
     # Usamos o resolvedor, que retorna um MetodoRaiz
     resultado = resolvedor.encontrar(f, a, b)
-
+    
     if not resultado.convergiu:
         raise ValueError(f"O resolvedor não convergiu.")
 
