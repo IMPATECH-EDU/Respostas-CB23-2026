@@ -59,10 +59,11 @@ Previsões registradas no commit: abaa37e <!-- cole o hash curto do commit de pr
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
 | Memória da lista / memória do `uint16` | 36000056/2000000 ~ 18.000028 | 18.000028 |
-| Tempo do laço / tempo vetorizado ~35 | | |
-| Tempo da compreensão / tempo do laço ~0.71 | | |
+| Tempo do laço / tempo vetorizado  | ~35 | 34.54 | 
+| Tempo da compreensão / tempo do laço  | ~0.71 | 1/1.07 = 0.93|
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
+Tinha colocado a previsão na coluna errada, mas corrigi. A memória deu exata pois .tolist() cria uma lista com allocated = ob_size. Então o tamanho da lista será 56 + 8*N + 28*N (tamanho dos ponteiros + tamanho de um int). Já uint16 ocupa 2 bytes/elemento. Os tempos de laço/vetorizado deram consistentes, não há como encontrar o valor exato, mas usei dis.dis pra ver os processos de um laço, estimei o tempo de cada ação em unidades genéricas. Considerei que o vetorizado levava uma unidade/elemento. O compr/laço deu bastante diferente. Eu achei que ia ser bem mais rápido por não usar nenhum CALL, mas acho que superestimei. Também: 4095 * 20 = 81900 > 2**16. O NumPy tira o mod. Por isso seria mais apropriado usar int64. Em dados.py, linha 245 tomamos cuidado para converter para float64 antes de multiplicar. 
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
