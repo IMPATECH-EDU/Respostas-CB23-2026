@@ -86,3 +86,13 @@ A bissecção gasta sempre 44 iterações porque o intervalo inicial é o mesmo 
 ### R12 — Issue #9
 
 Testes de regressão: `test_poucas_iteracoes_para_a_raiz_de_dois`, `test_derivada_recalculada_a_cada_iteracao`, `test_erro_cai_com_o_quadrado_a_cada_passo` e `test_colebrook_re_1e4_com_cinco_ou_seis_iteracoes`; os quatro falhavam antes da correção. Com a derivada calculada só no ponto inicial, a iteração vira `x ← x − f(x)/f'(x0)` (método da corda): o erro é multiplicado a cada passo por um fator constante, ≈ |1 − f'(raiz)/f'(x0)|, que não é zero, então a convergência é linear. Recalculando f'(x_k), esse fator tende a zero e o erro passa a cair com o quadrado do anterior. Os testes de aceitação só conferem se a raiz sai certa (a corda também chega, com mais passos) e não contam iterações nem medem a ordem; no Colebrook com Re = 1e4 são 5 iterações após a correção, contra 10 antes. Correção: mover `derivada = self._derivada(f, x)` para dentro do laço.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+As ordens 2 (trapézio) e 4 (Simpson) valem quando o integrando é suave no intervalo todo, porque o erro de truncamento depende de derivadas limitadas. O custo, potência × tarifa, tem saltos às 18 h e às 21 h, e cada salto cai dentro de uma célula da malha: essa célula contribui com um erro da ordem do salto × a largura dela, isto é, O(h), e como esse erro domina os demais, o total cai com ordem baixa, perto de 1, em qualquer regra (observei 1,00 no trapézio e 0,65 no Simpson, que varia conforme a posição do salto na malha). Integrando cada faixa separadamente, o integrando é suave em cada uma, e voltam as ordens 2,00 e 4,00.
+
+### R14 — Issue #11
+
+Testes de regressão: `test_reta_em_tres_pontos_desiguais`, `test_funcao_linear_e_exata_em_qualquer_malha`, `test_soma_das_areas_de_cada_trapezio` e `test_volume_do_dia_com_leituras_perdidas`; os quatro falhavam antes da correção. Causa: `Trapezio.integrar_tabela` usava um passo único, `h = x[1] - x[0]`, para todos os trapézios, mas o registro perdeu leituras e os intervalos são de 15, 30 e 45 min; os trechos largos eram contados como se fossem de 15 min e o volume saía 9,24% abaixo da conferência (agora, 0,18%). A correção soma a área de cada trapézio com a sua largura: `np.sum(0.5 * (y[1:] + y[:-1]) * np.diff(x))`. Os testes de aceitação só usam malhas uniformes (`np.linspace`), em que o passo único dá o resultado certo. A regra de Simpson não serve para o registro porque exige pontos igualmente espaçados (e número ímpar de pontos); com 89 leituras e intervalos irregulares, ela recusa a tabela.
