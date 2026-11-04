@@ -8,8 +8,9 @@ import unittest
 
 import numpy as np
 
-from elevatoria.dia import ajustar_polinomio
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 from elevatoria.integracao import Simpson, Trapezio
+from fornecido.energia import FAIXAS_TARIFARIAS
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -75,6 +76,60 @@ class TestAjustarPolinomioContrato(unittest.TestCase):
         """Um ajuste de grau dois aceita exatamente três pontos."""
         coef = ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 6.0, 17.0], 2)
         self.assertTrue(np.allclose(coef, [1.0, 2.0, 3.0]))
+
+
+class TestDiaDeOperacaoContrato(unittest.TestCase):
+    """Casos do balanço diário não cobertos pelos testes de aceitação."""
+
+    def test_rejeita_limite_tarifario_ausente(self) -> None:
+        """A ausência de qualquer limite tarifário levanta ValueError."""
+        t = np.array([0.0, 6.0, 12.0, 18.0, 19.0, 21.0, 24.0])
+        limites = {limite for inicio, fim, _ in FAIXAS_TARIFARIAS
+                   for limite in (inicio, fim)}
+        for limite in sorted(limites):
+            instantes = t[t != limite]
+            with self.subTest(limite=limite):
+                with self.assertRaises(ValueError):
+                    dia_de_operacao(instantes, np.full(instantes.size, 50.0),
+                                    [40.0], [0.8], Trapezio())
+
+    def test_balanco_em_malha_irregular(self) -> None:
+        """Vazão e potência lineares têm balanço exato mesmo em malha irregular."""
+        t = np.array([0.0, 1.0, 18.0, 19.0, 21.0, 22.0, 24.0])
+        resumo = dia_de_operacao(t, 40.0 + t, [40.0], [0.8], Trapezio())
+        # P(t) = fator * (40 + t); sua integral é analítica em cada faixa.
+        fator = 998.0 * 9.81 * 40.0 / (1e6 * 0.8)
+        integral_vazao = 40.0 * 24.0 + 24.0 ** 2 / 2.0
+        custos = tuple(tarifa * fator * (40.0 * (fim - inicio)
+                                       + (fim ** 2 - inicio ** 2) / 2.0)
+                       for inicio, fim, tarifa in FAIXAS_TARIFARIAS)
+        self.assertAlmostEqual(resumo.volume_m3, 3.6 * integral_vazao)
+        self.assertAlmostEqual(resumo.energia_kwh, fator * integral_vazao)
+        self.assertIsInstance(resumo.custo_por_faixa, tuple)
+        self.assertTrue(np.allclose(resumo.custo_por_faixa, custos))
+        self.assertAlmostEqual(resumo.custo_reais, sum(custos))
+
+    def test_respeita_integrador_simpson(self) -> None:
+        """Simpson integra a potência quadrática exatamente no dia e em cada faixa."""
+        t = np.arange(0.0, 24.0 + 1e-9, 1.5)
+        resumo = dia_de_operacao(t, t, [0.0, 1.0], [1.0], Simpson())
+        # Q(t) = H(t) = t e rendimento unitário: P(t) = fator * t².
+        fator = 998.0 * 9.81 / 1e6
+        custos = tuple(tarifa * fator * (fim ** 3 - inicio ** 3) / 3.0
+                       for inicio, fim, tarifa in FAIXAS_TARIFARIAS)
+        self.assertAlmostEqual(resumo.volume_m3, 3.6 * 24.0 ** 2 / 2.0)
+        self.assertAlmostEqual(resumo.energia_kwh, fator * 24.0 ** 3 / 3.0)
+        self.assertTrue(np.allclose(resumo.custo_por_faixa, custos))
+        self.assertAlmostEqual(resumo.custo_reais, sum(custos))
+
+    def test_rejeita_rendimento_nao_positivo(self) -> None:
+        """Rendimento zero ou negativo propaga o ValueError da potência elétrica."""
+        t = np.array([0.0, 18.0, 21.0, 24.0])
+        for rendimento in (0.0, -0.2):
+            with self.subTest(rendimento=rendimento):
+                with self.assertRaises(ValueError):
+                    dia_de_operacao(t, np.full(t.size, 50.0), [40.0],
+                                    [rendimento], Trapezio())
 
 
 if __name__ == "__main__":
