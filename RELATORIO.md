@@ -58,7 +58,7 @@ Previsões registradas no commit: abaa37e <!-- cole o hash curto do commit de pr
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | 36000056/2000000 ~ 18.000028 | |
+| Memória da lista / memória do `uint16` | 36000056/2000000 ~ 18.000028 | 18.000028 |
 | Tempo do laço / tempo vetorizado ~35 | | |
 | Tempo da compreensão / tempo do laço ~0.71 | | |
 

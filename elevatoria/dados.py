@@ -191,8 +191,32 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
 
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
     """
-    raise NotImplementedError("issue #3: medir_memoria")
-    
+
+    if not isinstance(contagens, np.ndarray):
+        raise ValueError("contagens deve ser um ndarray")
+    if contagens.ndim != 1:
+        raise ValueError(f"contagens deve ser 1D; recebi ndim={contagens.ndim}")
+    if not np.issubdtype(contagens.dtype, np.integer):
+        raise ValueError(f"contagens deve ser de inteiros; recebi {contagens.dtype}")
+
+    lista = contagens.tolist()
+    array_h = array.array("H", lista)
+    uint16 = contagens.astype(np.uint16)
+    int32 = contagens.astype(np.int32)
+    int64 = contagens.astype(np.int64)
+    float32 = contagens.astype(np.float32)
+    float64 = contagens.astype(np.float64)
+
+    return {
+        "list": sys.getsizeof(lista) + sum(sys.getsizeof(x) for x in lista),
+        "array('H')": array_h.itemsize * len(array_h),
+        "uint16": uint16.nbytes,
+        "int32": int32.nbytes,
+        "int64": int64.nbytes,
+        "float32": float32.nbytes,
+        "float64": float64.nbytes,
+    }
+
 
 def converter_laco(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `for` e `append`."""
