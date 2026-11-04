@@ -45,6 +45,7 @@ Ainda que uma linha não seja útil para as medições, o sensor pode comunicar 
 ### R3 — Late binding
 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
+Ao definirmos uma função lambda, criamos um escopo onde podemos definir variáveis. Errados define a variável de entrada, mas usa diretamente o k definido no escopo do for in line. Então quando chamamos a função, ela tenta usar uma variável que não existe no seu escopo e segue procurando nos escopos que contém a função. No escopo do for in line, k refere-se ao último valor acessaso. Na nossa função, k é definido no escopo de lambda.
 
 ### R4 — Escala nominal
 
