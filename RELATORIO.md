@@ -75,9 +75,8 @@ Python 3.13.2 | NumPy 2.4.4 | SciPy 1.17.1 | fornecido 4.0 | matrícula 3464
 
 ### R8 — Derivada numérica
 
-<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
-depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
-é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+Isso acontece porque a princípio diminuir h aumenta a precisão da derivada porque estamos escolhendo pontos mais próximos, mas eventualmente ultrapassamos um "threshold" devido à precisão do ponto flutuante. A partir desse ponto, que coincindiu com 1e-5, diminuir as distâncias não melhora a precisão devido às limitações do tipo de dado (float) que estamos usando. Assim, antes de 1e-5 temos erros de truncamento, e após 1e-5 erros de arredondamento.
+No caso de h = 1e-14, a menor diferença representável próximo a 1000 é da ordem 2.2e-13, e então f(1000 + h) - f(1000) = 0, de onde a derivada é 0. Então o erro é exatamente a derivada exata, já que obtivemos 0 como retorno.
 
 ### R9 — Issue #7
 
@@ -87,6 +86,4 @@ Os testes de aceitação não pegaram o defeito porque somaram poucos números. 
 
 ### R10 — Precisão × exatidão
 
-<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
-diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
-por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+A precisão nesse caso se dá pela dispersão dos dados. Ambas as curvas apresentam pouca dispersão (desvio) nos dados, e por isso suas precisões são semelhantes. As suas exatidões se diferem porque a curva linear não representa bem a simulação, que é uma curva. A Spline, que é mais suave, é um modelo melhor para a simulação, e então sua média converge para o valor real, diferentemente da linear.

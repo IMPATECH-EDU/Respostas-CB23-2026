@@ -16,6 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+import math
 from scipy import stats
 
 from elevatoria.calibracao import CurvaCalibracao
@@ -63,7 +64,49 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+
+    # Levantamentos de erros:
+
+    if u_sistematica < 0:
+        raise ValueError("A incerteza sistemática não pode ser negativa.")
+
+    
+
+    # Criamos a série nova e convertemos com a curva
+    nova_serie = serie(registros, tag, "contagens")
+    conversao = np.array([curva(x) for x in nova_serie])
+
+    # Calculamos a média, mad e pegamos as leituras espúrias
+    mediana = np.median(conversao)
+    mad = stats.median_abs_deviation(conversao, scale="normal")
+
+    if mad == 0:
+        raise ValueError("A MAD das leituras é zero (dados constantes).")
+
+    z = (conversao - mediana) / mad
+    
+    # Podemos usar o método np.where para ver elemento a elemento
+    espurias = np.where(np.abs(z) > limiar)[0].tolist()
+    validos = conversao[np.abs(z) <= limiar]
+
+    if len(validos) < 2:
+        raise ValueError("Sobraram menos de 2 leituras válidas após a remoção de espúrias.")
+
+    # Calculamos a média, o desvio padrão e o erro padrão
+    media = float(np.mean(validos))
+    desvio = float(np.std(validos, ddof=1))
+    erro_padrao = float(stats.sem(validos))
+
+    # Agora calculamos a incerteza combinada
+    u_combinada = math.sqrt(erro_padrao**2 + u_sistematica**2)
+
+    return Medicao(
+      tag = tag,
+      medida = Medida(media, u_combinada),
+      desvio = desvio,
+      n_validas = len(validos),
+      espurias = espurias
+    )
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +118,14 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+
+    # Usamos a função medir criada anteriormente
+    p_pt101 = medir(registros, "PT101", curva, u_sistematica=u_sistematica).medida
+    p_pt102 = medir(registros, "PT102", curva, u_sistematica=u_sistematica).medida
+
+    # Aplicamos a fórmula, considerando que 'medida' já propaga as incertezas
+    h = (p_pt102 - p_pt101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
+
+    return h
+
+#    raise NotImplementedError("issue #6: altura_manometrica")

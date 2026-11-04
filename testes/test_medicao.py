@@ -7,6 +7,9 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 import unittest
 
 from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
+from elevatoria.medicao import medir
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import Registro
 from math import isclose
 
 
@@ -38,6 +41,36 @@ class TestAcumuladorKahan(unittest.TestCase):
         valor = acumulador.total
         self.assertTrue(isclose(valor, 200_000.0, rel_tol=1e-12))
 
+
+class TestMedir(unittest.TestCase):
+    """Testes para a função medir."""
+
+    IDENTIDADE = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
+
+    @staticmethod
+    def registros(tag: str, contagens: list[float | int], nivel: str = "INFO") -> list[Registro]:
+        """Função auxiliar para criar registros do teste."""
+        return [
+            Registro(
+                instante=float(i),
+                nivel = nivel,
+                tag=tag,
+                valores={"contagens": float(c)}
+            )
+            for i, c in enumerate(contagens)
+        ]
+
+    def test_u_sistematica_negativa(self):
+        """Testa se incerteza sistemática negativa levanta ValueError."""
+        regs = self.registros("PT101", [10, 11, 9, 10, 12, 11, 10, 9])
+        with self.assertRaises(ValueError):
+            medir(regs, "PT101", self.IDENTIDADE, u_sistematica=-1.0)
+
+    def test_mad_zero(self):
+        """Testa se série constante (MAD zero) levanta ValueError."""
+        regs = self.registros("PT101", [10] * 8)
+        with self.assertRaises(ValueError):
+            medir(regs, "PT101",self.IDENTIDADE)
 
 
 if __name__ == "__main__":
