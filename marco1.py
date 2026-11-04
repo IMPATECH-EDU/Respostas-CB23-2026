@@ -134,6 +134,7 @@ def etapa3() -> None:
     # (c) Tipos e overflow: imprima os dois resultados.
     misto = np.array([1, 2.5, "a"])
     estouro = np.array([4095], dtype=np.uint16) * 20
+    print(f"\nTipo de misto: {misto.dtype} | estouro: {estouro[0]}")
     assert misto.dtype.kind == "U"
     assert estouro[0] == 16364 and 4095 * 20 == 81900
 
