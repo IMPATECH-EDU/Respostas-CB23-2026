@@ -192,7 +192,7 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
     """
     raise NotImplementedError("issue #3: medir_memoria")
-
+    
 
 def converter_laco(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `for` e `append`."""
