@@ -97,7 +97,7 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     energia = integrador.integrar_tabela(t, potencia)
 
     custo_por_faixa = tuple(
-        tarifa * integrador.integrar_tabela(t, potencia, inicio, fim)
+        tarifa * integrador.integrar_tabela(t, potencia * ((t >= inicio) & (t <= fim)))
         for inicio, fim, tarifa in FAIXAS_TARIFARIAS
     )
 
