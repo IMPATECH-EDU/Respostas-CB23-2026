@@ -65,3 +65,28 @@ o primeiro termo é ignorado, pois acumulada[janela] ignora o termo na posição
 Corrigimos isso adicionando um termo 0 à frente dos outros no vetor 'acumulada'.
 Os testes de aceitação não pegaram o defeito porque verificavam apenas o tipo da lista e se a função não levantava erros, mas não fazia um teste numérico.
 O teste que fiz inclui um teste de tamanho da lista, além de um teste com o primeiro valor calculado, para garantir que a função calcula esse primeiro termo.
+
+
+## Marco 2
+
+### Ambiente
+
+Python 3.13.2 | NumPy 2.4.4 | SciPy 1.17.1 | fornecido 4.0 | matrícula 3464
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+### R9 — Issue #7
+
+Os nomes dos testes são test_acumulacao_exata_1 e test_acumulacao_exata_2.
+t - (s + y) dá sempre zero em ponto flutuante, pois t foi definido anteriormente como s + y. Já (t - s) - y inverte a ordem, e então os pequenos erros de arredondamento conseguem ser capturados, pois forçamos que calcule t - s, e só depois subtraia y.
+Os testes de aceitação não pegaram o defeito porque somaram poucos números. Somar 0.1 dez vezes não é suficiente para que o erro de arredondamento do ponto flutuante seja relevante. O método math.isclose() (na documentação) tem tolerância relativa de 10e-9. Somar 0.1 dez vezes retorna 0.9999999999999999, e então math.isclose() não captura essa diferença.
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
