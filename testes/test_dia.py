@@ -8,6 +8,7 @@ import unittest
 
 import numpy as np
 
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 from elevatoria.integracao import Simpson, Trapezio
 from fornecido.energia import vazao_registrada
 from fornecido.simulador import verdade_dia
@@ -45,6 +46,82 @@ class TestTrapezioMalhaIrregularRegressao(unittest.TestCase):
         t, q = vazao_registrada(3478)
         volume = 3.6 * Trapezio().integrar_tabela(t, q)
         self.assertLess(abs(volume / verdade_dia()["volume_m3"] - 1), 0.015)
+
+# Issue #10: regras do contrato que os testes de aceitação não verificam
+
+T = np.arange(0.0, 24.0 + 1e-9, 1.5)
+
+
+class TestAjustarPolinomioContrato(unittest.TestCase):
+    """Regras de `ajustar_polinomio` que os testes de aceitação não verificam."""
+
+    def test_grau_negativo(self):
+        """Um grau negativo levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 2.0, 3.0], -1)
+
+    def test_vetores_invalidos(self):
+        """Vetores de tamanhos diferentes ou que não são 1D levantam ValueError."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 2.0], 1)
+        with self.assertRaises(ValueError):
+            ajustar_polinomio(np.zeros((3, 2)), np.zeros((3, 2)), 1)
+
+    def test_grau_zero_e_a_media(self):
+        """O polinômio de grau 0 que minimiza o erro quadrático é a média dos y."""
+        coef = ajustar_polinomio([0.0, 1.0, 2.0, 3.0], [2.0, 4.0, 6.0, 8.0], 0)
+        self.assertTrue(np.allclose(coef, [5.0]))
+
+    def test_pontos_justos_interpolam(self):
+        """Com grau + 1 pontos o polinômio passa exatamente por todos eles."""
+        x = np.array([0.0, 1.0, 3.0])
+        y = np.array([2.0, -1.0, 4.0])
+        coef = ajustar_polinomio(x, y, 2)
+        self.assertTrue(np.allclose(np.polynomial.polynomial.polyval(x, coef), y))
+
+    def test_recupera_a_curva_com_ruido(self):
+        """Com ruído pequeno, o ajuste de grau 2 recupera 45 - 0,0022·Q² com erro baixo em 10..100 L/s."""
+        rng = np.random.default_rng(5)
+        q = np.arange(0.0, 101.0, 10.0)
+        h = 45.0 - 0.0022 * q ** 2 + rng.normal(0.0, 0.1, q.size)
+        coef = ajustar_polinomio(q, h, 2)
+        ajustada = np.polynomial.polynomial.polyval(q, coef)
+        self.assertLess(float(np.max(np.abs(ajustada - (45.0 - 0.0022 * q ** 2)))), 0.3)
+
+
+class TestDiaDeOperacaoContrato(unittest.TestCase):
+    """Regras de `dia_de_operacao` que os testes de aceitação não verificam."""
+
+    def test_limite_de_faixa_ausente(self):
+        """Se o instante de 18 h não está em t, levanta ValueError."""
+        t = T[T != 18.0]
+        with self.assertRaises(ValueError):
+            dia_de_operacao(t, np.full(t.size, 50.0), [40.0], [0.8], Trapezio())
+
+    def test_rendimento_nao_positivo(self):
+        """Rendimento zero em algum instante levanta ValueError."""
+        with self.assertRaises(ValueError):
+            dia_de_operacao(T, np.full(T.size, 50.0), [40.0], [0.0], Trapezio())
+
+    def test_malha_irregular_com_leituras_perdidas(self):
+        """Com leituras perdidas (malha irregular) e vazão linear, o volume é exato: 3,6·(40·24 + 288)."""
+        t = np.array([0.0, 0.25, 1.0, 5.5, 18.0, 18.25, 20.0, 21.0, 22.5, 24.0])
+        resumo = dia_de_operacao(t, 40.0 + t, [40.0], [0.8], Trapezio())
+        self.assertAlmostEqual(resumo.volume_m3, 3.6 * (40.0 * 24.0 + 24.0 ** 2 / 2))
+
+    def test_custo_e_a_soma_das_faixas(self):
+        """O custo total é a soma de custo_por_faixa, que tem uma entrada por faixa."""
+        resumo = dia_de_operacao(T, 40.0 + T, [45.0, 0.0, -0.0022], [0.6, 0.002], Trapezio())
+        self.assertEqual(len(resumo.custo_por_faixa), 3)
+        self.assertAlmostEqual(resumo.custo_reais, sum(resumo.custo_por_faixa))
+
+    def test_funciona_com_outro_integrador(self):
+        """Simpson (malha uniforme, número ímpar de pontos por faixa) dá o mesmo resultado que o trapézio numa vazão constante."""
+        vazao = np.full(T.size, 50.0)
+        com_trapezio = dia_de_operacao(T, vazao, [40.0], [0.8], Trapezio())
+        com_simpson = dia_de_operacao(T, vazao, [40.0], [0.8], Simpson())
+        self.assertAlmostEqual(com_simpson.volume_m3, com_trapezio.volume_m3)
+        self.assertTrue(np.allclose(com_simpson.custo_por_faixa, com_trapezio.custo_por_faixa))
 
 
 if __name__ == "__main__":
