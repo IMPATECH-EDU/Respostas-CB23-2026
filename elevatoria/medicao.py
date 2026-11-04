@@ -63,7 +63,39 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica não pode ser negativa; recebi {u_sistematica}")
+
+    # Contagens da tag
+
+    contagens = np.asarray(serie(registros, tag, "contagens"))
+    if contagens.size < 2:
+        raise ValueError(f"a tag {tag!r} tem {contagens.size} leitura(s); preciso de pelo menos 2")
+
+    # Conversão para kPa (um ValueError da curva chega a quem chamou)
+
+    pressoes = np.asarray(curva(contagens))
+
+    # Leituras espúrias pelo z robusto
+
+    mediana = np.median(pressoes)
+    mad = stats.median_abs_deviation(pressoes, scale="normal")
+    if mad == 0:
+        raise ValueError(f"a MAD das leituras de {tag!r} é zero: não dá para calcular o z robusto")
+    z = (pressoes - mediana) / mad
+    eh_espuria = np.abs(z) > limiar
+    validas = pressoes[~eh_espuria]
+    if validas.size < 2:
+        raise ValueError(f"sobraram {validas.size} leitura(s) válida(s) em {tag!r}; preciso de pelo menos 2")
+
+    # Média, desvio, erro padrão e incerteza total
+
+    media = float(validas.mean())
+    desvio = float(validas.std(ddof=1))
+    erro_padrao = float(stats.sem(validas))
+    incerteza = float(np.hypot(erro_padrao, u_sistematica))
+    return Medicao(tag=tag, medida=Medida(media, incerteza), desvio=desvio,
+                   n_validas=int(validas.size), espurias=np.flatnonzero(eh_espuria).tolist())
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +107,9 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(registros, "PT101", curva, u_sistematica).medida
+    recalque = medir(registros, "PT102", curva, u_sistematica).medida
+
+    # Diferença de pressão (kPa -> Pa) dividida pelo peso específico, tudo com Medida
+
+    return (recalque - succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
