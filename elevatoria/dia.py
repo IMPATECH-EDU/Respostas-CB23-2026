@@ -41,7 +41,14 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    if x.ndim != 1 or y.ndim != 1 or len(x) != len(y):
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if grau < 0:
+        raise ValueError("grau deve ser não-negativo")
+    if len(x) < grau + 1:
+        raise ValueError("menos pontos que coeficientes: len(x) < grau + 1")
+
+    return np.polynomial.polynomial.polyfit(x, y, grau)
 
 
 @dataclass(frozen=True)
@@ -76,4 +83,24 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    if len(t) != len(vazao):
+        raise ValueError("t e vazao devem ter o mesmo tamanho")
+    if not all(limite in t for limite in (0, 18, 21, 24)):
+        raise ValueError("todos os limites de faixa (0, 18, 21, 24) devem estar em t")
+
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+
+    energia = integrador.integrar_tabela(t, potencia)
+
+    custo_por_faixa = tuple(
+        tarifa * integrador.integrar_tabela(t, potencia * ((t >= inicio) & (t <= fim)))
+        for inicio, fim, tarifa in FAIXAS_TARIFARIAS
+    )
+
+    custo_total = sum(custo_por_faixa)
+
+    return ResumoDia(volume, energia, custo_total, custo_por_faixa)
