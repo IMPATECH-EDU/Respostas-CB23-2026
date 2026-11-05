@@ -320,10 +320,11 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     """
     # Medimos o tempo de cada uma das conversões dadas anteriormente, onde cada uma ocorre k vezes
     liusta=contagens.tolist()
+    valo = list(map(int, liusta))
 
-    dicio={"laço": cronometrar(converter_laco(), liusta, k),
-           "compreensão": ,
-           "map+lambda": ,
-           "vetorizado": 
+    return {"laço": cronometrar(converter_laco(), valo, k),
+           "compreensão": cronometrar(converter_compreensao(), valo, k),
+           "map+lambda": cronometrar(converter_map(), valo, k),
+           "vetorizado": cronometrar(converter_vetorizado(), contagens, k)
            }
     raise NotImplementedError("issue #3: medir_tempos")
