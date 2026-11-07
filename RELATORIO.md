@@ -9,7 +9,7 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ```
 $ which python
-<COLE AQUI a saída de `which python` (ou `where python` no Windows) com o ambiente ativo>
+C:\Users\dirgo\AppData\Local\Microsoft\WindowsApps\python.exe
 
 === Etapa 0: ambiente ===
 Python 3.13.18 | NumPy 2.5.3 | fornecido 4.0
