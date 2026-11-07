@@ -49,7 +49,21 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    q_min, q_max = bomba.dominio
+    if a < q_min or b > q_max:
+        raise ValueError(f"[{a}, {b}] sai do domínio da curva da bomba [{q_min}, {q_max}]")
+
+    def desequilibrio(q: float) -> float:
+        """Altura que sobra (> 0) ou falta (< 0) da bomba em relação ao sistema."""
+        return bomba(q) - tubulacao.altura_sistema(q)
+
+    resultado = resolvedor.encontrar(desequilibrio, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"{type(resolvedor).__name__} não convergiu em "
+                         f"{resultado.iteracoes} iterações")
+    return PontoOperacao(vazao=resultado.raiz, altura=bomba(resultado.raiz), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +80,13 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    corte = piso * max(1.0, abs(raiz))
+    erros = [abs(x - raiz) for x in historico]
+    uteis = [e for e in erros if e > corte]
+    if len(uteis) < 3:
+        raise ValueError(f"preciso de 3 erros acima de {corte:.1e}; há só {len(uteis)}")
+    e_antes, e_meio, e_depois = uteis[-3:]
+    reducao_anterior = math.log(e_meio / e_antes)
+    if reducao_anterior == 0.0:
+        raise ValueError("dois erros consecutivos iguais: a sequência não está convergindo")
+    return math.log(e_depois / e_meio) / reducao_anterior

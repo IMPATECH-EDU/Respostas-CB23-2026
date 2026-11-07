@@ -17,12 +17,7 @@ from fornecido.simulador import gerar_log
 from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
                               medir_tempos, serie, valida_tag)
 
-MATRICULA = 123456  # troque pelo seu número de matrícula
-
-
-def _todo(item: str):
-    """Marca um trecho ainda não feito; apague as chamadas a _todo ao completar o script."""
-    raise NotImplementedError(f"marco1.py: complete o item {item}")
+MATRICULA = 3459
 
 
 def etapa0() -> None:
@@ -39,16 +34,22 @@ def etapa1(texto: str, verdade: dict) -> list:
     print("\n=== Etapa 1: leitura do log ===")
     # (a) Leia o log e imprima o número de registros válidos e de linhas inválidas.
     registros, invalidas = ler_log(texto)
+    print(f"(a) {len(registros)} registros válidos e {len(invalidas)} linhas inválidas:")
+    for linha in invalidas:
+        print(f"      descartada: {linha!r}")
     assert len(invalidas) == verdade["invalidas"]
     assert len(registros) + len(invalidas) == verdade["linhas"]
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
-    por_nivel = _todo("1(b)")
+    por_nivel = {nivel: sum(1 for r in registros if r.nivel == nivel)
+                 for nivel in {r.nivel for r in registros}}
+    print(f"(b) registros por nível: {dict(sorted(por_nivel.items()))}")
     assert por_nivel == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
-    total = _todo("1(c)")
+    total = int(serie(registros, "FT201", "pulsos").sum())
+    print(f"(c) FT201: {total} pulsos na hora = {total * 0.1:.1f} L bombeados")
     assert total == verdade["pulsos_total"]
 
     # (d) valida_tag.
@@ -56,6 +57,7 @@ def etapa1(texto: str, verdade: dict) -> list:
         assert valida_tag(tag), tag
     for tag in ["pt101", "PT", "PT1010", "101PT", "PT101 "]:
         assert not valida_tag(tag), tag
+    print("(d) valida_tag: aceita PT101, FT201, B1; rejeita pt101, PT, PT1010, 101PT, 'PT101 '")
     return registros
 
 
@@ -63,25 +65,33 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     """Etapa 2 — Lambda e compreensões (issue #2)."""
     print("\n=== Etapa 2: lambda e compreensões ===")
     # (a) Ordene com sorted e key=lambda: (i) por (tag, instante); (ii) por instante decrescente.
-    por_tag_instante = _todo("2(a)(i)")
-    decrescente = _todo("2(a)(ii)")
+    por_tag_instante = sorted(registros, key=lambda r: (r.tag, r.instante))
+    decrescente = sorted(registros, key=lambda r: r.instante, reverse=True)
+    print(f"(a) 1º por (tag, instante): {por_tag_instante[0].tag} {por_tag_instante[0].instante}; "
+          f"1º por instante decrescente: {decrescente[0].tag} {decrescente[0].instante}")
     assert por_tag_instante[0].tag == "B1"
     assert decrescente[0].instante == max(r.instante for r in registros)
 
     # (b) Contagens de PT102 (só registros com a chave "contagens"): map/filter e compreensão.
-    com_map = _todo("2(b) map/filter")
-    com_compreensao = _todo("2(b) compreensão")
+    com_map = list(map(lambda r: r.valores["contagens"],
+                       filter(lambda r: r.tag == "PT102" and "contagens" in r.valores, registros)))
+    com_compreensao = [r.valores["contagens"] for r in registros
+                       if r.tag == "PT102" and "contagens" in r.valores]
+    print(f"(b) contagens de PT102: {len(com_map)} com map/filter, {len(com_compreensao)} com compreensão")
     assert com_map == com_compreensao and len(com_compreensao) == 600
 
     # (c) Contagens acima de 2000 (compreensão de lista) e tags distintas (de conjunto).
-    altas = _todo("2(c) altas")
-    tags = _todo("2(c) tags")
+    altas = [c for c in com_compreensao if c > 2000]
+    tags = {r.tag for r in registros}
+    print(f"(c) contagens acima de 2000: {altas}; tags distintas: {sorted(tags)}")
     assert len(altas) == 5
     assert tags == {"B1", "PT101", "PT102", "FT201", "LT301"}
 
     # (d) Com re.sub e uma lambda como repl, troque pulsos=N por volume_L=V (V = N * 0,1,
     #     com uma casa decimal; por exemplo, pulsos=3892 vira volume_L=389.2).
-    convertido = _todo("2(d)")
+    convertido = re.sub(r"pulsos=(\d+)", lambda m: f"volume_L={int(m.group(1)) * 0.1:.1f}", texto)
+    exemplo = next(linha for linha in convertido.splitlines() if "volume_L=" in linha)
+    print(f"(d) depois do re.sub: {exemplo}")
     assert convertido.count("volume_L=") == 600 and "pulsos=" not in convertido
 
     # (e) Late binding: a versão errada (não corrija esta linha) e a sua.
@@ -90,10 +100,15 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     certos = criar_conversores(escalas)
     assert math.isclose(errados["PT102"](4095), 409.5)
     assert math.isclose(certos["PT102"](4095), 600.0)
+    print(f"(e) 4095 contagens de PT102: errado = {errados['PT102'](4095):.1f} kPa (fator do FT201); "
+          f"certo = {certos['PT102'](4095):.1f} kPa")
 
     # (f) Converta a média das contagens normais de PT102 (até 2000) com a escala nominal
     #     (certos["PT102"]) e imprima ao lado de verdade["pressao_recalque"].
-    p_nominal = _todo("2(f)")
+    normais = [c for c in com_compreensao if c <= 2000]
+    p_nominal = certos["PT102"](sum(normais) / len(normais))
+    print(f"(f) pressão de recalque pela escala nominal: {p_nominal:.1f} kPa "
+          f"(conferência: {verdade['pressao_recalque']:.1f} kPa)")
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
 
 
@@ -106,13 +121,17 @@ def etapa3() -> None:
     # (a) Memória: imprima uma tabela com estrutura, bytes por elemento, bytes totais e a
     #     razão em relação à lista.
     memoria = medir_memoria(contagens)
-    _todo("3(a) tabela")
+    print(f"(a) {'estrutura':<12}{'bytes/elem':>12}{'bytes totais':>16}{'razão p/ list':>15}")
+    for nome, total in memoria.items():
+        print(f"    {nome:<12}{total / n:>12.2f}{total:>16,}{total / memoria['list']:>15.3f}")
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
 
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
-    _todo("3(b) tabela")
+    print(f"(b) {'versão':<13}{'tempo (ms)':>12}{'aceleração':>12}")
+    for nome, t in tempos.items():
+        print(f"    {nome:<13}{t * 1000:>12.2f}{tempos['laço'] / t:>11.1f}x")
     assert tempos["laço"] / tempos["vetorizado"] >= 5
 
     # (c) Tipos e overflow: imprima os dois resultados.
@@ -120,6 +139,8 @@ def etapa3() -> None:
     estouro = np.array([4095], dtype=np.uint16) * 20
     assert misto.dtype.kind == "U"
     assert estouro[0] == 16364 and 4095 * 20 == 81900
+    print(f"(c) np.array([1, 2.5, 'a']) -> dtype {misto.dtype}: {misto}")
+    print(f"    uint16: 4095 * 20 = {estouro[0]} (em Python: {4095 * 20}; 81900 mod 65536 = {81900 % 65536})")
 
 
 def etapa4(registros: list) -> None:
@@ -129,19 +150,26 @@ def etapa4(registros: list) -> None:
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
     assert len(s) == 600 and s.amplitude() > 300
+    print(f"(a) PT102: média {float(s.mean()):.2f}, desvio {float(s.std(ddof=1)):.2f}, "
+          f"amplitude {s.amplitude():.0f} contagens")
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
     assert len(mm) == 571
+    print(f"(b) média móvel (30): {len(mm)} valores, de {float(mm.min()):.2f} a {float(mm.max()):.2f} "
+          f"(série: de {float(s.min()):.0f} a {float(s.max()):.0f})")
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
     assert len(por_minuto) == 60
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
+    print(f"(c) {len(por_minuto)} médias por minuto, de {float(por_minuto.min()):.2f} "
+          f"a {float(por_minuto.max()):.2f}")
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    expressoes = {"s + s": s + s, "s[1:]": s[1:], "s * 2": s * 2, "s.sum()": s.sum(), "s[0]": s[0]}
+    print("(d) " + "; ".join(f"{expr} -> {type(valor).__name__}" for expr, valor in expressoes.items()))
 
 
 def main(matricula: int = MATRICULA) -> None:
