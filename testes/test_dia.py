@@ -8,8 +8,9 @@ import unittest
 
 import numpy as np
 
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 from elevatoria.integracao import Simpson, Trapezio
-from fornecido.energia import vazao_registrada
+from fornecido.energia import FAIXAS_TARIFARIAS, vazao_registrada
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -37,6 +38,61 @@ class TestTrapezioTabelaRegressao(unittest.TestCase):
         """No registro real do dia (89 de 97 leituras), o resultado coincide com np.trapezoid."""
         t, q = vazao_registrada(123456)
         self.assertAlmostEqual(Trapezio().integrar_tabela(t, q), float(np.trapezoid(q, t)))
+
+
+class TestAjustarPolinomioContrato(unittest.TestCase):
+    """Issue #10: regras de ajustar_polinomio que os testes de aceitação não verificam."""
+
+    def test_entradas_invalidas(self):
+        """Grau negativo, tamanhos diferentes e x 2D levantam ValueError."""
+        casos = [([0.0, 1.0, 2.0], [1.0, 2.0, 3.0], -1),
+                 ([0.0, 1.0, 2.0], [1.0, 2.0], 1),
+                 ([[0.0, 1.0], [2.0, 3.0]], [1.0, 2.0], 1)]
+        for x, y, grau in casos:
+            with self.subTest(x=x, y=y, grau=grau), self.assertRaises(ValueError):
+                ajustar_polinomio(x, y, grau)
+
+    def test_grau_zero_e_a_media(self):
+        """O polinômio constante de mínimos quadrados é a média dos y."""
+        coef = ajustar_polinomio([0.0, 1.0, 5.0, 9.0], [2.0, 4.0, 3.0, 7.0], 0)
+        self.assertEqual(len(coef), 1)
+        self.assertAlmostEqual(coef[0], 4.0)
+
+    def test_pontos_iguais_ao_numero_de_coeficientes_interpola(self):
+        """Com len(x) = grau + 1, o ajuste passa exatamente pelos pontos."""
+        x = np.array([10.0, 40.0, 70.0, 100.0])
+        y = np.array([44.8, 41.3, 34.1, 23.0])
+        coef = ajustar_polinomio(x, y, 3)
+        self.assertTrue(np.allclose(np.polynomial.polynomial.polyval(x, coef), y))
+
+
+class TestDiaDeOperacaoContrato(unittest.TestCase):
+    """Issue #10: regras de dia_de_operacao que os testes de aceitação não verificam."""
+
+    def setUp(self):
+        self.t = np.arange(0.0, 24.0 + 1e-9, 1.5)
+
+    def test_falta_limite_de_faixa(self):
+        """Sem a leitura das 21 h, as faixas não podem ser integradas: ValueError."""
+        t = self.t[~np.isclose(self.t, 21.0)]
+        with self.assertRaisesRegex(ValueError, "21"):
+            dia_de_operacao(t, np.full(t.size, 50.0), [40.0], [0.8], Trapezio())
+
+    def test_custo_total_e_a_soma_das_faixas(self):
+        """custo_reais é a soma de custo_por_faixa, que tem uma entrada por faixa tarifária."""
+        resumo = dia_de_operacao(self.t, 40.0 + self.t, [45.0, 0.0, -0.0022], [0.6, 0.002],
+                                 Trapezio())
+        self.assertEqual(len(resumo.custo_por_faixa), len(FAIXAS_TARIFARIAS))
+        self.assertAlmostEqual(resumo.custo_reais, sum(resumo.custo_por_faixa))
+
+    def test_usa_o_integrador_recebido(self):
+        """Com Simpson, uma vazão quadrática no tempo dá o volume exato (o trapézio, não)."""
+        vazao = 30.0 + 0.1 * self.t ** 2
+        exato = 3.6 * (30.0 * 24.0 + 0.1 * 24.0 ** 3 / 3.0)
+        simpson = dia_de_operacao(self.t, vazao, [40.0], [0.8], Simpson())
+        trapezio = dia_de_operacao(self.t, vazao, [40.0], [0.8], Trapezio())
+        self.assertAlmostEqual(simpson.volume_m3, exato)
+        self.assertGreater(abs(trapezio.volume_m3 - exato), 1.0)
 
 
 if __name__ == "__main__":
