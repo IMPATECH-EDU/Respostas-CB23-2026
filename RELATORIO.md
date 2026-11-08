@@ -81,3 +81,68 @@ Previ `ndarray` para tudo e errei: `s + s`, `s[1:]` e `s * 2` devolveram `SerieT
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 
 Sintoma: `media_movel(30)` em 600 pontos devolvia 570 valores, e não 571. Testes de regressão: `test_tamanho_do_resultado` e mais quatro da classe `TestMediaMovelRegressao`, que davam FAIL antes da correção. Causa: o `np.cumsum` não começa em zero, então a diferença `acumulada[janela:] - acumulada[:-janela]` perde a primeira janela. Correção: pôr `0.0` no início da soma acumulada (`np.concatenate`) e devolver `SerieTemporal` com `.view`. Os testes de aceitação só conferem o tipo, as janelas inválidas e que a série não muda, não o tamanho nem os valores. Outro caso não coberto: janela igual ao tamanho da série (dava 0 valores), coberto por `test_janela_igual_ao_tamanho`.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+
+=== Etapa 0: ambiente ===
+Python 3.12.3 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3537
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+```
+
+## 7. Entrega
+
+**Descrição do Pull Request.** Acrescente à descrição do seu PR, abaixo da seção do Marco 1:
+
+```markdown
+## Marco 2
+Resolve as issues #6 e #7 do enunciado.
+
+### O que mudou
+- ...
+
+### Como testei
+- `python -m unittest discover -v`: N testes, todos passando
+- `python marco1.py` e `python marco2.py`: todos os assert passam
+
+### Pontos de atenção para o revisor
+- ...
+```
+
+**Checklist do Marco 2**
+
+- [ ] `git fetch upstream` seguido de `git diff upstream/main --stat -- fornecido/ marco2.py`
+      não mostra nada (você não alterou o código fornecido nem o script).
+- [ ] `python -m unittest discover -v` roda sem falhas, com pelo menos 4 testes seus do Marco 2.
+- [ ] `python marco1.py` e `python marco2.py` rodam sem exceções.
+- [ ] O código novo tem docstrings e anotações de tipo, e `elevatoria/` não tem `print`.
+- [ ] Os testes de regressão da #7 falhavam antes da correção.
+- [ ] O `RELATORIO.md` tem a seção "Marco 2", com o ambiente e as respostas R8 a R10.
+- [ ] Todo o código foi executado, testado e lido por você, inclusive o gerado com ajuda de IA.
+
+## 8. Material complementar (opcional)
+
+- https://docs.scipy.org/doc/scipy/reference/stats.html
+- https://docs.scipy.org/doc/scipy/tutorial/interpolate.html
+- https://docs.python.org/3/tutorial/floatingpoint.html
+- https://en.wikipedia.org/wiki/Kahan_summation_algorithm
