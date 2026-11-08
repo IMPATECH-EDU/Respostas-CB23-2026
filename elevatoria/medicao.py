@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy import stats
+import scipy
 
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.dados import Registro, serie
@@ -63,7 +64,30 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+
+    if u_sistematica < 0: raise ValueError
+
+    s = serie(registros, tag, "contagens")
+    if len(s) < 2: raise ValueError
+
+    x = curva(s)
+
+    mediana = np.median(x)
+    MAD = scipy.stats.median_abs_deviation(x, scale="normal")
+    if MAD == 0: raise ValueError
+    z = (x - mediana) / MAD
+    mask = np.abs(z) > limiar
+    validas = x[~mask] #reverte a mascara boleana
+    n_validas = len(validas)
+    if n_validas < 2: raise ValueError
+    list_espurias = np.flatnonzero(mask).tolist()
+
+
+    media = np.mean(validas)
+    desvio_padrao = np.std(validas, ddof=1)
+    erro_padrao = scipy.stats.sem(validas)
+
+    return Medicao(tag, Medida(media, np.sqrt(erro_padrao**2 + u_sistematica**2)), desvio_padrao, n_validas, list_espurias)
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +99,8 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    p101 = medir(registros, "PT101", curva, u_sistematica).medida
+    p102 = medir(registros, "PT102", curva, u_sistematica).medida
+    
+    return (p102 - p101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
+
