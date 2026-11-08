@@ -98,9 +98,6 @@ O método de Newton falha, por exemplo, se a derivada da função for muito pequ
 
 ### R12 — Issue #9
 
-<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
-convergência linear; por que os testes de aceitação não pegaram o defeito. -->
-
 Os nomes dos testes são test_derivada_recalculada_a_cada_iteracao e test_segundo_passo.
 Calcular a derivada apenas uma vez deixa a convergência linear porque a razão do erro entre duas iterações consecutivas é constante, pois dado x_n, x_{n+1} = x_n - f(x_n)/m, sendo m o valor da primeira derivada. Assim, o erro decai por uma taxa constante e_{n+1} = C * e_n.
 Os testes de aceitação não pegaram o efeito porque não verificavam a taxa de convergência do método, e sim se convergia ou não.
