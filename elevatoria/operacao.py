@@ -49,7 +49,32 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+
+    # Verificações de erro:
+    if a >= b:
+        raise ValueError(f"{a} >= {b} não é uma entrada válida.")
+
+    # bomba (CurvaCalibracao) já possui uma função que possibilita verificar o domínio e levantar erro, mas não vamos usá-la porque tem o underscore '_'
+    dominio = bomba.dominio
+    if a < dominio[0] or b > dominio[1]:
+        raise ValueError(f"[{a}, {b}] não está contido no domínio da bomba [{dominio}]")
+
+    # Definimos a função f com base no contrato
+    f = lambda Q : bomba(Q) - tubulacao.altura_sistema(Q)
+
+    # Usamos o resolvedor, que retorna um MetodoRaiz
+    resultado = resolvedor.encontrar(f, a, b)
+    
+    if not resultado.convergiu:
+        raise ValueError(f"O resolvedor não convergiu.")
+
+    Q = resultado.raiz
+
+    return PontoOperacao(
+        vazao = Q,
+        altura = bomba(Q),
+        resultado = resultado
+    )
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +91,17 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+
+    # Vamos usar o map e filter para pegar os erros que estão acima do piso
+    erros_validos = list(filter(lambda e : e > piso, map(lambda e : abs(e - raiz), historico)))
+
+    # Verificamos o tamanho
+    if len(erros_validos) < 3:
+        raise ValueError(f"Apenas {len(erros_validos)} erros estão acima do piso.")
+
+    e = erros_validos[-3:]
+
+    # Aplicando a fórmula para p:
+    p = math.log( e[2] / e[1] ) / math.log( e[1] / e[0])
+
+    return p

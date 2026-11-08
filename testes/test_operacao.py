@@ -6,8 +6,22 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
+# Importações para os testes
+import numpy as np
 from elevatoria.raizes import Bisseccao
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.raizes import MetodoRaiz, ResultadoRaiz, Newton
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
+from fornecido.hidraulica import Tubulacao
 
+
+# Esse código foi tirado do test_aceitacao_m3.py por simplicidade
+VAZOES = np.arange(0.0, 101.0, 10.0)
+BOMBA = CurvaCalibracao(VAZOES, 50.0 - 0.004 * VAZOES ** 2, "spline")   # H = 50 - 0,004 Q²
+
+def tubulacao() -> Tubulacao:
+    """A adutora da estação, com a bissecção resolvendo Colebrook."""
+    return Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Bisseccao(tol=1e-12))
 
 class TestBisseccaoExemplo(unittest.TestCase):
     """Exemplo do formato. `Bisseccao` é código existente da base."""
@@ -20,6 +34,57 @@ class TestBisseccaoExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+class TestPontoOperacao(unittest.TestCase):
+    """Teste da função ponto_operacao."""
+
+    def test_intervalos_crescentes(self):
+        """Verifica se a função retorna erro quando os intervalos não estão em ordem cresccente."""
+        # Podemos usar o asserRaisesRegex, que verifica a resposta também, e assim diferenciamos os erros do 
+        # PontoOperacao e do resolvedor em si.
+        with self.assertRaisesRegex(ValueError, r"não é uma entrada válida"):
+            ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10), a=60.0, b=50.0)
+
+    def test_intervalos_definidos(self):
+        """Verifica se a função levanta erro quando os intervalos não estão contidos no domínio da bomba."""
+        with self.assertRaisesRegex(ValueError, r"não está contido no domínio da bomba"):
+            ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10), a = 120.0, b = 200.0)
+
+
+class TestMetodoNewton(unittest.TestCase):
+    """Testes da função Newton."""
+
+    def test_derivada_recalculada_a_cada_iteracao(self):
+        """Verifica se a função de derivada é chamada a cada iteração do laço."""
+        chamas_df = 0
+
+        # Definimidos uma função de derivada com um parâmetro não local para avaliarmos seu valor posteriormente
+        def df_contador(x: float) -> float:
+            nonlocal chamas_df
+            chamas_df += 1
+            return 2.0 * x
+
+        solver = Newton(tol=1e-10, df=df_contador)
+        solver.encontrar(lambda x: x**2 - 2.0, a=1.0, b=3.0)
+
+        self.assertGreater(
+            chamas_df,
+            1,
+            "A derivada deve ser recalculada em cada iteração, mas foi chamada apenas uma vez.",
+        )
+
+    def test_segundo_passo(self):
+        """Verifica se o segundo passo do histórico usa a derivada atualizada em x1."""
+        solver = Newton(tol=1e-10)
+        res = solver.encontrar(lambda x: x**2 - 2.0, a=1.0, b=3.0)
+
+        self.assertAlmostEqual(
+            res.historico[2],
+            17 / 12,
+            places=5,
+            msg="O histórico reflete uma derivada congelada no ponto inicial x0.",
+        )
+
 
 
 if __name__ == "__main__":
