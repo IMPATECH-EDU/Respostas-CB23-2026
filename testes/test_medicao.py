@@ -8,6 +8,7 @@ import unittest
 
 from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
 
+import math
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
     """Exemplo do formato. `AcumuladorIngenuo` é código existente da base."""
@@ -28,16 +29,26 @@ class TestAcumuladorKahan(unittest.TestCase):
         self.assertEqual(AcumuladorKahan().total, 0.0)
 
     def test_com_100_000_parcelas(self):
+        """A Soma de 100_000 parcelas de 0.1 é 10_000."""
         acumulador = AcumuladorKahan()
         for _ in range(100_000):
             acumulador.adicionar(0.1)
         self.assertEqual(acumulador.total, 10_000.0)
 
     def test_com_10_000_000_parcelas(self):
+        """A Soma de 10_000_000 parcelas de 0.1 é 1_000_000."""
         acumulador = AcumuladorKahan()
         for _ in range(10_000_000):
             acumulador.adicionar(0.1)
         self.assertEqual(acumulador.total, 1_000_000.0)
+
+    def test_parcelas_pequenas_nao_somem(self):
+        """1.0 seguido de 10 parcelas de 1e-16 dá o mesmo que math.fsum, e não 1.0."""
+        valores = [1.0] + [1e-16] * 10
+        acumulador = AcumuladorKahan()
+        for x in valores:
+            acumulador.adicionar(x)
+        self.assertEqual(acumulador.total, math.fsum(valores))
 
 
 if __name__ == "__main__":
