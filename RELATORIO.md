@@ -92,11 +92,15 @@ A precisão nesse caso se dá pela dispersão dos dados. Ambas as curvas apresen
 
 ### R11 — Bissecção × Newton
 
-<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
-quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
-situação em que o Newton falha e a bissecção não. -->
+A bissecção gasta sempre 44 iterações independentemente do Reynolds porque o valor de entrada de tolerância na função serve para limitar o quão pequeno o intervalo analisado pode ficar, e em todas as chamadas da função foram indicados a mesma tolerância e tamanho do intervalo, de forma que o número de iterações até atingir o tamanho exigido pela tolerância é constante.
+A ordem de convergência 2 significa que o número de dígitos corretos dobra em cada iteração.
+O método de Newton falha, por exemplo, se a derivada da função for muito pequena, pois então o próximo ponto a ser avaliado pode sair do intervalo, já que estamos dividindo por um número pequeno. O método da bisseção não sofre desse problema porque depende apenas do sinal do ponto analisado.
 
 ### R12 — Issue #9
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+Os nomes dos testes são test_derivada_recalculada_a_cada_iteracao e test_segundo_passo.
+Calcular a derivada apenas uma vez deixa a convergência linear porque a razão do erro entre duas iterações consecutivas é constante, pois dado x_n, x_{n+1} = x_n - f(x_n)/m, sendo m o valor da primeira derivada. Assim, o erro decai por uma taxa constante e_{n+1} = C * e_n.
+Os testes de aceitação não pegaram o efeito porque não verificavam a taxa de convergência do método, e sim se convergia ou não.
