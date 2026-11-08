@@ -43,6 +43,9 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     """
 
     # Levantamento de erros:
+    # Convertemos para np.array caso a entrada seja uma lista ou outro iterador do tipo
+    x = np.array(x)
+    y = np.array(y)
     if (x.ndim > 1) or (y.ndim > 1):
         raise ValueError("Os vetores devem ser 1D.")
     if x.size != y.size:
