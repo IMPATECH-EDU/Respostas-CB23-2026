@@ -5,7 +5,7 @@ contém a base de código do Projeto Elevatória: o software de supervisão de u
 elevatória de água, escrito por uma equipe da qual você agora faz parte. Cada aluno trabalha
 na sua própria branch e entrega o trabalho em um Pull Request contra a `main`.
 
-**Marcos publicados:** [Marco 1 — Dados](ENUNCIADO_MARCO1.md) · [Marco 2 — Medição](ENUNCIADO_MARCO2.md) · [Marco 3 — Raízes e interpolação](ENUNCIADO_MARCO3.md).
+**Marcos:** [Marco 1 — Dados](ENUNCIADO_MARCO1.md) · [Marco 2 — Medição](ENUNCIADO_MARCO2.md) · [Marco 3 — Raízes e interpolação](ENUNCIADO_MARCO3.md) · [Marco 4 — Ajuste e integração](ENUNCIADO_MARCO4.md). O projeto termina no Marco 4. **Prazo final: 23/11/2026.**
 
 ## Como trabalhar
 
@@ -27,8 +27,9 @@ Abra **um único Pull Request** com base `IMPATECH-EDU/Respostas-CB23-2026`, bra
 head `<seu_usuario>/Respostas-CB23-2026`, branch `projeto_<sua_matricula>`. Use o título
 `projeto_<sua_matricula>` e a conta do GitHub associada ao seu e-mail @impatech.edu.br. Abra-o
 como rascunho (*Draft*) logo no primeiro marco; os pushes seguintes para a mesma branch do seu
-fork atualizam o PR sozinhos. O PR **não será integrado** à `main`: ele é a sua entrega e o
-lugar da revisão. Não apague o fork nem a branch até o fim da disciplina.
+fork atualizam o PR sozinhos. Ao terminar o projeto, e até **23/11/2026**, tire o PR do modo
+rascunho: no GitHub, clique em **Ready for review**. O PR **não será integrado** à `main`: ele
+é a sua entrega e o lugar da revisão. Não apague o fork nem a branch até o fim da disciplina.
 
 **Marco novo publicado?** Traga-o para a sua branch e envie para o seu fork:
 
