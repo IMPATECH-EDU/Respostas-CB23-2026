@@ -41,7 +41,21 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+
+    # Levantamento de erros:
+    if (x.ndim > 1) or (y.ndim > 1):
+        raise ValueError("Os vetores devem ser 1D.")
+    if x.size != y.size:
+        raise ValueError("Os vetores devem ter o mesmo tamanho.")
+    if grau < 0:
+        raise ValueError("O grau deve ser maior ou igual a 0.")
+    if len(x) < grau + 1:
+        raise ValueError("Há menos pontos do que coeficientes.")
+
+    # Escolhi o np.polynomial.polynomial.polyfit pela simplicidade
+    c = np.polynomial.polynomial.polyfit(x, y, grau)
+
+    return c
 
 
 @dataclass(frozen=True)
@@ -76,4 +90,36 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+
+    # Levantamento de erros:
+    if len(t) != len(vazao):
+        raise ValueError("As medidas de tempo e vazão possuem um número diferente de elementos.")
+    for limite in [0, 18, 21, 24]:
+        if limite not in t:
+            raise ValueError(f"O limite {limite}h não está contido no vetor de tempos.")
+
+    # Calculando os valores de ResumoDia:
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+
+    volume = 3.6 * integrador.integrar_tabela(vazao, t)
+
+    # Calculamos a potencia elétrica para termos a energia
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+
+    energia = integrador.integrar_tabela(potencia, t)
+
+    # Calculamos o custo por faixa
+    custo = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        custo.append(integrador.integrar_tabela(potencia, t[inicio:fim]))
+
+    custo_total = sum(custo)
+
+    # Retornamos os valores em ResumoDia:
+    return ResumoDia(
+        volume = volume,
+        energia_kwh = energia,
+        custo_reais = custo_total,
+        custo_por_faixa = tuple(custo)
+    )
