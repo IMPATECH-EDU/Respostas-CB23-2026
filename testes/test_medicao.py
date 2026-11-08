@@ -50,6 +50,13 @@ class TestAcumuladorKahan(unittest.TestCase):
             acumulador.adicionar(x)
         self.assertEqual(acumulador.total, math.fsum(valores))
 
+    def test_parcelas_diferentes(self):
+        """A Soma de 1000 vezes 0.1, 0.2 e 0.3 dá o mesmo que math.fsum."""
+        valores = [0.1, 0.2, 0.3] * 1000
+        acumulador = AcumuladorKahan()
+        for x in valores:
+            acumulador.adicionar(x)
+        self.assertEqual(acumulador.total, math.fsum(valores))
 
 if __name__ == "__main__":
     unittest.main()
