@@ -102,23 +102,25 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
     rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
 
-    volume = 3.6 * integrador.integrar_tabela(vazao, t)
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
 
     # Calculamos a potencia elétrica para termos a energia
     potencia = potencia_eletrica(vazao, altura, rendimento)
 
-    energia = integrador.integrar_tabela(potencia, t)
+    energia = integrador.integrar_tabela(t, potencia)
 
     # Calculamos o custo por faixa
     custo = []
     for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
-        custo.append(integrador.integrar_tabela(potencia, t[inicio:fim]))
-
+        # Filtramos os tempos para que fiquem dentro dos limites de FAIXAS_TARIFARIAS criando uma máscara:
+        mascara = (inicio <= t) & (t <= fim)
+        custo.append(tarifa * integrador.integrar_tabela(t[mascara], potencia[mascara]))
+        
     custo_total = sum(custo)
 
     # Retornamos os valores em ResumoDia:
     return ResumoDia(
-        volume = volume,
+        volume_m3 = volume,
         energia_kwh = energia,
         custo_reais = custo_total,
         custo_por_faixa = tuple(custo)
