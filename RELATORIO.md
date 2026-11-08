@@ -107,6 +107,10 @@ Em h = 1e-14, `1000 + 1e-14 == 1000` é `True` (o espaçamento dos floats perto 
 t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
 de aceitação não pegaram o defeito. -->
 
+Testes de regressão: `test_com_100_000_parcelas`, `test_com_10_000_000_parcelas` (dava 999999.9998389754) e `test_parcelas_pequenas_nao_somem` (dava 1.0 em vez de 1.000000000000001); os três falhavam antes da correção.
+Causa: `t = s + y` já é arredondado, e calcular `s + y` de novo repete o mesmo arredondamento, então `t - (s + y)` é sempre 0 e o Kahan virava a soma ingênua; em `(t - s) - y`, `t - s` é exato e o resultado é o que se perdeu (a Etapa 2 passa a dar 100000.0, com erro 0).
+Os testes de aceitação não pegaram o defeito porque usam `math.isclose`, que aceita 0.9999999999999999 como 1.0.
+
 ### R10 — Precisão × exatidão
 
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
