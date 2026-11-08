@@ -10,7 +10,7 @@ import unittest
 import numpy as np
 from elevatoria.raizes import Bisseccao
 from elevatoria.calibracao import CurvaCalibracao
-from elevatoria.raizes import MetodoRaiz, ResultadoRaiz
+from elevatoria.raizes import MetodoRaiz, ResultadoRaiz, Newton
 from elevatoria.operacao import ordem_convergencia, ponto_operacao
 from fornecido.hidraulica import Tubulacao
 
@@ -49,6 +49,41 @@ class TestPontoOperacao(unittest.TestCase):
         """Verifica se a função levanta erro quando os intervalos não estão contidos no domínio da bomba."""
         with self.assertRaisesRegex(ValueError, r"não está contido no domínio da bomba"):
             ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10), a = 120.0, b = 200.0)
+
+
+class TestMetodoNewton(unittest.TestCase):
+    """Testes da função Newton."""
+
+    def test_derivada_recalculada_a_cada_iteracao(self):
+        """Verifica se a função de derivada é chamada a cada iteração do laço."""
+        chamas_df = 0
+
+        # Definimidos uma função de derivada com um parâmetro não local para avaliarmos seu valor posteriormente
+        def df_contador(x: float) -> float:
+            nonlocal chamas_df
+            chamas_df += 1
+            return 2.0 * x
+
+        solver = Newton(tol=1e-10, df=df_contador)
+        solver.encontrar(lambda x: x**2 - 2.0, a=1.0, b=3.0)
+
+        self.assertGreater(
+            chamas_df,
+            1,
+            "A derivada deve ser recalculada em cada iteração, mas foi chamada apenas uma vez.",
+        )
+
+    def test_segundo_passo(self):
+        """Verifica se o segundo passo do histórico usa a derivada atualizada em x1."""
+        solver = Newton(tol=1e-10)
+        res = solver.encontrar(lambda x: x**2 - 2.0, a=1.0, b=3.0)
+
+        self.assertAlmostEqual(
+            res.historico[2],
+            17 / 12,
+            places=5,
+            msg="O histórico reflete uma derivada congelada no ponto inicial x0.",
+        )
 
 
 

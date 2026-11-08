@@ -87,3 +87,16 @@ Os testes de aceitação não pegaram o defeito porque somaram poucos números. 
 ### R10 — Precisão × exatidão
 
 A precisão nesse caso se dá pela dispersão dos dados. Ambas as curvas apresentam pouca dispersão (desvio) nos dados, e por isso suas precisões são semelhantes. As suas exatidões se diferem porque a curva linear não representa bem a simulação, que é uma curva. A Spline, que é mais suave, é um modelo melhor para a simulação, e então sua média converge para o valor real, diferentemente da linear.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
