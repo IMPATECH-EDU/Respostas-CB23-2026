@@ -101,3 +101,19 @@ O método de Newton falha, por exemplo, se a derivada da função for muito pequ
 Os nomes dos testes são test_derivada_recalculada_a_cada_iteracao e test_segundo_passo.
 Calcular a derivada apenas uma vez deixa a convergência linear porque a razão do erro entre duas iterações consecutivas é constante, pois dado x_n, x_{n+1} = x_n - f(x_n)/m, sendo m o valor da primeira derivada. Assim, o erro decai por uma taxa constante e_{n+1} = C * e_n.
 Os testes de aceitação não pegaram o efeito porque não verificavam a taxa de convergência do método, e sim se convergia ou não.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+Isso acontece porque a função é descontínua. Ao integrar de uma só vez, a regra do Trapézio calcula f(x_{n+1}) + f(x_{n}), e então o método aproxima isso por uma reta. Por conta disso, nas descontinuidades os erros passam a ser da altura do salto das tarifas, que mudam a taxa de convergência da funçao.
+Com o método de Simpson ocorre algo similar: o método aproxima a integral real por parábolas. Assim, descontinuidades da função fazem o método aproximar por uma área muito diferente da área real, e então esse algoritmo acumula erros maiores do que o método do Trapézio.
+Ao integrar a faixa separadamente, as funções se comportam continuamente, de forma que os métodos alcançam sua efetividade teórica.
+
+
+### R14 — Issue #11
+
+Os nomes dos testes são test_grau_negativo, test_faixas_tarifarias, test_malha_nao_uniforme e test_falha_de_comunicacao_scada
+O defeito do integrador Trapézio ocorria porque considerava que a comunicação não falhava, e então considerava que os intervalos estavam uniformemente distribuídos, com distância constante. 
+Os testes de aceitação não pegaram esse erro porque os testes de integradores só verificavam a resposta para funções suaves, e quando não usavam distribuições uniformes, apenas verificavam se o método levantava erro.
+O método de Simpson não serve para o registro do dia porque os pontos não necessariamente são uniformes, e talvez seu número não seja par.
