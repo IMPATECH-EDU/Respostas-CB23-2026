@@ -86,8 +86,16 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
             continue
 
         d = res.groupdict()
-        instante = datetime.strptime(f'{d['data']} {d['hora']}', '%Y-%m-%d %H:%M:%S')
+        try:
+            instante = datetime.strptime(f'{d['data']} {d['hora']}', '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            invalidos.append(linha)
+            continue
+        
         pares_str = re.findall(r'(\w+)=(\S+)',d['resto'])
+        if not pares_str:
+            invalidos.append(linha)
+            continue
         pares = {}
         for par in pares_str:
             try:
@@ -143,13 +151,18 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
 # ---------------------------------------------------------------------------------------
 # Issue #2: conversores por tag
 # ---------------------------------------------------------------------------------------
+
+def conversor(k):
+    """Função factory para a lambda"""
+    return lambda c: c*k
+
 def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], float]]:
     """Dado `{tag: fator}`, devolve `{tag: f}`, em que `f(c) = c * fator` da própria tag.
 
     Cada `f` é uma lambda. Cuidado com o *late binding*: cada função deve usar o fator da
     sua tag, e não o último fator do dicionário (veja a issue #2 no enunciado).
     """
-    return {p[0]: (lambda c: c * p[1]) for p in escalas.items()}
+    return {tag: conversor(k) for tag, k in escalas.items()}
 
 
 # ---------------------------------------------------------------------------------------
@@ -168,27 +181,42 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
 
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
     """
-    raise NotImplementedError("issue #3: medir_memoria")
+    if not (isinstance(contagens, np.ndarray) and contagens.ndim == 1 and np.issubdtype(contagens.dtype, np.integer)):
+        raise ValueError('Não é ndarray 1D de inteiros')
+    py_list = contagens.tolist()
+    arr = array.array('H', py_list)
+    return {
+        "list": sys.getsizeof(py_list) + sum(sys.getsizeof(x) for x in py_list),
+        "array('H')": arr.itemsize * len(arr),
+        "uint16": contagens.astype(np.uint16).nbytes,
+        "int32": contagens.astype(np.int32).nbytes,
+        "int64": contagens.astype(np.int64).nbytes,
+        "float32": contagens.astype(np.float32).nbytes,
+        "float64": contagens.astype(np.float64).nbytes
+    }
 
 
 def converter_laco(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `for` e `append`."""
-    raise NotImplementedError("issue #3: converter_laco")
+    arr = []
+    for c in contagens:
+        arr.append(c*600/4095)
+    return arr
 
 
 def converter_compreensao(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma compreensão de lista."""
-    raise NotImplementedError("issue #3: converter_compreensao")
+    return [c*600/4095 for c in contagens]
 
 
 def converter_map(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `map` e uma lambda."""
-    raise NotImplementedError("issue #3: converter_map")
+    return list(map(lambda c:c*600/4095, contagens))
 
 
 def converter_vetorizado(contagens: np.ndarray) -> np.ndarray:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma operação vetorizada do NumPy."""
-    raise NotImplementedError("issue #3: converter_vetorizado")
+    return contagens * 600/4095
 
 
 def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
@@ -198,4 +226,10 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     `"map+lambda"` (que recebem a lista `contagens.tolist()`, criada uma única vez, fora da
     medição) e `"vetorizado"` (que recebe o próprio `ndarray`).
     """
-    raise NotImplementedError("issue #3: medir_tempos")
+    py_list = contagens.tolist()
+    return {
+        'laço': cronometrar(lambda: converter_laco(py_list)),
+        'compreensão': cronometrar(lambda: converter_compreensao(py_list)),
+        'map+lambda': cronometrar(lambda: converter_map(py_list)),
+        'vetorizado': cronometrar(lambda: converter_vetorizado(contagens))
+        }
