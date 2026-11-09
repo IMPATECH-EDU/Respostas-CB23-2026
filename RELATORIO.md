@@ -129,6 +129,10 @@ A média de 595 leituras reduz só o erro aleatório (o erro padrão cai para 0,
 quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
 situação em que o Newton falha e a bissecção não. -->
 
+A bissecção usa só o sinal de f e corta o intervalo [2, 15] ao meio a cada iteração até a largura ficar menor que `tol = 1e-12`: são log₂(13 / 1e-12) ≈ 43,6, ou seja, sempre 44 iterações, qualquer que seja o Reynolds (a função não influencia).
+Ordem 2 (convergência quadrática) quer dizer e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada passo. Em Re = 1e4 os erros do Newton foram 5,0e-02 → 2,3e-05 → 5,0e-12 (o expoente vai de 2 a 5 e a 12), e a ordem estimada foi 2,00.
+O Newton falha quando a derivada é nula ou quase nula, ou quando o ponto inicial está longe da raiz: em f(x) = arctan(x) no intervalo [−2, 8], ele começa em x = 3 e diverge (3 → −9,5 → 5,2 → −8,6 → …), enquanto a bissecção encontra a raiz x = 0, porque só precisa da troca de sinal.
+
 ### R12 — Issue #9
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
