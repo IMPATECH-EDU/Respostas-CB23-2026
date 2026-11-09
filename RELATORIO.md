@@ -62,3 +62,32 @@ O resultado mais surpreendente foi `s.sum()` retornar `SerieTemporal` em vez de 
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 Sintoma: `media_movel(30)` de 600 pontos devolvia 570 valores em vez dos 571 esperados. Teste de regressão: `test_media_movel_tamanho_correto`. Causa: a diferença entre os fatiamentos da soma acumulada (`acumulada[janela:] - acumulada[:-janela]`) perdia um elemento na contagem de intervalos. Correção: inserção do elemento neutro `0.0` no início com `np.insert(self, 0, 0.0)`. Os testes de aceitação originais usavam listas curtas e não verificavam o tamanho exato relativo ao contrato. Outro caso não coberto é o teste de retenção de tipo da classe e a reamostragem com sobras descartadas, coberto por `test_reamostrar_com_sobra`.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+Python 3.14.6 | NumPy 2.5.3 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3461
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+Para h variando de 1 até 1e-5, domina o erro de truncamento da diferença finita (da ordem de O(h)), diminuindo à medida que h se reduz. Abaixo de 1e-5, passa a predominar o erro de arredondamento da máquina gerado pelo cancelamento catastrófico ao subtrair números quase idênticos e dividir por um h extremamente pequeno. Em h = 1e-14, como 1000 + 1e-14 == 1000 no padrão IEEE 754 de 64 bits, a diferença f(x+h) - f(x) resulta exatamente em zero; logo, a derivada aproximada é 0 e o erro é a própria derivada exata (0.2134).
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+Testes de regressão: `test_kahan_um_milhao_de_pulsos` e `test_kahan_difere_de_acumulador_ingenuo`. Na expressão `t - (s + y)`, como `t` foi atribuído como `s + y`, recalcular `s + y` gera exatamente `t`, zerando a correção e anulando a compensação de Kahan. Já na ordem `(t - s) - y`, `t - s` cancela os bits mais significativos e recupera a parcela de `y` efetivamente absorvida pela soma; ao subtrair `y`, resta a fração perdida pelo arredondamento. Os testes de aceitação não capturaram o defeito por testarem apenas 10 parcelas de 0.1, magnitude em que o erro acumulado ainda não surge.
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+Precisão diz respeito à repetibilidade e dispersão aleatória das leituras, refletida no desvio padrão praticamente idêntico em ambas as curvas (~0.52 kPa). Exatidão corresponde à aderência ao valor real da grandeza física, caracterizada pelo viés (-1.866 kPa na linear vs -0.037 kPa na spline). A média de 600 pontos reduz a incerteza estatística proveniente do ruído aleatório das medidas (erro padrão da média), mas não é capaz de diminuir o erro sistemático inerente ao modelo linear de interpolação, que possui um viés fixo frente à resposta não linear do transmissor.
+
