@@ -31,7 +31,7 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | | |
+| Memória da lista / memória do `uint16` |3,6*10⁷/10⁷ | |
 | Tempo do laço / tempo vetorizado | | |
 | Tempo da compreensão / tempo do laço | | |
 

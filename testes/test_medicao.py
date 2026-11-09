@@ -6,7 +6,7 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 """
 import unittest
 
-from elevatoria.acumuladores import AcumuladorIngenuo
+from elevatoria.acumuladores import (AcumuladorIngenuo, AcumuladorKahan)
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -15,6 +15,20 @@ class TestAcumuladorIngenuoExemplo(unittest.TestCase):
     def test_sem_parcelas(self):
         """Sem nenhuma parcela, o total é zero."""
         self.assertEqual(AcumuladorIngenuo().total, 0.0)
+
+    def test_acumulador_kahan_1(self):
+        """100_000_000 pulsos de 0,1 deveria dar 100_000_000.0"""
+        kahan = AcumuladorKahan()
+        for _ in range (100_000_000):
+            kahan.adicionar(0.1)
+        self.assertAlmostEqual(kahan.total, 10_000_000)
+
+    def test_acumulador_kahan_2(self):
+        """500_000_000 pulsos de 0,1 deveria dar 500_000_000.0"""
+        kahan_2 = AcumuladorKahan()
+        for _ in range (10_000_000):
+            kahan_2.adicionar(0.1)
+        self.assertAlmostEqual(kahan_2.total, 1_000_000)
 
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
