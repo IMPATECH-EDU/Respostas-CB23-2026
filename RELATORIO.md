@@ -120,3 +120,16 @@ por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 Precisão é a dispersão das leituras (o desvio) e exatidão é a proximidade do valor verdadeiro (o viés): para PT102, as duas curvas são igualmente precisas (desvio 0,498 na linear e 0,499 na spline), mas só a spline é exata (viés de −0,038 kPa, contra −1,868 kPa da linear).
 O desvio vem do ruído do transmissor, que é o mesmo nas duas curvas; o viés vem da reta, que não acompanha a resposta não linear do sensor (erro máximo de 2,88 kPa, contra 0,025 kPa da spline).
 A média de 595 leituras reduz só o erro aleatório (o erro padrão cai para 0,498/√595 ≈ 0,02 kPa), mas a reta erra do mesmo jeito em todas as leituras, e esse erro sistemático, cerca de 90 vezes maior, não se cancela.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
