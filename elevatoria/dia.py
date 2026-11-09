@@ -39,9 +39,19 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     - a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
 
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
-    houver menos pontos que coeficientes (`len(x) < grau + 1`).
+    houver menos pontos que coeficientes (`len(x) < grau + 1`). Também rejeita
+    valores não finitos e graus não inteiros com `ValueError`.
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if isinstance(grau, bool) or not isinstance(grau, (int, np.integer)) or grau < 0:
+        raise ValueError("grau deve ser um inteiro não negativo")
+    if x.size < grau + 1:
+        raise ValueError("o número de pontos deve ser pelo menos grau + 1")
+    if not np.all(np.isfinite(x)) or not np.all(np.isfinite(y)):
+        raise ValueError("x e y devem conter somente valores finitos")
+    return np.polynomial.polynomial.polyfit(x, y, grau)
 
 
 @dataclass(frozen=True)
@@ -74,6 +84,26 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Todas as integrais usam `integrador.integrar_tabela(x, y)`.
 
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
-    faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
+    faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`. As entradas
+    devem ser vetores 1D finitos; violações também levantam `ValueError`.
+    Erros da potência e do integrador são propagados para quem chamou.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t, vazao = np.asarray(t, dtype=float), np.asarray(vazao, dtype=float)
+    if t.ndim != 1 or vazao.ndim != 1 or t.size != vazao.size:
+        raise ValueError("t e vazao devem ser vetores 1D do mesmo tamanho")
+    if not np.all(np.isfinite(t)) or not np.all(np.isfinite(vazao)):
+        raise ValueError("t e vazao devem conter somente valores finitos")
+    limites = {limite for inicio, fim, _ in FAIXAS_TARIFARIAS for limite in (inicio, fim)}
+    for limite in limites:
+        if not np.any(t == limite):
+            raise ValueError(f"falta a leitura no limite tarifário de {limite:g} h")
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+    custos = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        faixa = (t >= inicio) & (t <= fim)
+        custos.append(tarifa * integrador.integrar_tabela(t[faixa], potencia[faixa]))
+    return ResumoDia(volume, energia, sum(custos), tuple(custos))
