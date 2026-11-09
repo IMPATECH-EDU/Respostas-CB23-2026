@@ -1,0 +1,51 @@
+=== Etapa 0: ambiente ===
+Python 3.15.2 | NumPy 2.5.4 | fornecido 4.0
+
+=== Etapa 1: leitura do log ===
+2404 registros válidos, 4 linhas inválidas
+Registros por nível: {'WARN': 1, 'INFO': 2401, 'ALARME': 2}
+Pulsos de FT201: 2334053 (233405.3 L, ou 233.41 m³, na hora)
+valida_tag: exemplos válidos e inválidos conferidos
+
+=== Etapa 2: lambda e compreensões ===
+Primeiro por (tag, instante): B1 às 08:00:00
+Mais recente: PT101 às 08:59:54
+Contagens de PT102: 600 (map/filter e compreensão coincidem)
+Contagens acima de 2000: [2190.0, 2184.0, 2185.0, 2186.0, 2191.0]
+Tags distintas: ['B1', 'FT201', 'LT301', 'PT101', 'PT102']
+Exemplo: 2026-10-05 08:00:00 INFO FT201 volume_L=396.7
+PT101(4095): errado = 409.5 | certo = 600.0
+PT102(4095): errado = 409.5 | certo = 600.0
+FT201(4095): errado = 409.5 | certo = 409.5
+Pressão de recalque: nominal = 262.0 kPa | conferência = 380.0 kPa
+
+=== Etapa 3: memória e tempo ===
+estrutura    bytes/elem.       bytes  lista/estrutura
+list               36.00    36000056              1.0
+array('H')          2.00     2000000             18.0
+uint16              2.00     2000000             18.0
+int32               4.00     4000000              9.0
+int64               8.00     8000000              4.5
+float32             4.00     4000000              9.0
+float64             8.00     8000000              4.5
+
+método          tempo (ms)  aceleração
+laço                145.76        1.0x
+compreensão         118.93        1.2x
+map+lambda          173.86        0.8x
+vetorizado            5.06       28.8x
+
+Lista mista: ['1' '2.5' 'a'] (dtype <U32)
+uint16 4095 * 20 = 16364 (o correto seria 81900)
+
+=== Etapa 4: a série de pressão ===
+Média = 1791.30 | desvio = 36.45 | amplitude = 412.00
+Média móvel: 571 valores, de 1786.70 a 1814.73 (série: de 1779.00 a 2191.00)
+Médias por minuto: 60 valores, de 1785.70 a 1828.80
+s + s    -> SerieTemporal
+s[1:]    -> SerieTemporal
+s * 2    -> SerieTemporal
+s.sum()  -> SerieTemporal
+s[0]     -> float64
+
+Marco 1: todos os assert passaram.
