@@ -27,6 +27,12 @@ from elevatoria.operacao import ordem_convergencia
 from elevatoria.raizes import Bisseccao, Newton
 from fornecido.hidraulica import fator_atrito_colebrook
 
+import numpy as np
+
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ponto_operacao
+from fornecido.hidraulica import Tubulacao
+
 
 class TestNewton(unittest.TestCase):
     """Issue #9: o Newton deve ter ordem de convergência perto de 2."""
@@ -48,6 +54,36 @@ class TestNewton(unittest.TestCase):
         resultado = Newton(tol=1e-12).encontrar(lambda x: x * x - 2, 0.0, 2.0)
         ordem = ordem_convergencia(resultado.historico, math.sqrt(2))
         self.assertGreater(ordem, 1.8)
+
+
+VAZOES = np.arange(0.0, 101.0, 10.0)
+BOMBA = CurvaCalibracao(VAZOES, 50.0 - 0.004 * VAZOES ** 2, "spline")   # H = 50 - 0,004 Q²
+
+
+def tubulacao() -> Tubulacao:
+    """A adutora da estação, com a bissecção resolvendo Colebrook."""
+    return Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Bisseccao(tol=1e-12))
+
+
+class TestPontoOperacao(unittest.TestCase):
+    """Issue #8: regras do contrato de ponto_operacao que os testes de aceitação não verificam."""
+
+    def test_intervalo_invertido(self):
+        """Com a >= b, levanta ValueError mesmo com o Newton, que não confere o intervalo."""
+        for a, b in [(90.0, 40.0), (50.0, 50.0)]:
+            with self.subTest(a=a, b=b), self.assertRaises(ValueError):
+                ponto_operacao(BOMBA, tubulacao(), Newton(tol=1e-10), a=a, b=b)
+
+    def test_intervalo_fora_do_dominio_da_bomba(self):
+        """Com [a, b] saindo do domínio da bomba (0 a 100 L/s), levanta ValueError mesmo com o Newton."""
+        for a, b in [(-10.0, 90.0), (10.0, 130.0)]:
+            with self.subTest(a=a, b=b), self.assertRaises(ValueError):
+                ponto_operacao(BOMBA, tubulacao(), Newton(tol=1e-10), a=a, b=b)
+
+    def test_resolvedor_nao_convergiu(self):
+        """Se o resolvedor para em max_iter sem convergir, levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10, max_iter=3))
 
 if __name__ == "__main__":
     unittest.main()
