@@ -23,25 +23,18 @@ from fornecido.energia import FAIXAS_TARIFARIAS, potencia_eletrica
 
 
 def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
-    """Coeficientes `[c0, c1, ..., c_grau]` do polinômio de mínimos quadrados de grau `grau`.
-
-    O polinômio `p(x) = c0 + c1·x + ... + c_grau·x^grau` minimiza `Σ (y_i - p(x_i))²`. Os
-    coeficientes estão em ordem **crescente**: avalie o polinômio com
-    `np.polynomial.polynomial.polyval(x, coeficientes)`.
-
-    O NumPy e o SciPy oferecem mais de um método para resolver esse problema, e a escolha é
-    sua. Alguns pontos de partida, para ler na documentação:
-
-    - `np.polynomial.polynomial.polyfit`;
-    - `np.polyfit` (atenção: devolve os coeficientes em ordem **decrescente**);
-    - `np.linalg.lstsq` ou `scipy.linalg.lstsq`, aplicados à matriz
-      `np.vander(x, grau + 1, increasing=True)`;
-    - a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
-
-    Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
-    houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    Calcula os coeficientes atraves de np.polynomial.polynomial.polyfit(x,y,grau);
+    Levanta index error caso x e y tenham dimensões diferentes de 1D ou tenham tamanhos diferentes entre si,
+    se grau > 0, se o número de elementos de x for menor que grau mais 1, ou seja se houver menos 
+    """
+    x, y = np.asarray(x), np.asarray(y) # vi que nos codigos de aceitação são passadas listas no lugar de arrays do numpy, coloquei essa linha para assegurar que os métodos no np possam ser usados
+
+    if grau < 0 or len(x) < grau + 1 or x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1d do mesmo tamanho, com grau > 0 e ter mais ou o mesmo número de pontos que coenficientes.")
+
+    coeficientes = np.polynomial.polynomial.polyfit(x, y, grau)
+    return coeficientes
 
 
 @dataclass(frozen=True)
@@ -56,24 +49,37 @@ class ResumoDia:
 
 def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
                     coef_rendimento: np.ndarray, integrador: Integrador) -> ResumoDia:
-    """Volume, energia e custo de um dia de operação a partir do registro de vazão.
-
-    `t` (h) e `vazao` (L/s) são o registro do dia; `coef_altura` e `coef_rendimento` são os
-    coeficientes (em ordem crescente, como os de `ajustar_polinomio`) das curvas da bomba,
-    altura (m) e rendimento em função da vazão. Passos:
-
-    1. em cada instante, a altura e o rendimento da bomba, com
-       `np.polynomial.polynomial.polyval(vazao, coeficientes)`, e a potência (kW), com
-       `potencia_eletrica` (de `fornecido/energia.py`);
-    2. o volume (m³): `3,6 · ∫ vazão dt` (L/s × h = 3,6 m³);
-    3. a energia (kWh): `∫ potência dt`;
-    4. o custo de cada faixa `(início, fim, tarifa)` de `FAIXAS_TARIFARIAS`: `tarifa · ∫ potência
-       dt`, com a integral feita só com os instantes `início ≤ t ≤ fim`. O custo total é a
-       soma das faixas.
-
-    Todas as integrais usam `integrador.integrar_tabela(x, y)`.
-
-    Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
-    faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    Calcula altura e rendimento a partir dos coeficientes dados e os utiliza para calcular a potencia;
+    Calcula volume e energia a partir de integrador.integrar_tabela, usando (vazao,t) e (potencia,t), respectivamente;
+    A partir de FAIXAS_TARIFARIAS calcula o custo total do dia e separa o custo de cada faixa;
+    Retorna um objeto da Classe Resumo do Dia;
+    Levanta Index Error caso t e vazao tenham tamanhos diferentes, e caso algum dos limites da faixa (0, 18, 21, 24) não sejam instantes de t.
+    """
+    t, vazao, coef_altura, coef_rendimento = np.asarray(t), np.asarray(vazao), np.asarray(coef_altura), np.asarray(coef_rendimento)
+
+    limites_faixa = np.array([0,18,21,24])
+
+    if t.size != vazao.size or np.any(~np.isin(limites_faixa,t)):
+        raise ValueError('O número de registros de tempo e vazão devem ser os mesmos, e todos os limites de faixa devem estar em t')
+
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao,altura,rendimento)
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+
+    custo_total = 0
+    custo_por_faixa = []
+
+    for faixa in FAIXAS_TARIFARIAS:
+        inicio, fim, tarifa = faixa
+
+        mascara = (t >= inicio) & (t <= fim)
+        t_novo = t[mascara]
+        potencia_nova = potencia[mascara]
+        custo_faixa = tarifa * integrador.integrar_tabela(t_novo,potencia_nova)
+        custo_por_faixa.append(custo_faixa)
+        custo_total += custo_faixa
+
+    return ResumoDia(volume, energia, custo_total, tuple(custo_por_faixa))

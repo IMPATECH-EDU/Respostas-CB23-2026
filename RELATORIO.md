@@ -101,3 +101,13 @@ A bissecção gasta sempre 44 iterações independentemente do número de Reynol
 ### R12 — Issue #9
 
 Os testes de regressão elaborados para expor a falha foram o test_newton_itera_rapido e o test_newton_ordem_quadratica (além dos testes de fronteira test_newton_foge_do_intervalo e test_newton_derivada_nula).Ao calcular a derivada apenas uma vez (no ponto inicial), o método de Newton perde a sua característica fundamental: a adaptação iterativa à curvatura local. Ao usar uma inclinação constante, o algoritmo transforma-se numa variante do método das cordas (ou Newton modificado). Sem a atualização da reta tangente para o ponto $x_k$ atual, o salto em direção à raiz deixa de ser otimizado, e o erro passa a decrescer apenas por um fator constante a cada passo (convergência linear).Os testes de aceitação não detetaram o defeito porque avaliavam exclusivamente o valor final devolvido pelo método. Eles garantiam que o resultado numérico estava correto e dentro da tolerância, mas não inspecionavam o percurso feito para lá chegar (como o contador de iterações da resposta ou o histórico de erros). Um método lento que chegue ao resultado certo passará sempre num teste que avalia apenas o destino e ignora a viagem.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+A tarifa muda bruscamente às 18 h e às 21 h, então o custo não é uma função suave e as regras perdem a ordem teórica perto dessas descontinuidades. Na execução, integrar tudo junto deu ordem 1,00 no trapézio e 0,65 no Simpson. Integrando cada faixa separadamente, a tarifa fica constante em cada trecho e as ordens voltam a 2,00 e 4,00.
+
+### R14 — Issue #11
+
+Os testes são `test_trapezio_usa_largura_de_cada_intervalo` e `test_volume_do_registro_com_falhas`. O defeito era usar o primeiro passo de tempo para todos os trapézios, embora as leituras perdidas gerem intervalos de 15 e 30 minutos. Os testes de aceitação usavam tabelas uniformes e não expunham esse erro. Simpson não serve para este registro porque exige pontos igualmente espaçados; as medições têm espaçamento irregular.
