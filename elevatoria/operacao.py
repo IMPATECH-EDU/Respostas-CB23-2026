@@ -49,7 +49,22 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    minimo, maximo = bomba.dominio
+    if a < minimo or b > maximo:
+        raise ValueError(f"o intervalo [{a}, {b}] está fora do domínio da bomba "
+                         f"[{minimo}, {maximo}]")
+
+    def f(vazao: float) -> float:
+        """Diferença entre a altura da bomba e a exigida pelo sistema."""
+        return float(bomba(vazao)) - tubulacao.altura_sistema(vazao)
+
+    resultado = resolvedor.encontrar(f, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"o resolvedor não convergiu em {resultado.iteracoes} iterações")
+    vazao = resultado.raiz
+    return PontoOperacao(vazao=vazao, altura=float(bomba(vazao)), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -64,6 +79,16 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
     quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
 
-    Levanta `ValueError` se houver menos de 3 erros acima do piso.
+    Levanta `ValueError` se houver menos de 3 erros acima do piso ou se dois erros
+    consecutivos entre os três usados forem iguais (a razão dos logaritmos seria 0/0).
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    limite = piso * max(1.0, abs(raiz))
+    erros = [abs(x - raiz) for x in historico]
+    erros = [e for e in erros if e > limite]
+    if len(erros) < 3:
+        raise ValueError(f"preciso de pelo menos 3 erros acima do piso {limite:.1e}; "
+                         f"tenho {len(erros)}")
+    e0, e1, e2 = erros[-3:]
+    if e0 == e1:
+        raise ValueError("dois erros consecutivos iguais: a ordem não pode ser estimada")
+    return math.log(e2 / e1) / math.log(e1 / e0)
