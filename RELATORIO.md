@@ -137,3 +137,10 @@ O Newton falha quando a derivada é nula ou quase nula, ou quando o ponto inicia
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+Testes de regressão: `test_ordem_colebrook_re_10_000`, `test_ordem_colebrook_re_100_000` e
+`test_ordem_raiz_de_2` (ordem ≈ 1,0 antes da correção, ≈ 2,0 depois).
+Com a derivada fixa d, o erro cai sempre na mesma proporção, e_{k+1} ≈ (1 − g'(raiz)/d)·e_k: linear.
+Como Colebrook é quase uma reta, esse fator é pequeno (0,039 em Re = 1e4), e o método ainda
+converge, mas em 10 iterações em vez de 5. Os testes de aceitação só conferem `convergiu` e a
+raiz, e não as iterações nem a ordem: o resultado sai certo, só que mais devagar.
