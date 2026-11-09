@@ -1,6 +1,6 @@
 # Relatório — Enrico Ferraroni Maiali (3528)
 
-IMPA Tech · Programação 2 · Professor Emilio Vital Brazil · Período 1.2  
+IMPA Tech · Programação 2 · Professor Emilio Vital Brazil · Período 1.2
 E-mail: al.enrico.maiali@impatech.edu.br · GitHub: enrico-impatech
 
 ## Marco 1
@@ -8,7 +8,15 @@ E-mail: al.enrico.maiali@impatech.edu.br · GitHub: enrico-impatech
 ### Ambiente
 
 <!-- auto:ambiente-m1 -->
-**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+Execução de validação em Linux, com ambiente `venv` fora do repositório,
+criado com `--system-site-packages` para utilizar as bibliotecas instaladas.
+Saída de `which python`, com o ambiente ativado, e da Etapa 0:
+
+```text
+/workspace/scratch/373109ec75cb/review_venv/bin/python
+=== Etapa 0: ambiente ===
+Python 3.12.14 | NumPy 2.3.5 | fornecido 4.0
+```
 <!-- /auto:ambiente-m1 -->
 
 ### R1 — Expressões regulares
@@ -41,11 +49,36 @@ A calibração deve representar essa resposta, em vez de supor uma reta entre os
 ### R5 — Previsão × medição (Etapa 3)
 
 <!-- auto:r5-medicoes -->
-**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+Previsões registradas no commit `ee48fcc`, antes da implementação e da medição.
+Os tempos correspondem a uma execução com um milhão de contagens e dez repetições por método.
+
+| Grandeza | Previsão | Medido |
+| --- | --- | --- |
+| Memória da lista / memória do `uint16` | 18 vezes | 18,000028 vezes |
+| Tempo do laço / tempo vetorizado | 30 vezes | 64,704911 vezes |
+| Tempo da compreensão / tempo do laço | 0,8 | 0,893287 |
+
+| Estrutura | Bytes por elemento | Bytes totais | Bytes / bytes da lista |
+| --- | ---: | ---: | ---: |
+| `list` | 36,000056 | 36.000.056 | 1,000000 |
+| `array('H')` | 2 | 2.000.000 | 0,055555 |
+| `uint16` | 2 | 2.000.000 | 0,055555 |
+| `int32` | 4 | 4.000.000 | 0,111111 |
+| `int64` | 8 | 8.000.000 | 0,222222 |
+| `float32` | 4 | 4.000.000 | 0,111111 |
+| `float64` | 8 | 8.000.000 | 0,222222 |
+
+| Método | Tempo médio (ms) | Aceleração em relação ao laço |
+| --- | ---: | ---: |
+| Laço | 55,115520 | 1,000000 |
+| Compreensão | 49,233969 | 1,119461 |
+| `map` + lambda | 71,615318 | 0,769605 |
+| Vetorizado | 0,851798 | 64,704911 |
 <!-- /auto:r5-medicoes -->
 
 <!-- auto:r5-diferenca -->
-**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+A maior diferença foi a aceleração do vetorizado: previ 30 vezes e medi 64,7 vezes, mais que o previsto.
+O NumPy evita o custo de executar operações e criar floats no laço Python; tempos também dependem da máquina e de sua carga, portanto não são constantes universais.
 <!-- /auto:r5-diferenca -->
 Em `uint16`, `4095*20 = 81900` ultrapassa 65535 e resulta em `81900 mod 65536 = 16364`.
 Usaria `uint16` para armazenar contagens de 12 bits e `float64` para pressões e cálculos intermediários.
@@ -79,7 +112,10 @@ Outro extremo ausente na aceitação é janela 1, coberto por `test_janela_unita
 ### Ambiente
 
 <!-- auto:ambiente-m2 -->
-**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+```text
+=== Etapa 0: ambiente ===
+Python 3.12.14 | NumPy 2.3.5 | SciPy 1.17.0 | fornecido 4.0 | matrícula 3528
+```
 <!-- /auto:ambiente-m2 -->
 
 ### R8 — Derivada numérica
@@ -146,5 +182,7 @@ O ajuste usa `np.polynomial.polynomial.polyfit`, que resolve mínimos quadrados 
 - `python -m unittest discover -v`: 91 testes aprovados, incluindo 37 testes novos, além dos quatro exemplos e dos 50 de aceitação.
 - `python marco1.py` a `python marco4.py`: todos os asserts passaram.
 <!-- auto:regressoes -->
-**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+- As nove regressões foram executadas e falharam antes das correções, no commit `2d3d6e7`.
 <!-- /auto:regressoes -->
+
+- Os arquivos protegidos foram conferidos contra a `main` oficial, commit `48a173e`, sem alterações.
