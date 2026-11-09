@@ -112,3 +112,13 @@ situação em que o Newton falha e a bissecção não. --> A bissecção parte d
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. --> Meus testes de regressão são 'test_recalcula_a_derivada_a_cada_iteracao' e 'test_converge_em_poucas_iteracoes': os dois falhavam com o código original e passam depois da correção. Com a derivada calculada uma vez só, em x₀, a iteração vira x_{k+1} = x_k − f(x_k)/f'(x₀). Como f'(x₀) ≠ f'(raiz), o erro só é multiplicado por uma constante menor que 1 a cada passo, então a convergência é linear. Recalculando f'(x_k) a cada iteração, essa constante tende a zero perto da raiz e a convergência fica quadrática. Para Re = 1e4, o relato da issue dava 10 iterações e, depois da correção, a tabela 2(a) mostra 5. Os testes de aceitação não pegaram o defeito porque só conferem se a raiz está certa, e o Newton defeituoso ainda chega à raiz certa. Nenhum deles verifica o número de iterações nem a ordem de convergência.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+O erro O(h²) do trapézio e O(h⁴) do Simpson só vale quando o integrando é suave. A tarifa dá saltos em 18 h e 21 h (0,50 → 1,50 → 0,50), então o custo é descontínuo. O subintervalo que contém o salto é aproximado por uma parábola ou uma reta que não enxerga o degrau, e esse erro local é proporcional a h. O erro total cai então como h, o trapézio deu ordem 1.00 e o Simpson, 0.65, menos regular porque o erro depende de onde o salto cai dentro do subintervalo para cada n. Integrando faixa por faixa, o salto fica nas extremidades e cada integrando é suave. A ordem volta a 2.00 e 4.00 (erro de 6.3e-04 e 8.1e-08 com n = 110).
+
+### R14 — Issue #11
+
+Meus testes de regressão são `test_reta_em_malha_irregular`, `test_constante_com_leitura_perdida` e `test_parabola_em_malha_irregular`: os três falhavam com o código original e passam depois da correção. A causa: `Trapezio.integrar_tabela` usava um passo único, `h = x[1] - x[0]`, para todos os trapézios, o que só vale com leituras igualmente espaçadas. No registro com 8 leituras perdidas, os intervalos são de 15 ou 30 min, e a conta errava o volume. Os testes de aceitação não pegaram isso porque só passam tabelas de passo constante ao trapézio, e com passo constante a fórmula errada dá o mesmo resultado da certa. A regra de Simpson não serve para o registro porque exige pontos igualmente espaçados, e `Simpson().integrar_tabela` recusa a tabela (Etapa 2a: 89 leituras, intervalos de 15 e 30 min). Com o trapézio corrigido, o volume é 3881.5 m³, com erro de 0.17%.
