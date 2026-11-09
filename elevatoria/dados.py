@@ -48,7 +48,7 @@ _TAG: re.Pattern = re.compile(r"[A-Z]{1,2}[0-9]{1,3}")
 
 _PAR: re.Pattern = re.compile(r"(\w+)=(\S+)")
 
-_FORMATO_INSTANTE: str = '%y-%m-%d %H:%M:%S'
+_FORMATO_INSTANTE: str = '%Y-%m-%d %H:%M:%S'
 
 
 @dataclass(frozen=True)
