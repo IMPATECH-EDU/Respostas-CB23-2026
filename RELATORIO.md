@@ -106,4 +106,20 @@ A bissecção divide o intervalo rigorosamente ao meio a cada passo, de forma qu
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
 Testes de regressão: `test_newton_iteracoes_colebrook_re_1e4` e `test_newton_convergencia_quadratica_polinomio`. Calcular a derivada uma única vez no início fixa a inclinação da reta (método da corda ou Newton com derivada estacionária); sem a atualização tangente local, a contração do erro passa a ser geométrica constante (e_{k+1} ~ C * e_k), degradando a convergência para linear e dobrando as iterações necessárias. Os testes de aceitação originais não pegaram a falha porque verificavam apenas se a raiz final convergia dentro de max_iter=100, sem aferir a ordem de convergência nem limitar o teto de iterações esperado.
 
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+As regras do trapézio e de Simpson derivam de polinômios interpoladores locais e exigem integrando suave (C² e C⁴, respectivamente) para garantir suas ordens teóricas de erro. A tarifa sofre saltos nos limites das 18 h e 21 h; integrando o dia como um único bloco, os subintervalos que contêm as descontinuidades sofrem erro de ordem O(h), estragando a taxa global e derrubando as ordens para ~1. Já a integração segmentada por faixas opera sobre integrandos perfeitamente suaves em cada trecho com tarifa constante, restabelecendo plenamente as ordens 2 (trapézio) e 4 (Simpson).
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+Testes de regressão: `test_trapezio_malha_nao_uniforme_constante` e `test_trapezio_malha_irregular_linear`. Causa: `Trapezio.integrar_tabela` fixava a largura de todos os trapézios no primeiro passo `h = x[1] - x[0]`; ao ocorrer perda de pacotes, os passos dobravam ou triplicavam (30 ou 45 min) e sua área continuava multiplicada por 15 min, subestimando o volume total. Os testes de aceitação não capturaram o erro por utilizarem tabelas ideais com espaçamento regular (`np.linspace`). A regra de Simpson não serve para esse registro porque pressupõe obrigatoriamente nós uniformemente espaçados e quantidade ímpar de pontos, condições destruídas pelas 8 falhas do SCADA.
+
+
 
