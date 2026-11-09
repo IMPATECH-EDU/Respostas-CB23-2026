@@ -7,15 +7,9 @@ E-mail: al.enrico.maiali@impatech.edu.br · GitHub: enrico-impatech
 
 ### Ambiente
 
-Execução em Linux, com ambiente `venv` fora do repositório, criado com
-`--system-site-packages` para aproveitar as bibliotecas instaladas no ambiente de execução.
-Saída de `which python`, com o ambiente ativado, e da Etapa 0:
-
-```text
-/workspace/scratch/373109ec75cb/venv/bin/python
-=== Etapa 0: ambiente ===
-Python 3.12.14 | NumPy 2.3.5 | fornecido 4.0
-```
+<!-- auto:ambiente-m1 -->
+**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+<!-- /auto:ambiente-m1 -->
 
 ### R1 — Expressões regulares
 
@@ -46,34 +40,13 @@ A calibração deve representar essa resposta, em vez de supor uma reta entre os
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit local `96abf35`, antes da implementação e da medição.
-Os tempos correspondem a uma execução com um milhão de contagens e dez repetições por método.
+<!-- auto:r5-medicoes -->
+**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+<!-- /auto:r5-medicoes -->
 
-| Grandeza | Previsão | Medido |
-| --- | --- | --- |
-| Memória da lista / memória do `uint16` | 18 vezes | 18,000028 vezes |
-| Tempo do laço / tempo vetorizado | 30 vezes | 83,373649 vezes |
-| Tempo da compreensão / tempo do laço | 0,8 | 0,935300 |
-
-| Estrutura | Bytes por elemento | Bytes totais | Bytes / bytes da lista |
-| --- | ---: | ---: | ---: |
-| `list` | 36,000056 | 36.000.056 | 1,000000 |
-| `array('H')` | 2 | 2.000.000 | 0,055555 |
-| `uint16` | 2 | 2.000.000 | 0,055555 |
-| `int32` | 4 | 4.000.000 | 0,111111 |
-| `int64` | 8 | 8.000.000 | 0,222222 |
-| `float32` | 4 | 4.000.000 | 0,111111 |
-| `float64` | 8 | 8.000.000 | 0,222222 |
-
-| Método | Tempo médio (ms) | Aceleração em relação ao laço |
-| --- | ---: | ---: |
-| Laço | 65,393480 | 1,000000 |
-| Compreensão | 61,162551 | 1,069175 |
-| `map` + lambda | 75,553656 | 0,865524 |
-| Vetorizado | 0,784342 | 83,373649 |
-
-A maior diferença foi a aceleração: o NumPy evita o custo de executar operações e criar floats no laço Python.
-Ela foi maior que a prevista; tempos também dependem da máquina e de sua carga, portanto não são constantes universais.
+<!-- auto:r5-diferenca -->
+**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+<!-- /auto:r5-diferenca -->
 Em `uint16`, `4095*20 = 81900` ultrapassa 65535 e resulta em `81900 mod 65536 = 16364`.
 Usaria `uint16` para armazenar contagens de 12 bits e `float64` para pressões e cálculos intermediários.
 A conversão vetorizada promove os dados para `float64` antes de multiplicar, evitando esse estouro.
@@ -105,10 +78,9 @@ Outro extremo ausente na aceitação é janela 1, coberto por `test_janela_unita
 
 ### Ambiente
 
-```text
-=== Etapa 0: ambiente ===
-Python 3.12.14 | NumPy 2.3.5 | SciPy 1.17.0 | fornecido 4.0 | matrícula 3528
-```
+<!-- auto:ambiente-m2 -->
+**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+<!-- /auto:ambiente-m2 -->
 
 ### R8 — Derivada numérica
 
@@ -145,7 +117,7 @@ A bissecção funciona nesse intervalo porque a função é contínua e há troc
 ### R12 — Issue #9
 
 As regressões são `test_derivada_analitica_atualizada` e `test_derivada_numerica_atualizada`, ambas com limite de seis iterações.
-O código congelava a derivada no ponto inicial; perto da raiz, sobrava em geral um termo linear no erro, em vez do cancelamento de Newton.
+O código congelava a derivada em `x₀`. Com `d = f'(x₀)` fixa, o erro passa a obedecer `e_{k+1} ≈ (1 − f'(r)/d)·e_k`; esse fator só se anula se `d = f'(r)`, então a convergência fica linear.
 Mover a avaliação da derivada para dentro do laço restaura sua atualização em cada aproximação.
 A aceitação conferia convergência e valor final, mas permitia até 100 iterações e não verificava a ordem.
 As ordens observadas para Colebrook foram `2.00`, `1.98` e `2.00`; o ponto com spline foi `64.910 L/s` e `35.761 m`.
@@ -172,7 +144,7 @@ O ajuste usa `np.polynomial.polynomial.polyfit`, que resolve mínimos quadrados 
 ## Verificação dos marcos 1 a 4
 
 - `python -m unittest discover -v`: 91 testes aprovados, incluindo 37 testes novos, além dos quatro exemplos e dos 50 de aceitação.
-- `python marco1.py` a `python marco4.py`: todos os asserts passaram com matrícula 3528.
-- As nove regressões foram executadas e falharam antes das correções, no commit local `6d2c26f`.
-- `fornecido/`, `README.md`, os enunciados, `calibracao.py` e `marco2.py` a `marco4.py` foram preservados em relação ao ZIP recebido.
-- O material recebido não contém um enunciado específico do Fechamento; esta versão cobre integralmente os quatro marcos disponíveis.
+- `python marco1.py` a `python marco4.py`: todos os asserts passaram.
+<!-- auto:regressoes -->
+**Pendente:** com o ambiente ativo, rode `python <caminho>/apoio/preencher_relatorio.py` na raiz do repositório.
+<!-- /auto:regressoes -->
