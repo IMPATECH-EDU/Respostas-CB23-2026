@@ -76,3 +76,30 @@ O resultado que mais me surpreendeu foi `s.sum()`, porque uma redução devolve 
 **Correção:** inserir um zero no início antes de acumular, `np.cumsum(np.insert(self, 0, 0.0))`: o vetor passa a ter `n + 1` somas parciais e as `n − janela + 1` diferenças incluem a primeira janela. `np.insert` devolve uma cópia, então `self` não é modificado, e o resultado continua `SerieTemporal`.
 **Por que os testes de aceitação não pegaram:** `test_media_movel_tipo_e_erros` só confere o tipo do resultado e os `ValueError` das janelas 0 e 6; nenhum teste de aceitação confere o tamanho nem os valores da média móvel.
 **Outro caso que eles não cobrem:** `janela == len(s)`, que deveria devolver um único valor (a média da série) e devolvia um vetor vazio, coberto pelo meu teste `test_janela_do_tamanho_da_serie`.
+
+## Marco 2
+
+### Ambiente
+
+```text
+$ python marco2.py   # Etapa 0
+=== Etapa 0: ambiente ===
+Python 3.12.1 | NumPy 1.26.3 | SciPy 1.16.3 | fornecido 4.0 | matrícula 3465
+```
+
+### R8 — Derivada numérica
+
+De h = 1 (erro 1,7e-5) até h = 1e-5 (erro 6,2e-10), o erro cai 10 vezes a cada década de h: domina o erro de **truncamento** da diferença adiante, proporcional a h (ordem 1).
+Abaixo disso domina o erro de **arredondamento**: f(x+h) e f(x) são quase iguais, a subtração cancela os dígitos significativos e o erro relativo de ~1e-16 de cada valor (~224 kPa) é dividido por h, crescendo como 1/h (2,8e-6 em h = 1e-8, 1,4e-2 em h = 1e-12).
+Em h = 1e-14, `1000 + 1e-14 == 1000` é `True`: x + h é o próprio x em ponto flutuante, então f(x+h) − f(x) = 0, a estimativa é 0 e o erro é exatamente a derivada, 0,2134.
+
+### R9 — Issue #7
+
+Testes de regressão: `test_milhao_de_decimos`, `test_parcela_pequena_nao_se_perde` e `test_igual_a_fsum`; os três falhavam com o código original.
+Causa: `t` já é o resultado arredondado de `soma + y`; calcular `soma + y` de novo arredonda do mesmo jeito e dá o mesmo `t`, então `t − (soma + y)` é sempre 0 e a correção nunca é aplicada (o Kahan virava a soma ingênua). Algebricamente é igual a `(t − soma) − y`, mas só nessa ordem a conta recupera o que se perdeu: `t − soma` é exato e vale a parte de `y` que de fato entrou na soma; subtrair `y` dá o resto perdido. A correção foi só reordenar os parênteses.
+Os testes de aceitação somam apenas dez parcelas de 0,1 e comparam com `math.isclose` (tolerância relativa de 1e-9): o erro da soma ingênua é muito menor que isso, então os dois acumuladores passavam.
+
+### R10 — Precisão × exatidão
+
+Para PT102, o desvio é 0,536 kPa com a linear e 0,537 kPa com a spline: a **precisão** (dispersão das leituras em torno da própria média) é a mesma, porque vem do ruído do transmissor. Já o viés é −1,835 kPa com a linear e −0,006 kPa com a spline: a **exatidão** (distância da média ao valor verdadeiro) é bem diferente.
+A média de ~595 leituras reduz o erro aleatório (o erro padrão cai com √n), mas o erro da curva linear é sistemático: perto de 1790 contagens a reta entre os pontos da tabela fica sempre abaixo da resposta senoidal, e toda leitura é convertida com o mesmo erro. A média converge para o valor enviesado, não para o verdadeiro.
