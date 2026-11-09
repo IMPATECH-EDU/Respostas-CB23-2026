@@ -4,10 +4,10 @@ Regras: pelo menos 4 testes seus (o exemplo abaixo não conta), uma docstring em
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou math.isclose, a não
 ser que a igualdade exata seja justamente o que você quer testar.
 """
+import math
 import unittest
 
-from elevatoria.raizes import Bisseccao
-
+from elevatoria.raizes import Bisseccao , Newton
 
 class TestBisseccaoExemplo(unittest.TestCase):
     """Exemplo do formato. `Bisseccao` é código existente da base."""
@@ -21,6 +21,19 @@ class TestBisseccaoExemplo(unittest.TestCase):
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
+class TestNewtonRegressao(unittest.TestCase):
+    """Testes de regressão da issue #9: o Newton converge de maneira quadrática."""
+
+    def test_iteracoes_raiz_de_2(self):
+        """Dentro do intervalo [1,2] a raiz de x² - 2, o Newton deve gastar no máximo 5 iterações."""
+        resultado = Newton().encontrar(lambda x: x**2 - 2, 1.0, 2.0)
+        self.assertLessEqual(resultado.iteracoes, 5)
+
+    def test_erro_apos_tres_iteracoes(self):
+        """Depois de 3 iterações, o erro na raiz de 2 já é menor que 1e-10."""
+        resultado = Newton().encontrar(lambda x: x**2 - 2, 1.0, 2.0)
+        erro = abs(resultado.historico[3] - math.sqrt(2))
+        self.assertLess(erro, 1e-10)
 
 if __name__ == "__main__":
     unittest.main()
