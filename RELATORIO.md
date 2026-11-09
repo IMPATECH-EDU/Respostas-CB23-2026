@@ -122,3 +122,19 @@ Python 3.11.9 | NumPy 2.4.4 | SciPy 1.17.1 | fornecido 4.0 | matrícula 3529
 ### R10 — Precisão × exatidão
 
 As duas curvas têm praticamente a mesma precisão, pois os desvios são muito próximos: 0,528 kPa na linear e 0,530 kPa na spline. Porém, a exatidão é diferente, o viés da spline é 0,005 kPa, enquanto o da linear é −1,825 kPa. Isso ocorre porque a curva linear não representa tão bem a resposta do transmissor e acaba subestimando a pressão. A média de quase 600 leituras reduz as variações aleatórias, mas não elimina esse erro sistemático, que continua presente mesmo com muitas medições.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+1. A bissecção sempre realiza 44 iterações porque utiliza o mesmo intervalo [2, 15] e a mesma tolerância (`1e-12`). Como o intervalo é dividido pela metade a cada passo, a quantidade de iterações depende apenas desses valores, e não do Reynolds.
+
+2. Ordem de convergência 2 significa que o erro diminui aproximadamente ao quadrado a cada iteração, fazendo com que os dígitos corretos aumentem rapidamente. Em Re = 1e4, por exemplo, o erro cai de `2,3e-5` para `5,0e-12`. Já o método de Newton pode falhar quando fica oscilando entre dois valores, como acontece com `f(x) = x³ − 2x + 2`, partindo de `x = 0`, em que alterna entre 0 e 1 sem encontrar a raiz. Nesse caso, a bissecção consegue encontrar a solução porque o intervalo escolhido contém uma mudança de sinal.
+
+### R12 — Issue #9
+
+1. Os testes de regressão foram `test_colebrook_poucas_iteracoes`, `test_ordem_quadratica`, `test_derivada_avaliada_a_cada_iteracao` e `test_newton_vence_a_bisseccao_em_x2_menos_2`. 
+
+2. 2. Ao calcular a derivada apenas uma vez, o método deixa de atualizar a inclinação da função a cada iteração e passa a usar sempre a inclinação do ponto inicial. Com isso, ele perde a convergência quadrática e passa a convergir de forma linear, ou seja, o erro diminui mais lentamente. Ao recalcular a derivada em cada passo, o método acompanha melhor a função e consegue se aproximar da raiz muito mais rapidamente.
+
+3. Os testes de aceitação não identificaram o defeito porque verificavam apenas se o resultado final estava dentro da tolerância. Como o método original também encontrava a raiz, mesmo que mais lentamente, ele passava nesses testes. Nenhum deles verificava a quantidade de iterações ou a ordem de convergência.
