@@ -7,15 +7,15 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
-Python instalado no sistema (Windows), sem ambiente virtual.
+Ambiente conda: `prog2-conda`, criado com `conda create -n prog2-conda python numpy scipy` e ativado com `conda activate prog2-conda`.
 
 ```text
 $ which python
-/c/dev/languages/Python/Python312/python
+/c/dev/languages/anaconda3/envs/prog2-conda/python
 
 $ python marco1.py   # Etapa 0
 === Etapa 0: ambiente ===
-Python 3.12.1 | NumPy 1.26.3 | fornecido 4.0
+Python 3.15.2 | NumPy 2.5.4 | fornecido 4.0
 ```
 
 ### R1 — Expressões regulares
@@ -46,10 +46,10 @@ Previsões: não houve commit separado de previsões. Como previsão para esta m
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
 | Memória da lista / memória do `uint16` | 18,0× | 18,0× (36 000 056 B / 2 000 000 B) |
-| Tempo do laço / tempo vetorizado | 34,7× | 14,4× (108,59 ms / 7,53 ms) |
-| Tempo da compreensão / tempo do laço | 0,91× | 0,92× (99,80 ms / 108,59 ms) |
+| Tempo do laço / tempo vetorizado | 34,7× | 28,8× (145,76 ms / 5,06 ms) |
+| Tempo da compreensão / tempo do laço | 0,91× | 0,82× (118,93 ms / 145,76 ms) |
 
-A maior diferença entre previsão e medição foi na razão laço / vetorizado: previ 34,7× e medi 14,4×, porque o tempo depende da máquina, e as duas partes mudam de jeitos diferentes. O laço em Python ficou cerca de 3,4× mais lento (31,75 → 108,59 ms), já o vetorizado ficou cerca de 8× mais lento (0,91 → 7,53 ms) e oscilou entre 4,9 e 10 ms em execuções seguidas. Uma operação de poucos milissegundos sofre mais com a carga do sistema e com a versão do NumPy (1.26 aqui, 2.5 na outra máquina). A memória não muda (18,0× nas duas), porque só depende do tamanho dos objetos, e a razão compreensão / laço também quase não muda (0,91× e 0,92×), porque as duas implementações rodam no mesmo interpretador.
+A maior diferença entre previsão e medição foi na razão laço / vetorizado: previ 34,7× e medi 28,8×, porque o tempo depende da máquina, e as duas partes não mudam na mesma proporção. Nesta máquina o laço em Python ficou cerca de 4,6× mais lento (31,75 → 145,76 ms) e o vetorizado cerca de 5,6× mais lento (0,91 → 5,06 ms). Uma operação de poucos milissegundos sofre mais com a carga do sistema e com o ruído da medição. A memória não muda (18,0× nas duas), porque só depende do tamanho dos objetos, e a razão compreensão / laço muda pouco (0,91× e 0,82×), porque as duas implementações rodam no mesmo interpretador.
 `uint16` vezes 20 dá 16364 porque o resultado continua `uint16`, que só guarda de 0 a 65535: 4095 · 20 = 81900 estoura e o valor é tomado módulo 2¹⁶, ou seja, 81900 − 65536 = 16364, sem aviso nenhum.
 Para guardar contagens, eu escolheria `uint16`, porque 0 a 4095 cabe em 12 bits e cada contagem ocupa 2 bytes, 18 vezes menos que na lista (só é preciso converter para `float` antes de fazer contas, como em `converter_vetorizado`).
 Para guardar pressões em kPa, eu escolheria `float64`, porque é o tipo padrão do NumPy e das contas que vêm depois (médias, desvios, incertezas), evitando arredondamentos acumulados do `float32`, e a memória extra (8 MB por milhão) é irrelevante aqui.
@@ -84,7 +84,7 @@ O resultado que mais me surpreendeu foi `s.sum()`, porque uma redução devolve 
 ```text
 $ python marco2.py   # Etapa 0
 === Etapa 0: ambiente ===
-Python 3.12.1 | NumPy 1.26.3 | SciPy 1.16.3 | fornecido 4.0 | matrícula 3465
+Python 3.15.2 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3465
 ```
 
 ### R8 — Derivada numérica

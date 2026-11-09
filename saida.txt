@@ -1,9 +1,9 @@
 === Etapa 0: ambiente ===
-Python 3.12.1 | NumPy 1.26.3 | fornecido 4.0
+Python 3.15.2 | NumPy 2.5.4 | fornecido 4.0
 
 === Etapa 1: leitura do log ===
 2404 registros válidos, 4 linhas inválidas
-Registros por nível: {'ALARME': 2, 'WARN': 1, 'INFO': 2401}
+Registros por nível: {'WARN': 1, 'INFO': 2401, 'ALARME': 2}
 Pulsos de FT201: 2334053 (233405.3 L, ou 233.41 m³, na hora)
 valida_tag: exemplos válidos e inválidos conferidos
 
@@ -30,10 +30,10 @@ float32             4.00     4000000              9.0
 float64             8.00     8000000              4.5
 
 método          tempo (ms)  aceleração
-laço                108.59        1.0x
-compreensão          99.80        1.1x
-map+lambda          148.16        0.7x
-vetorizado            7.53       14.4x
+laço                145.76        1.0x
+compreensão         118.93        1.2x
+map+lambda          173.86        0.8x
+vetorizado            5.06       28.8x
 
 Lista mista: ['1' '2.5' 'a'] (dtype <U32)
 uint16 4095 * 20 = 16364 (o correto seria 81900)
