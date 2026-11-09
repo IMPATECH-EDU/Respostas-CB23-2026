@@ -22,9 +22,9 @@ class TestPorTagExemplo(unittest.TestCase):
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
-    class TestRegressaoMediaMovel(unittest.TestCase):
-        """Testes de regressão da issue #4 ANTES da correção."""
-    
+class TestRegressaoMediaMovel(unittest.TestCase):
+    """Testes de regressão da issue #4 ANTES da correção."""
+
     def test_media_movel_tamanho_correto(self):
         """Verifica se media_movel(30) de 600 pontos devolve exatos 571 valores."""
         s = SerieTemporal.de_lista([1.0] * 600)

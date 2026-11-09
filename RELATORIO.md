@@ -62,3 +62,64 @@ O resultado mais surpreendente foi `s.sum()` retornar `SerieTemporal` em vez de 
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 Sintoma: `media_movel(30)` de 600 pontos devolvia 570 valores em vez dos 571 esperados. Teste de regressão: `test_media_movel_tamanho_correto`. Causa: a diferença entre os fatiamentos da soma acumulada (`acumulada[janela:] - acumulada[:-janela]`) perdia um elemento na contagem de intervalos. Correção: inserção do elemento neutro `0.0` no início com `np.insert(self, 0, 0.0)`. Os testes de aceitação originais usavam listas curtas e não verificavam o tamanho exato relativo ao contrato. Outro caso não coberto é o teste de retenção de tipo da classe e a reamostragem com sobras descartadas, coberto por `test_reamostrar_com_sobra`.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+Python 3.14.6 | NumPy 2.5.3 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3461
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+Para h variando de 1 até 1e-5, domina o erro de truncamento da diferença finita (da ordem de O(h)), diminuindo à medida que h se reduz. Abaixo de 1e-5, passa a predominar o erro de arredondamento da máquina gerado pelo cancelamento catastrófico ao subtrair números quase idênticos e dividir por um h extremamente pequeno. Em h = 1e-14, como 1000 + 1e-14 == 1000 no padrão IEEE 754 de 64 bits, a diferença f(x+h) - f(x) resulta exatamente em zero; logo, a derivada aproximada é 0 e o erro é a própria derivada exata (0.2134).
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+Testes de regressão: `test_kahan_um_milhao_de_pulsos` e `test_kahan_difere_de_acumulador_ingenuo`. Na expressão `t - (s + y)`, como `t` foi atribuído como `s + y`, recalcular `s + y` gera exatamente `t`, zerando a correção e anulando a compensação de Kahan. Já na ordem `(t - s) - y`, `t - s` cancela os bits mais significativos e recupera a parcela de `y` efetivamente absorvida pela soma; ao subtrair `y`, resta a fração perdida pelo arredondamento. Os testes de aceitação não capturaram o defeito por testarem apenas 10 parcelas de 0.1, magnitude em que o erro acumulado ainda não surge.
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+Precisão diz respeito à repetibilidade e dispersão aleatória das leituras, refletida no desvio padrão praticamente idêntico em ambas as curvas (~0.52 kPa). Exatidão corresponde à aderência ao valor real da grandeza física, caracterizada pelo viés (-1.866 kPa na linear vs -0.037 kPa na spline). A média de 600 pontos reduz a incerteza estatística proveniente do ruído aleatório das medidas (erro padrão da média), mas não é capaz de diminuir o erro sistemático inerente ao modelo linear de interpolação, que possui um viés fixo frente à resposta não linear do transmissor.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+A bissecção divide o intervalo rigorosamente ao meio a cada passo, de forma que o número de iterações decorre unicamente de log2((b - a) / tol), sendo invariante em relação à função avaliada ou ao Reynolds. Ordem de convergência 2 (quadrática) significa que o erro subsequente é proporcional ao quadrado do erro corrente (e_{k+1} ~ C * e_k^2), dobrando a quantidade de dígitos precisos a cada iteração, como exibido na Etapa 2(b) (erros decaindo de 5e-2 para 2.3e-5 e depois 5e-12). Newton falha se atingir derivada nula (f'(x) = 0) ou divergir para longe da raiz se a estimativa inicial não for suficientemente próxima, cenários em que a bissecção converge com segurança se houver mudança de sinal.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+Testes de regressão: `test_newton_iteracoes_colebrook_re_1e4` e `test_newton_convergencia_quadratica_polinomio`. Calcular a derivada uma única vez no início fixa a inclinação da reta (método da corda ou Newton com derivada estacionária); sem a atualização tangente local, a contração do erro passa a ser geométrica constante (e_{k+1} ~ C * e_k), degradando a convergência para linear e dobrando as iterações necessárias. Os testes de aceitação originais não pegaram a falha porque verificavam apenas se a raiz final convergia dentro de max_iter=100, sem aferir a ordem de convergência nem limitar o teto de iterações esperado.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+As regras do trapézio e de Simpson derivam de polinômios interpoladores locais e exigem integrando suave (C² e C⁴, respectivamente) para garantir suas ordens teóricas de erro. A tarifa sofre saltos nos limites das 18 h e 21 h; integrando o dia como um único bloco, os subintervalos que contêm as descontinuidades sofrem erro de ordem O(h), estragando a taxa global e derrubando as ordens para ~1. Já a integração segmentada por faixas opera sobre integrandos perfeitamente suaves em cada trecho com tarifa constante, restabelecendo plenamente as ordens 2 (trapézio) e 4 (Simpson).
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+Testes de regressão: `test_trapezio_malha_nao_uniforme_constante` e `test_trapezio_malha_irregular_linear`. Causa: `Trapezio.integrar_tabela` fixava a largura de todos os trapézios no primeiro passo `h = x[1] - x[0]`; ao ocorrer perda de pacotes, os passos dobravam ou triplicavam (30 ou 45 min) e sua área continuava multiplicada por 15 min, subestimando o volume total. Os testes de aceitação não capturaram o erro por utilizarem tabelas ideais com espaçamento regular (`np.linspace`). A regra de Simpson não serve para esse registro porque pressupõe obrigatoriamente nós uniformemente espaçados e quantidade ímpar de pontos, condições destruídas pelas 8 falhas do SCADA.
+
+
+
