@@ -63,8 +63,47 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError("A incerteza sistemática não pode ser negativa.")
 
+    contagens = serie(registros, tag, "contagens")
+
+    if len(contagens) < 2:
+        raise ValueError("São necessárias pelo menos duas leituras.")
+
+    valores = np.asarray(curva(contagens), dtype=float)
+
+    mediana = float(np.median(valores))
+    mad = float(stats.median_abs_deviation(valores, scale="normal"))
+
+    if mad == 0:
+        raise ValueError("A MAD é zero; não é possível calcular o z robusto.")
+
+    z = (valores - mediana) / mad
+
+    mascara_validas = np.abs(z) <= limiar
+
+    espurias = np.flatnonzero(~mascara_validas).tolist()
+    validas = valores[mascara_validas]
+
+    if len(validas) < 2:
+        raise ValueError("São necessárias pelo menos duas leituras válidas.")
+
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))
+
+    incerteza_total = float(
+        np.sqrt(erro_padrao**2 + u_sistematica**2)
+    )
+
+    return Medicao(
+        tag=tag,
+        medida=Medida(media, incerteza_total),
+        desvio=desvio,
+        n_validas=len(validas),
+        espurias=espurias
+    )
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
                        u_sistematica: float = 1.5) -> Medida:
@@ -75,4 +114,19 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(
+        registros, "PT101", curva,
+        u_sistematica=u_sistematica
+    ).medida
+
+    recalque = medir(
+        registros, "PT102", curva,
+        u_sistematica=u_sistematica
+    ).medida
+
+    altura = (
+        (recalque - succao) * 1000
+        / (MASSA_ESPECIFICA * GRAVIDADE)
+    )
+
+    return altura
