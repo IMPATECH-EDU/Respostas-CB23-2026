@@ -62,3 +62,28 @@ Surpreende-me o fato de que a maioria das operações sobre objetos do tipo `Ser
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 O sintoma observado foi que havia menos valores no resultado da média móvel do que o esperado, como verificado pelo `test_media_movel_tamanho_e_valores`. O motivo é que o código original ignorava o primeiro valor da média móvel: a soma acumulada só considerava a partir do indice `janela`, que é o (janela+1)-ésimo item. Os testes de aceitação não pegaram o defeito porque a única coisa que faziam era verificar se o valor retornado era SerieTemporal e testar valores inválidos para `janela`. Além disso, o novo teste também verifica se o resultado produzido condiz com o esperado.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+Python 3.13.15 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3475
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->

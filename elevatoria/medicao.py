@@ -32,7 +32,7 @@ GRAVIDADE = 9.81
 @dataclass(frozen=True)
 class Medicao:
     """Resultado da medição de uma grandeza a partir do log."""
-
+    
     tag: str
     medida: Medida        # média das leituras válidas, com a incerteza total
     desvio: float         # desvio padrão amostral (ddof=1) das leituras válidas: a precisão
@@ -63,7 +63,31 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica < 0: {u_sistematica}")
+
+    contagens_tag = serie(registros, tag, "contagens")
+    convertidas = curva(contagens_tag)
+
+    mediana = np.median(convertidas)
+    mad = stats.median_abs_deviation(convertidas, scale="normal")
+    if mad == 0:
+        raise ValueError(f"MAD = 0 para a tag {tag!r}")
+    z = (convertidas - mediana) / mad
+
+    espurias = np.where(np.abs(z) > limiar)[0].tolist()
+    validas = np.delete(convertidas, espurias)
+    if validas.size < 2:
+        raise ValueError(f"menos de 2 leituras válidas para a tag {tag!r}")
+    
+    media = np.mean(validas)
+    desvio = np.std(validas, ddof=1)
+    erro_padrao = stats.sem(validas)
+    u = np.sqrt(erro_padrao**2 + u_sistematica**2)
+
+    return Medicao(tag, Medida(media, u), desvio, validas.size, espurias)
+
+    #  raise NotImplementedError("issue #6: medir")
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
