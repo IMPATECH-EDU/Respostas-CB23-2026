@@ -6,7 +6,9 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.integracao import Simpson
+import numpy as np
+
+from elevatoria.integracao import Simpson, Trapezio
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -17,8 +19,24 @@ class TestSimpsonExemplo(unittest.TestCase):
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestTrapezioMalhaIrregular(unittest.TestCase):
+    """Testes de regressão da issue #11: o trapézio de tabela precisa usar a largura de cada passo."""
+
+    def test_reta_em_malha_irregular(self):
+        """Issue #11: ∫ x dx em x = [0, 1, 3] vale 4,5 (passos de 1 e de 2)."""
+        x = np.array([0.0, 1.0, 3.0])
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, x), 4.5)
+
+    def test_constante_com_leitura_perdida(self):
+        """Issue #11: ∫ 2 dx em [0, 1], com a leitura de 0,5 perdida, vale 2."""
+        x = np.array([0.0, 0.25, 0.75, 1.0])
+        y = np.full(4, 2.0)
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 2.0)
+
+    def test_parabola_em_malha_irregular(self):
+        """Issue #11: trapézios de x² em x = [0, 0,25, 0,75, 1] somam 0,359375."""
+        x = np.array([0.0, 0.25, 0.75, 1.0])
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, x ** 2), 0.359375)
 
 
 if __name__ == "__main__":
