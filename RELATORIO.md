@@ -8,11 +8,14 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 ### Ambiente
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
+### Ambiente
+
 Usei Windows, então no lugar de `which python` usei `(Get-Command python).Source`.
-CommandType     Name                                               Version    Source
------------     ----                                               -------    ------
-Application     python.exe                                         3.14.41... C:\Users\dudad\venvs\prog2-venv\Scripts\python.exe
+
+```text
+C:\Users\dudad\venvs\prog2-venv\Scripts\python.exe
 Python 3.14.4 | NumPy 2.5.4 | fornecido 3.0
+```
 
 ### R1 — Expressões regulares
 
@@ -26,8 +29,8 @@ Eu tive 4 inválidas em 2408 linhas. Devolvê-las permite contar e auditar a fal
 
 ### R3 — Late binding
 
-<!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
-Na compreensão, cada lambda guarda a variável k, não o valor dela. Quando as lambdas são chamadas, k já terminou o laço valendo 0,1 (a escala de FT201, a última do dicionário), e por isso errados["PT102"](4095) dá 4095 × 0,1 = 409,5. A minha criar_conversores usa f=fator como argumento padrão, que é avaliado na criação de cada lambda e fixa o fator de cada tag.
+<!-- Por que `errados["PT102"](4095)` dá 409,5 e por que a sua criar_conversores não tem o problema. -->
+Na compreensão, cada lambda guarda a variável `k`, não o valor dela. Quando as lambdas são chamadas, `k` já terminou o laço valendo 0,1 (a escala de FT201, a última do dicionário), e por isso errados["PT102"](4095) dá 4095 × 0,1 = 409,5. A minha criar_conversores usa `f=fator` como argumento padrão, que é avaliado na criação de cada lambda e fixa o fator de cada tag.
 
 ### R4 — Escala nominal
 
