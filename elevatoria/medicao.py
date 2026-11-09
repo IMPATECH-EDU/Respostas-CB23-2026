@@ -11,8 +11,10 @@ As funções marcadas com `NotImplementedError` são a issue #6; as docstrings d
 contrato. Não mude nomes nem assinaturas públicas: o `marco2.py` e os testes dependem deles.
 Funções auxiliares privadas (`_nome`) são permitidas.
 """
+
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -63,7 +65,30 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError("u_sistematica não pode ser negativa")
+
+    contagens = np.asarray(serie(registros, tag, "contagens"))
+    if contagens.size < 2:
+        raise ValueError(f"a tag {tag} tem menos de 2 leituras")
+    x = curva(contagens)
+    mad = stats.median_abs_deviation(x, scale="normal")
+    if mad == 0:
+        raise ValueError("MAD igual a zero: não dá para calcular o z robusto")
+
+    z = (x - np.median(x)) / mad
+    mascara = np.abs(z) > limiar
+    espurias = np.flatnonzero(mascara).tolist()
+    validas = x[~mascara]
+    if validas.size < 2:
+        raise ValueError("sobraram menos de 2 leituras válidas")
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))        # precisão
+    erro_padrao = float(stats.sem(validas))        # ddof=1 por padrão
+    u = math.hypot(erro_padrao, u_sistematica)     # sqrt(sem² + u_sist²)
+
+    return Medicao(tag, Medida(media, u), desvio, int(validas.size), espurias)
+
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +100,6 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    p_succao = medir(registros, "PT101", curva, u_sistematica).medida
+    p_recalque = medir(registros, "PT102", curva, u_sistematica).medida
+    return (p_recalque - p_succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
