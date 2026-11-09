@@ -7,17 +7,24 @@ import numpy as np
 
 
 class SerieTemporal(np.ndarray):
-    """Série temporal unidimensional de `float`, com métodos de análise vetorizados.
+    """Série temporal unidimensional de valores float.
 
-    Crie instâncias com `SerieTemporal.de_lista(seq)`. Todos os métodos usam apenas
-    operações do NumPy (sem laços sobre os elementos) e nenhum deles modifica `self`.
+    Crie instâncias com ``SerieTemporal.de_lista(seq)``. Os métodos usam operações
+    vetorizadas do NumPy e não modificam ``self``.
     """
 
     @classmethod
     def de_lista(cls, seq: Sequence[float]) -> SerieTemporal:
-        """Cria uma `SerieTemporal` de `float` (uma cópia) a partir de qualquer sequência.
+        """Cria uma série temporal unidimensional a partir de uma sequência.
 
-        Levanta `ValueError` se o resultado não for unidimensional.
+        Args:
+            seq: Sequência de valores numéricos.
+
+        Returns:
+            Nova instância de ``SerieTemporal`` com dtype ``float``.
+
+        Raises:
+            ValueError: Se o resultado não for unidimensional.
         """
         arr = np.array(seq, dtype=float)
         if arr.ndim != 1:
@@ -25,28 +32,51 @@ class SerieTemporal(np.ndarray):
         return arr.view(cls)
 
     def media_movel(self, janela: int) -> SerieTemporal:
-        """Médias de `janela` pontos consecutivos: `n - janela + 1` valores.
+        """Calcula a média móvel em janelas consecutivas.
 
-        O valor `i` do resultado é a média de `self[i : i + janela]`. Usa a soma acumulada
-        (`np.cumsum`), sem laços. Levanta `ValueError` se `janela < 1` ou `janela > len(self)`.
+        Args:
+            janela: Tamanho da janela de média.
+
+        Returns:
+            Série com ``n - janela + 1`` valores, em que o elemento ``i`` é a média
+            de ``self[i : i + janela]``.
+
+        Raises:
+            ValueError: Se ``janela < 1`` ou ``janela > len(self)``.
         """
         if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
-        acumulada = np.cumsum(self)
-        return (acumulada[janela:] - acumulada[:-janela]) / janela
+        
+        acumulada = np.concatenate((np.zeros(1), np.cumsum(self)))
+        
+        ret = self.de_lista((acumulada[janela:] - acumulada[:-janela])/janela)
+        return ret
 
     def variacao(self) -> SerieTemporal:
-        """Diferenças entre pontos consecutivos (`n - 1` valores)."""
+        """Calcula diferenças entre pontos consecutivos.
+
+        Returns:
+            Série com ``n - 1`` elementos contendo ``self[i+1] - self[i]``.
+        """
         return np.diff(self)
 
     def amplitude(self) -> float:
-        """Máximo menos mínimo da série, como `float`."""
+        """Calcula a amplitude da série.
+
+        Returns:
+            Diferença entre o valor máximo e o valor mínimo da série.
+        """
         return float(self.max() - self.min())
 
     def normalizar(self) -> SerieTemporal:
-        """Série padronizada `(x - média) / desvio`, com desvio amostral (`ddof=1`).
+        """Padroniza a série com média zero e desvio padrão amostral unitário.
 
-        Levanta `ValueError` se o desvio for zero.
+        Returns:
+            Série normalizada pela fórmula ``(x - média) / desvio`` com
+            ``ddof=1``.
+
+        Raises:
+            ValueError: Se o desvio padrão amostral for zero.
         """
         desvio = float(self.std(ddof=1))
         if desvio == 0.0:
@@ -54,10 +84,26 @@ class SerieTemporal(np.ndarray):
         return (self - self.mean()) / desvio
 
     def reamostrar(self, k: int) -> SerieTemporal:
-        """Médias de blocos consecutivos de `k` pontos: `len(self) // k` valores.
+        """Calcula médias de blocos consecutivos de tamanho ``k``.
 
-        O bloco `j` é `self[j*k : (j+1)*k]`; os `len(self) % k` pontos finais que não
-        completam um bloco são descartados. Usa `reshape`, sem laços. Levanta `ValueError`
-        se `k < 1` ou `k > len(self)`.
+        Args:
+            k: Número de pontos por bloco.
+
+        Returns:
+            Série com ``len(self) // k`` médias de blocos consecutivos. Pontos
+            finais que não completam um bloco são descartados.
+
+        Raises:
+            ValueError: Se ``k < 1`` ou ``k > len(self)``.
         """
-        raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")
+        
+        if (k < 1 or k > len(self)):
+            raise(ValueError("k inválido."))
+        
+        matriz = self.copy()[:len(self) - len(self) % k]
+        
+        matriz.resize(len(matriz)//k, k)
+        
+        medias = np.mean(matriz, axis=1)
+        
+        return medias
