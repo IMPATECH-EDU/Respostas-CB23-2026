@@ -8,6 +8,7 @@ import math
 import unittest
 
 from elevatoria.raizes import Bisseccao , Newton
+from elevatoria.operacao import ordem_convergencia
 
 class TestBisseccaoExemplo(unittest.TestCase):
     """Exemplo do formato. `Bisseccao` é código existente da base."""
@@ -37,3 +38,18 @@ class TestNewtonRegressao(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestOrdemConvergenciaRegras(unittest.TestCase):
+    """Regras que os testes de aceitação não verificam sobre ordem_convergencia"""
+    
+    def test_tres_ultimos(self):
+        """Uma sequência começa linear e termina quadrática de ordem 2: contam os três últimos erros"""
+        historico = [0.5, 0.25, 0.125, 1e-2, 1e-4, 1e-8]
+        self.assertAlmostEqual(ordem_convergencia(historico, 0.0), 2.0, delta=0.01)
+
+    def test_ignorando_erros_abaixo_do_piso(self):
+        """Aproximações exatas no fim do histórico (erro zero) são ignoradas, e a ordem continua 2"""
+        historico = [1e-1, 1e-2, 1e-4, 1e-8, 0.0, 0.0]
+        self.assertAlmostEqual(ordem_convergencia(historico, 0.0), 2.0, delta=0.01)
+    
