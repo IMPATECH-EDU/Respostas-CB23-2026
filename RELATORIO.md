@@ -65,3 +65,27 @@ Causa: `acumulada[janela:] - acumulada[:-janela]` esquecia o primeiro elemento `
 Correção: Pré-alocou-se vetor acumulado com `0.0` na primeira posição antes de subtrair as fatias.
 Os testes de aceitação originais apenas verificavam o tipo de retorno e exceções, sem validar o comprimento exato nem os valores.
 Outro caso não coberto por eles: `janela == len(s)`, em que o código original retornava array vazio e agora retorna a média global (coberto por `test_media_movel_janela_igual_tamanho`).
+
+## Marco 2
+
+### Ambiente
+
+Python 3.14.6 | NumPy 2.4.6 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3469
+
+### R8 — Derivada numérica
+
+De $h = 1$ a $10^{-5}$, o erro de truncamento de primeira ordem $O(h)$ da série de Taylor domina e diminui linearmente à medida que $h$ diminui.
+Abaixo de $10^{-5}$, domina o erro de arredondamento de ponto flutuante $O(\epsilon/h)$, crescendo pela perda de dígitos significativos na subtração de valores próximos.
+Em $h = 10^{-14}$, a representação em float64 trunca a soma ($1000 + 10^{-14} == 1000$), gerando $f(x+h) - f(x) = 0$, derivada numérica nula e erro exatamente igual à derivada analítica ($0.2134$).
+
+### R9 — Issue #7
+
+Testes de regressão: `test_kahan_precisao_muitas_parcelas` e `test_kahan_diferente_de_ingenuo_em_longa_sequencia`.
+Causa: Como $t$ guarda a soma arredondada $(s + y)$, a expressão $t - (s + y)$ repete a adição e subtrai $t - t = 0$, anulando a compensação. Na fórmula correta $(t - s) - y$, subtrai-se $s$ de $t$ para recuperar o incremento real e dele subtrai-se $y$, retendo o erro de arredondamento.
+Os testes de aceitação somavam somente 10 parcelas com `math.isclose`, tolerância ampla demais para captar desvios acumulados de ponto flutuante.
+
+### R10 — Precisão × exatidão
+
+A precisão mede a variabilidade aleatória e repetibilidade (ambas as curvas apresentaram desvio padrão semelhante, cerca de $0.54$ kPa).
+A exatidão mede a proximidade da média com a realidade (viés): a curva linear tem viés de $-1.837$ kPa, enquanto a spline tem viés desprezível de $-0.007$ kPa.
+A média de 600 leituras apenas minimiza a incerteza estatística aleatória ($u \propto 1/\sqrt{N}$), mas é incapaz de eliminar o viés sistemático gerado por um modelo de calibração incorreto.
