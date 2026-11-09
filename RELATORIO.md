@@ -141,3 +141,17 @@ convergência linear; por que os testes de aceitação não pegaram o defeito. -
 Testes de regressão: `test_ordem_colebrook_re_10_000`, `test_ordem_colebrook_re_100_000` e `test_ordem_raiz_de_2` (ordem ≈ 1,0 antes da correção, ≈ 2,0 depois).
 Com a derivada fixa d, o erro cai sempre na mesma proporção, e_{k+1} ≈ (1 − g'(raiz)/d)·e_k: linear.
 Como Colebrook é quase uma reta, esse fator é pequeno (0,039 em Re = 1e4), e o método ainda converge, mas em 10 iterações em vez de 5. Os testes de aceitação só conferem `convergiu` e a raiz, e não as iterações nem a ordem: o resultado sai certo, só que mais devagar.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+```
