@@ -1,4 +1,10 @@
-"""Leitura do log SCADA, conversões e comparações de memória e tempo."""
+"""Leitura do log SCADA da estação elevatória e preparação dos dados.
+
+Este módulo é a porta de entrada da aplicação: transforma o texto do log em registros
+estruturados e em séries numéricas. As funções marcadas com `NotImplementedError` são as
+issues abertas do Marco 1; as docstrings descrevem o contrato que cada uma deve cumprir.
+Não mude nomes nem assinaturas públicas: outros módulos e os testes dependem deles.
+"""
 from __future__ import annotations
 
 import array

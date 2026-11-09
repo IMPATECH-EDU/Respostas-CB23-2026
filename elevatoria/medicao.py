@@ -1,4 +1,16 @@
-"""Medição de pressão com calibração, estatística robusta e incerteza."""
+"""Medição de pressão a partir do log: calibração, estatística e incerteza (issue #6).
+
+Este módulo junta peças que já existem na base:
+
+- `serie` (de `elevatoria/dados.py`, o seu Marco 1): as contagens de uma tag no log;
+- `CurvaCalibracao` (de `elevatoria/calibracao.py`, escrita por um colega): contagens -> kPa;
+- `scipy.stats`: mediana, MAD e erro padrão;
+- `Medida` (de `fornecido/medida.py`, da equipe de metrologia): valor ± incerteza.
+
+As funções marcadas com `NotImplementedError` são a issue #6; as docstrings descrevem o
+contrato. Não mude nomes nem assinaturas públicas: o `marco2.py` e os testes dependem deles.
+Funções auxiliares privadas (`_nome`) são permitidas.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

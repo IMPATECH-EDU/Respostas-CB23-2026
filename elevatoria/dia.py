@@ -1,4 +1,17 @@
-"""Ajuste das curvas da bomba e balanço do dia de operação."""
+"""Curvas da bomba por mínimos quadrados e o balanço do dia de operação (issue #10).
+
+Este módulo junta peças que já existem na base:
+
+- o registro de vazão do dia, a potência e as faixas tarifárias (de `fornecido/energia.py`,
+  da equipe de energia);
+- as regras de integração `Trapezio` e `Simpson` (de `elevatoria/integracao.py`, escritas por
+  um colega);
+- o NumPy ou o SciPy, para o ajuste de curvas (há mais de um caminho: veja `ajustar_polinomio`).
+
+As funções marcadas com `NotImplementedError` são a issue #10; as docstrings descrevem o
+contrato. Não mude nomes nem assinaturas públicas: o `marco4.py` e os testes dependem deles.
+Funções auxiliares privadas (`_nome`) são permitidas.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
