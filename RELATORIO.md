@@ -91,3 +91,19 @@ diferentes para PT102. Explique a diferença entre precisão e exatidão com ess
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 Precisão diz respeito à repetibilidade e dispersão aleatória das leituras, refletida no desvio padrão praticamente idêntico em ambas as curvas (~0.52 kPa). Exatidão corresponde à aderência ao valor real da grandeza física, caracterizada pelo viés (-1.866 kPa na linear vs -0.037 kPa na spline). A média de 600 pontos reduz a incerteza estatística proveniente do ruído aleatório das medidas (erro padrão da média), mas não é capaz de diminuir o erro sistemático inerente ao modelo linear de interpolação, que possui um viés fixo frente à resposta não linear do transmissor.
 
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+A bissecção divide o intervalo rigorosamente ao meio a cada passo, de forma que o número de iterações decorre unicamente de log2((b - a) / tol), sendo invariante em relação à função avaliada ou ao Reynolds. Ordem de convergência 2 (quadrática) significa que o erro subsequente é proporcional ao quadrado do erro corrente (e_{k+1} ~ C * e_k^2), dobrando a quantidade de dígitos precisos a cada iteração, como exibido na Etapa 2(b) (erros decaindo de 5e-2 para 2.3e-5 e depois 5e-12). Newton falha se atingir derivada nula (f'(x) = 0) ou divergir para longe da raiz se a estimativa inicial não for suficientemente próxima, cenários em que a bissecção converge com segurança se houver mudança de sinal.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+Testes de regressão: `test_newton_iteracoes_colebrook_re_1e4` e `test_newton_convergencia_quadratica_polinomio`. Calcular a derivada uma única vez no início fixa a inclinação da reta (método da corda ou Newton com derivada estacionária); sem a atualização tangente local, a contração do erro passa a ser geométrica constante (e_{k+1} ~ C * e_k), degradando a convergência para linear e dobrando as iterações necessárias. Os testes de aceitação originais não pegaram a falha porque verificavam apenas se a raiz final convergia dentro de max_iter=100, sem aferir a ordem de convergência nem limitar o teto de iterações esperado.
+
+
