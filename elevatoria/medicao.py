@@ -42,37 +42,79 @@ class Medicao:
 
 def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
           u_sistematica: float = 0.0, limiar: float = 6.0) -> Medicao:
-    """Mede a grandeza registrada pela `tag` no log.
+      """
+        Converte as leituras da tag e filtra valores espúrios usando Z-score robusto (MAD).
 
-    Passos:
+        Parâmetros:
+            registros: Lista de registros do log.
+            tag: Identificador do sensor.
+            curva: Função de calibração (contagens para grandeza física).
+            u_sistematica: Incerteza do instrumento (não diminui com mais leituras).
+            limiar: Limite do Z-score para corte de espúrias.
 
-    1. obtém as contagens da `tag` (chave `"contagens"`) com `serie`, do Marco 1;
-    2. converte as contagens com a `curva`;
-    3. descarta as leituras espúrias pelo z robusto: `z = (x - mediana) / MAD`, com a MAD
-       calculada por `scipy.stats.median_abs_deviation(x, scale="normal")`; uma leitura é
-       espúria se `|z| > limiar`. Os índices em `espurias` são posições na série da tag
-       (a primeira leitura da tag tem índice 0);
-    4. com as leituras válidas, calcula a média, o desvio padrão amostral (`ddof=1`) e o erro
-       padrão da média (`scipy.stats.sem`);
-    5. devolve uma `Medicao` cuja `medida` é `Medida(média, u)`, com
-       `u = sqrt(erro_padrao² + u_sistematica²)`.
+        Retorna um objeto Medicao com a média, incerteza propagada, desvio e filtro.
+        Levanta ValueError se os dados forem insuficientes ou inválidos.
+        """
+      if u_sistematica < 0.0:
+          raise ValueError(f"u_sistematica deve ser não negativa; recebi {u_sistematica!r}")
+      
+      contagens = serie(registros, tag, chave="contagens")
 
-    `u_sistematica` é a incerteza do instrumento, que não diminui com o número de leituras.
+      if len(contagens) < 2:
+          raise ValueError(f"Menos de 2 leituras para a tag {tag!r}: {len(contagens)}")
 
-    Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
-    for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
-    fora do domínio) não é tratado: ele chega a quem chamou `medir`.
-    """
-    raise NotImplementedError("issue #6: medir")
+      pressoes_kpa = curva(contagens)
+
+
+      mad = stats.median_abs_deviation(pressoes_kpa, scale="normal")
+
+      if mad == 0.0:
+          raise ValueError(f"MAD = 0 para a tag {tag!r}: {pressoes_kpa}")
+
+      z = (pressoes_kpa - np.median(pressoes_kpa)) / mad
+
+      espurias = list(np.where(np.abs(z) > limiar)[0])
+
+      validas = np.delete(pressoes_kpa, espurias)
+
+      if len(validas) < 2:
+          raise ValueError(f"Menos de 2 leituras válidas para a tag {tag!r}: {len(validas)}")
+      
+      media = np.mean(validas)
+
+      desvio = np.std(validas, ddof=1)
+
+      erro_padrao = stats.sem(validas)
+
+      incerteza_total = (erro_padrao ** 2 + u_sistematica ** 2) ** 0.5
+
+      return Medicao(tag=tag, medida=Medida(media, incerteza_total), desvio=desvio, n_validas=len(validas),espurias=espurias)
+
+
+    
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
                        u_sistematica: float = 1.5) -> Medida:
-    """Altura manométrica da bomba, em metros, com a sua incerteza.
-
-    `H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)`, em que `P_PT101` e
-    `P_PT102` são as `medida`s de `medir` para as duas tags, em kPa (o fator 1000 converte
-    para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
-    com `Medida`, que propaga as incertezas.
+    
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    Calcula a diferença de pressão na bomba e propaga a incerteza estatística.
+    
+        Parâmetros:
+            medicao_succao: Medição consolidada da entrada (sucção).
+            medicao_recalque: Medição consolidada da saída (recalque).
+    
+        Retorna um objeto Medida contendo o ganho de pressão (recalque - sucção) 
+            e a raiz da soma dos quadrados das incertezas individuais.
+    """        
+
+
+    pressao_PT101 = medir(registros, "PT101", curva, u_sistematica)
+
+    pressao_PT102 = medir(registros, "PT102", curva, u_sistematica)
+
+    return (pressao_PT102.medida - pressao_PT101.medida) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
+
+
+
+      

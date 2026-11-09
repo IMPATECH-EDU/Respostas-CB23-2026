@@ -35,35 +35,49 @@ class PontoOperacao:
 def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: MetodoRaiz,
                    a: float = 10.0, b: float = 100.0) -> PontoOperacao:
     """Ponto de operação: a vazão `Q` em `[a, b]` (L/s) em que a bomba e o sistema se igualam.
-
-    A bomba opera onde a altura que ela fornece, `bomba(Q)`, é igual à altura que o sistema
-    exige, `tubulacao.altura_sistema(Q)`. Esta função:
-
-    1. define `f(Q) = bomba(Q) - tubulacao.altura_sistema(Q)`;
-    2. resolve `f(Q) = 0` com `resolvedor.encontrar(f, a, b)`;
-    3. devolve `PontoOperacao(vazao=Q, altura=bomba(Q), resultado=...)`, com `Q` a raiz
-       encontrada e `resultado` o `ResultadoRaiz` devolvido pelo resolvedor.
-
-    Levanta `ValueError` se `a >= b`, se `[a, b]` não estiver dentro do domínio da bomba
-    (`bomba.dominio`) ou se o resolvedor não convergir (`resultado.convergiu` falso). Um
-    `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
-    tratado: ele chega a quem chamou `ponto_operacao`.
+    Aplica o resolvedor númerico em [a,b], para encontrar as raizes da função f(Q) = bomba(Q) - tubulacao.altura_sistema(Q).
+    Levanta valueError com a>=b, intervalo [a, b] não contido no dominio da bomba, e qunado o resolvedor não converge.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+
+    if a >= b:
+        raise ValueError("O intervalo deve ser [a, b], logo a deve ser menor que a b.")
+
+    dominio_bomba = bomba.dominio
+
+    if dominio_bomba[0] > a or dominio_bomba[1] < b:
+        raise ValueError("O intervalo [a, b], deve estar contido no domínio da bomba.")
+
+    f = lambda Q: bomba(Q) - tubulacao.altura_sistema(Q)
+
+    resultado = resolvedor.encontrar(f, a, b)
+    if not resultado.convergiu:
+        raise ValueError("O resolvedor não convergiu para o ponto de operação.")
+
+    Q = resultado.raiz
+
+    return PontoOperacao(Q, bomba(Q), resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
     """Estimativa da ordem de convergência `p` de uma sequência de aproximações.
-
-    Com os erros `e_k = |x_k - raiz|`, se `e_{k+1} ≈ C·e_k^p`, então
-
-        p ≈ log(e_{k+1} / e_k) / log(e_k / e_{k-1}).
-
-    Use os **três últimos** erros, na ordem do `historico`, que forem maiores que
-    `piso · max(1, |raiz|)`: erros menores estão no nível do arredondamento e não dizem nada
-    sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
-    quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
-
-    Levanta `ValueError` se houver menos de 3 erros acima do piso.
+    Utiliza os últimos 3 valores do historico, onde seus erros (|x - raiz|) seja maior que piso · max(1, |raiz|), do historico.
+    Usando a ordem deles no historico calculamos a convergencia p, levantando Value error quando o numero de erros acima do piso é menor que 3.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    
+    historico_invertido = tuple(reversed(historico))
+    erros_acima = []
+
+    for x in historico_invertido:
+      erro = abs(x - raiz)
+      if erro > piso * max(1, abs(raiz)):
+        erros_acima.append(erro)
+        if len(erros_acima) == 3:
+          break
+
+    if len(erros_acima) < 3:
+       raise ValueError("Número insuficientes de erros acima do piso.")
+
+    return math.log(erros_acima[0] / erros_acima[1]) / math.log(erros_acima[1] / erros_acima[2])
+        
+
+    
