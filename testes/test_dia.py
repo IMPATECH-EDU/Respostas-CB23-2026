@@ -42,5 +42,32 @@ class TestRegressaoTrapezio(unittest.TestCase):
         self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 30.0)
 
 
+class TestDiaContrato(unittest.TestCase):
+    """Testes de contrato de ajustar_polinomio e dia_de_operacao não cobertos pela aceitação."""
+
+    def test_ajustar_polinomio_grau_negativo(self):
+        """ajustar_polinomio com grau < 0 deve levantar ValueError."""
+        from elevatoria.dia import ajustar_polinomio
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [0.0, 1.0, 2.0], -1)
+
+    def test_ajustar_polinomio_tamanhos_diferentes(self):
+        """ajustar_polinomio com x e y de tamanhos distintos levanta ValueError."""
+        from elevatoria.dia import ajustar_polinomio
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [0.0, 1.0], 1)
+
+    def test_dia_de_operacao_falta_limite_faixa(self):
+        """dia_de_operacao sem algum limite tarifario em t levanta ValueError."""
+        import numpy as np
+        from elevatoria.dia import dia_de_operacao
+        from elevatoria.integracao import Trapezio
+        # malha que omite o ponto 18.0
+        t = np.array([0.0, 6.0, 12.0, 20.0, 21.0, 24.0])
+        vazao = np.full(t.size, 50.0)
+        with self.assertRaises(ValueError):
+            dia_de_operacao(t, vazao, [40.0], [0.8], Trapezio())
+
+
 if __name__ == "__main__":
     unittest.main()
