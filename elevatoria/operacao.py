@@ -70,10 +70,9 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     # print(raiz) 5.588785892966379
     # print(piso) 1e-14
     
-    list_erros = [abs(x - raiz) for x in historico]
-    list_erros.sort()
+    list_erros = [abs(x - raiz) for x in historico if abs(x - raiz) > piso]
 
-    if list_erros[-3] <= piso:
+    if len(list_erros) < 3:
         raise ValueError("Sequencia sem erros suficientes acima do piso")
 
     return (math.log(list_erros[-1]/list_erros[-2]))/(math.log(list_erros[-2]/list_erros[-3]))
