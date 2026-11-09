@@ -28,11 +28,9 @@ class SerieTemporal(np.ndarray):
         """Médias de `janela` pontos consecutivos: `n - janela + 1` valores.
 
         O valor `i` do resultado é a média de `self[i : i + janela]`. Usa a soma acumulada
-        (`np.cumsum`), sem laços. Levanta `ValueError` se `janela` não for inteiro
-        entre 1 e `len(self)` (inclusive).
+        (`np.cumsum`), sem laços. Levanta `ValueError` se `janela < 1` ou `janela > len(self)`.
         """
-        if (isinstance(janela, bool) or not isinstance(janela, (int, np.integer))
-                or janela < 1 or janela > len(self)):
+        if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
         acumulada = np.concatenate(([0.0], np.cumsum(self)))
         return ((acumulada[janela:] - acumulada[:-janela]) / janela).view(SerieTemporal)
