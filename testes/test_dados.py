@@ -1,10 +1,11 @@
 """Testes do Marco 1: leitura, conversões e séries temporais."""
 import unittest
-from elevatoria.dados import por_tag
+
 import numpy as np
+
+from elevatoria.dados import (converter_vetorizado, criar_conversores, ler_log,
+                              medir_memoria, por_tag, serie)
 from elevatoria.serie import SerieTemporal
-from elevatoria.dados import (ler_log, serie, criar_conversores, medir_memoria,
-                              converter_vetorizado)
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -13,9 +14,6 @@ class TestPorTagExemplo(unittest.TestCase):
     def test_lista_vazia(self):
         """Sem registros, por_tag devolve uma lista vazia."""
         self.assertEqual(por_tag([], "PT101"), [])
-
-
-
 
 
 class TestMediaMovelRegressao(unittest.TestCase):
@@ -41,7 +39,6 @@ class TestMediaMovelRegressao(unittest.TestCase):
         resultado = s.media_movel(1)
         self.assertEqual(len(resultado), len(s))
         self.assertTrue(np.allclose(resultado, s))
-
 
 
 class TestContratosDados(unittest.TestCase):

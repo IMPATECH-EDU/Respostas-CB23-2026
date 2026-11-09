@@ -1,9 +1,10 @@
 """Testes do Marco 4: ajuste e integração em malhas irregulares."""
 import unittest
-from elevatoria.integracao import Simpson
-from elevatoria.integracao import Trapezio
+
 import numpy as np
+
 from elevatoria.dia import ajustar_polinomio, dia_de_operacao
+from elevatoria.integracao import Simpson, Trapezio
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -12,9 +13,6 @@ class TestSimpsonExemplo(unittest.TestCase):
     def test_exato_para_parabola(self):
         """Simpson integra x² exatamente, mesmo com n = 2."""
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
-
-
-
 
 
 class TestTrapezioRegressao(unittest.TestCase):
@@ -29,7 +27,6 @@ class TestTrapezioRegressao(unittest.TestCase):
         """O trapézio é exato para uma reta mesmo quando o primeiro passo é maior."""
         area = Trapezio().integrar_tabela([0, 3, 4, 4.5], [2, 8, 10, 11])
         self.assertAlmostEqual(area, 29.25)
-
 
 
 class TestContratosDia(unittest.TestCase):

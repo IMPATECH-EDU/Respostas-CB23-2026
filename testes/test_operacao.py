@@ -1,12 +1,11 @@
 """Testes do Marco 3: Newton, ponto de operação e convergência."""
-import unittest
-from elevatoria.raizes import Bisseccao
 import math
-from elevatoria.raizes import Newton
+import unittest
 from unittest.mock import Mock
+
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.operacao import ordem_convergencia, ponto_operacao
-from elevatoria.raizes import ResultadoRaiz
+from elevatoria.raizes import Bisseccao, Newton, ResultadoRaiz
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -16,9 +15,6 @@ class TestBisseccaoExemplo(unittest.TestCase):
         """Se f(a) já é zero, a bissecção devolve a sem iterar."""
         resultado = Bisseccao().encontrar(lambda x: x - 1.0, 1.0, 3.0)
         self.assertEqual((resultado.raiz, resultado.iteracoes), (1.0, 0))
-
-
-
 
 
 class TestNewtonRegressao(unittest.TestCase):
@@ -37,7 +33,6 @@ class TestNewtonRegressao(unittest.TestCase):
             lambda x: x**3 - 7, 1.0, 4.0)
         self.assertTrue(resultado.convergiu)
         self.assertAlmostEqual(resultado.raiz, 7 ** (1/3), places=9)
-
 
 
 class TestContratosOperacao(unittest.TestCase):

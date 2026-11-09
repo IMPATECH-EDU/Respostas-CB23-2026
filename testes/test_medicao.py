@@ -1,11 +1,10 @@
 """Testes do Marco 2: compensação numérica e medição robusta."""
-import unittest
-from elevatoria.acumuladores import AcumuladorIngenuo
 import math
-from itertools import repeat
-from elevatoria.acumuladores import AcumuladorKahan
+import unittest
 from datetime import datetime
-import numpy as np
+from itertools import repeat
+
+from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.dados import Registro
 from elevatoria.medicao import medir
@@ -17,9 +16,6 @@ class TestAcumuladorIngenuoExemplo(unittest.TestCase):
     def test_sem_parcelas(self):
         """Sem nenhuma parcela, o total é zero."""
         self.assertEqual(AcumuladorIngenuo().total, 0.0)
-
-
-
 
 
 class TestKahanRegressao(unittest.TestCase):
@@ -37,7 +33,6 @@ class TestKahanRegressao(unittest.TestCase):
         parcelas = [float(2 ** 54), 1.0, 1.0, 1.0, 1.0]
         acumulador.adicionar_todos(parcelas)
         self.assertAlmostEqual(acumulador.total, math.fsum(parcelas), delta=0.5)
-
 
 
 def _leituras(valores: list[float]) -> list[Registro]:
