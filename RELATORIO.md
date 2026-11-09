@@ -21,23 +21,23 @@ Python 3.12.1 | NumPy 1.26.3 | fornecido 4.0
 ### R1 — Expressões regulares
 
 A string `PT1010` é aceita por `re.match` e rejeitada por `re.fullmatch` com o padrão de tag, porque o `re.match` precisa que somente o *início* seja igual, já o `re.fullmatch` necessita que a string satisfaça do início ao fim.
-Se `valida_tag` usasse `match`, então seriam aprovadas tags inválidas, tais quais `PT1010` e `PT101`.
+Se `valida_tag` usasse `match`, então seriam aprovadas tags inválidas, tais quais `"PT1010"` e `"PT101 "` (com espaço no fim), porque `match` aceita qualquer sobra depois da tag.
 
 ### R2 — Linhas inválidas
 
 `ler_log` devolve as linhas descartadas porque isso permite analisar o que foi perdido e apurar o motivo de serem inválidas, além de poder determinar o que era aquela informação.
-Na operação da estação, descartá-las em silêncio esconderia um problema quando houvesse em alguma dessas linhas uma falha que seria omitida por ser um log inválido.
+Na operação da estação, se o canal do PT102 começar a falhar justo durante um pico de pressão, as linhas corrompidas seriam exatamente as que mostram a pressão alta e o alarme: descartando em silêncio, o log pareceria normal. Contando as inválidas, um aumento delas (por tag ou por horário) já é um sinal de falha de comunicação ou de instrumento.
 
 ### R3 — Late binding
 
-`errados["PT102"](4095)` dá 409,5 porque a função lambda guarda a variável `k` e não o valor dessa variável, ou seja, é passado por referência e vale o último fator, no caso `0,1`.
-A minha `criar_conversores` não tem o problema porque a cada chamada de `_multiplicador(fator)` um novo escopo é criado e a função lambda fica presa nesse escopo.
+`errados["PT102"](4095)` dá 409,5 porque a lambda guarda a variável `k`, e não o valor que ela tinha ao ser criada, e só consulta `k` quando é chamada (*late binding*). Nesse momento a compreensão já terminou, e `k` vale o último fator do dicionário, `0,1` (do FT201): 4095 · 0,1 = 409,5.
+A minha `criar_conversores` não tem o problema porque cada chamada de `_multiplicador(fator)` cria um escopo novo, com o seu próprio `fator`, e a lambda devolvida fica presa a esse escopo, que não muda depois.
 
 ### R4 — Escala nominal
 
 A escala nominal deu 262,0 kPa, e o valor de conferência é 380,0 kPa.
 Minha hipótese para a diferença é que a resposta do transmissor não é linear, de forma que a reta dada subestima a pressão nessa faixa.
-A explicação está em `p_real`, no arquivo `fornecido/simulador.py`, onde ela calcula `600 * sen(π/2 * c/4095)` que é uma senoidal, com `c` próximo de `1790` que aproxima bem melhor o valor esperado.
+A explicação está em `p_real`, no arquivo `fornecido/simulador.py`, que calcula a resposta verdadeira do transmissor como `600 · sen(π/2 · c/4095)`, uma senoide, e não a reta `600 · c/4095`. Com `c ≈ 1790`, a reta dá 600 · 1790/4095 ≈ 262 kPa, e a senoide dá 600 · sen(0,687) ≈ 380,4 kPa, que é o valor de conferência.
 
 ### R5 — Previsão × medição (Etapa 3)
 
