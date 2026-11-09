@@ -5,9 +5,20 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
+import numpy as np
 
-from elevatoria.integracao import Simpson
+from elevatoria.integracao import Simpson, Trapezio
 
+class TestTrapezio(unittest.TestCase):
+    def test_1(self):
+        x = np.array([0, 1, 5])
+        y = np.array([10, 10, 10])
+        self.assertAlmostEqual(Trapezio.integrar_tabela(self, x, y), 50) 
+
+    def test_2(self):
+        x = np.array([0, 10, 11])
+        y = np.array([0, 10, 11])
+        self.assertAlmostEqual(Trapezio.integrar_tabela(self, x, y), 65.5)
 
 class TestSimpsonExemplo(unittest.TestCase):
     """Exemplo do formato. `Simpson` é código existente da base."""

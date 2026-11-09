@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from elevatoria.integracao import Integrador
+from elevatoria.integracao import Integrador, Trapezio
 from fornecido.energia import FAIXAS_TARIFARIAS, potencia_eletrica
 
 
@@ -41,6 +41,22 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
+    if grau < 0:
+        raise ValueError("O grau não pode ser menor do que 0.")
+    
+    if x.ndim !=1 or y.ndim !=1:
+        raise ValueError("x e y devem ser vetores 1D")
+    
+    if len(x) < (grau + 1):
+        raise ValueError("Não foram fornecidos pontos o suficinetes")
+
+    if len(x)!=len(y):
+        raise ValueError("Foram informados quantidades diferentes de valores x e y.")
+
+    coeficientes = np.polynomial.polynomial.polyfit(x, y, deg=grau)
+    return coeficientes
+    
+
     raise NotImplementedError("issue #10: ajustar_polinomio")
 
 
@@ -76,4 +92,32 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
+    if len(t) != len(vazao):
+        raise ValueError("'t' e 'vazão' possuem tamanhos diferentes.")
+    if not np.all(np.isin([limite for inicio, fim, _ in FAIXAS_TARIFARIAS for limite in (inicio, fim)], t)):
+        raise ValueError("Os horários 0, 18, 21 e 24h devem estar em t.")
+
+    alturas = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimentos = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencias = potencia_eletrica(vazao, alturas, rendimentos)
+
+    integ = integrador.integrar_tabela(t, vazao)
+    volume = 3.6*integ
+
+    energia = integrador.integrar_tabela(t, potencias)
+
+    custos = []
+    for inicio, fim, faixa in FAIXAS_TARIFARIAS:
+        mascara = (t>=inicio) & (t<=fim)
+        nt = t[mascara]
+        pot = potencias[mascara]
+        custos.append(faixa*integrador.integrar_tabela(nt, pot))
+
+    dia = ResumoDia(volume_m3=volume,
+                    energia_kwh=energia,
+                    custo_reais=sum(custos),
+                    custo_por_faixa=[custo for custo in custos]
+                    )
+    return(dia)
+    
     raise NotImplementedError("issue #10: dia_de_operacao")
