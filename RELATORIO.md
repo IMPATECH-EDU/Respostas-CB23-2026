@@ -97,3 +97,28 @@ Previsões registradas no commit: 1ddb294
 4. A correção foi adicionar `0.0` ao início da soma acumulada com `np.concatenate`.
 5. Os testes de aceitação não detectaram o erro porque não verificavam esse caso.
 6. O teste `test_primeiro_valor_e_media_da_primeira_janela` cobre outro caso que não era testado.
+
+## Marco 2
+
+### Ambiente
+
+=== Etapa 0: ambiente ===
+Python 3.11.9 | NumPy 2.4.4 | SciPy 1.17.1 | fornecido 4.0 | matrícula 3529
+
+### R8 — Derivada numérica
+
+1. De h = 1 até h = 1e-5, o erro diminui porque, quanto menor o valor de h, menor é o erro de truncamento da aproximação.
+2. A partir de h = 1e-6, o erro começa a aumentar, pois f(x+h) e f(x) ficam muito próximos, causando perda de precisão nos cálculos.
+3. O melhor resultado ocorre em h = 1e-5, pois nesse ponto existe um equilíbrio entre o erro de truncamento e o de arredondamento.
+4. Em h = 1e-14, somar h a 1000 não altera o valor por causa da precisão limitada dos números float. Assim, a derivada estimada fica zero e o erro é 0,2134.
+
+### R9 — Issue #7
+
+1. Os testes de regressão foram `test_kahan_milhao_de_pulsos_exato`, `test_kahan_recupera_parcelas_pequenas` e `test_kahan_igual_a_fsum`. Todos falhavam na implementação original.
+2. O problema estava no cálculo da correção, que sempre resultava em zero, pois repetia uma operação já arredondada. Assim, pequenas perdas de precisão não eram recuperadas.
+3. A correção foi usar `(t - self._soma) - y`, que permite identificar a parte perdida no arredondamento e compensá-la na próxima soma.
+4. Os testes de aceitação não detectaram o defeito porque usavam apenas 10 parcelas e `math.isclose`, quantidade insuficiente para revelar o erro acumulado. Com um milhão de parcelas de 0,1 L, a soma corrigida resulta em 100000.0, enquanto a ingênua resulta em 100000.00000133288.
+
+### R10 — Precisão × exatidão
+
+As duas curvas têm praticamente a mesma precisão, pois os desvios são muito próximos: 0,528 kPa na linear e 0,530 kPa na spline. Porém, a exatidão é diferente, o viés da spline é 0,005 kPa, enquanto o da linear é −1,825 kPa. Isso ocorre porque a curva linear não representa tão bem a resposta do transmissor e acaba subestimando a pressão. A média de quase 600 leituras reduz as variações aleatórias, mas não elimina esse erro sistemático, que continua presente mesmo com muitas medições.
