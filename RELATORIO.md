@@ -33,9 +33,9 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | [Sua Previsão] | ~ 18.0x (36.000.056 / 2.000.000) |
-| Tempo do laço / tempo vetorizado | [Sua Previsão] | ~ 33.7x (37.33 ms / 1.11 ms) |
-| Tempo da compreensão / tempo do laço | [Sua Previsão] | ~ 1.0x (37.61 ms / 37.33 ms) |
+| Memória da lista / memória do `uint16` | ~ 18.0x 18| ~ 18.0x (36.000.056 / 2.000.000) |
+| Tempo do laço / tempo vetorizado | ~37.22 ms | ~ 33.7x (37.33 ms / 1.11 ms) |
+| Tempo da compreensão / tempo do laço | 36.00 ms| ~ 1.0x (37.61 ms / 37.33 ms) |
 
 A maior diferença reside na aceleração da versão vetorizada face ao laço (33.7x), pois o NumPy roda as operações em C compilado, ignorando o *overhead* do interpretador Python. O valor `16364` surge porque 81900 excede o limite do `uint16` (65535), causando um *overflow* ($81900 \pmod{65536} = 16364$). Escolheria `uint16` para as contagens A/D e `float32` ou `float64` para pressões em kPa.
 
