@@ -62,12 +62,23 @@ class Trapezio(Integrador):
     def integrar_tabela(self, x: np.ndarray, y: np.ndarray) -> float:
         """Soma das áreas dos trapézios entre pontos consecutivos.
 
-        Aceita malha **não uniforme**: cada trapézio usa a sua própria largura `x[i+1] - x[i]`.
+        Aceita malha **não uniforme**: cada trapézio usa a sua própria largura `x[i+1] - x[i]`,
+        isto é, `Σ (x[i+1] - x[i]) · (y[i] + y[i+1]) / 2`.
+
+        Args:
+            x: abscissas, estritamente crescentes (vetor 1D com pelo menos 2 pontos).
+            y: valores em `x` (vetor 1D do mesmo tamanho).
+
+        Returns:
+            A integral aproximada.
+
+        Raises:
+            ValueError: se `x` e `y` não forem vetores 1D do mesmo tamanho (≥ 2) ou se `x`
+                não for estritamente crescente.
         """
         x, y = _validar_tabela(x, y)
-        # O SCADA registra uma leitura a cada 15 min, então o passo é o mesmo em toda a tabela.
-        h = x[1] - x[0]
-        return float(h * (0.5 * y[0] + y[1:-1].sum() + 0.5 * y[-1]))
+        # O SCADA perde leituras, então o passo varia: cada trapézio usa a sua própria largura.
+        return float(np.sum(np.diff(x) * (y[1:] + y[:-1]) / 2.0))
 
 
 class Simpson(Integrador):
