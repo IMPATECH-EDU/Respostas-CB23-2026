@@ -118,7 +118,7 @@ def etapa3() -> None:
     #     razão em relação à lista.
     memoria = medir_memoria(contagens)
     print(f"{'Estrutura':<15} {'Bytes/elem.':>12} {'Bytes totais':>15} {'Razão/lista':>12}")
-
+    print("-" * 56)
     tamanhos_elemento = {
         "list": memoria["list"] / n,
         "array('H')": 2,
@@ -139,7 +139,7 @@ def etapa3() -> None:
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
     print(f"\n{'Método':<15} {'Tempo (ms)':>12} {'Aceleração':>12}")
-
+    print("-" * 56)
     for metodo, tempo in tempos.items():
         tempo_ms = tempo * 1000
         aceleracao = tempos["laço"] /tempo
@@ -149,6 +149,7 @@ def etapa3() -> None:
     # (c) Tipos e overflow: imprima os dois resultados.
     misto = np.array([1, 2.5, "a"])
     estouro = np.array([4095], dtype=np.uint16) * 20
+    print(f"\nTipo de misto: {misto.dtype} | Tipo de estouro: {estouro.dtype}")
     assert misto.dtype.kind == "U"
     assert estouro[0] == 16364 and 4095 * 20 == 81900
 
@@ -159,11 +160,16 @@ def etapa4(registros: list) -> None:
     s = serie(registros, "PT102", "contagens")
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
+    print(f"Média: {s.mean():.2f} | Desvio: {s.std(ddof=1):.2f} | Amplitude: {s.amplitude():.2f}")
     assert len(s) == 600 and s.amplitude() > 300
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
+    print(f"\n{'Série':<20} {'Tamanho':>10} {'Mínimo':>12} {'Máximo':>12}")
+    print("-" * 56)
+    print(f"{'Original':<20} {len(s):>10} {s.min():>12.2f} {s.max():>12.2f}")
+    print(f"{'Média móvel':<20} {len(mm):>10} {mm.min():>12.2f} {mm.max():>12.2f}")
     assert len(mm) == 571
 
     # (c) Médias por minuto (10 leituras de 6 s).
@@ -172,7 +178,17 @@ def etapa4(registros: list) -> None:
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    print("\nExpressão".ljust(16), "Tipo")
+    print("-" * 56)
+    expressoes = {
+        "s + s": s + s,
+        "s[1:]": s[1:],
+        "s * 2": s * 2,
+        "s.sum()": s.sum(),
+        "s[0]": s[0],
+    }
+    for expressao, resultado in expressoes.items():
+        print(f"{expressao:<15} {type(resultado).__name__}")
 
 
 def main(matricula: int = MATRICULA) -> None:
