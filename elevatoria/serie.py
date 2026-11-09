@@ -32,9 +32,14 @@ class SerieTemporal(np.ndarray):
         """
         if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
-        acumulada = np.cumsum(self)
-        return (acumulada[janela:] - acumulada[:-janela]) / janela
-
+        #a soma que vai acumulando precisa começar de 0,
+        #porque se não, quando fizer self[0:janela], um resultado vai ser perdido
+        #como se a primeira janela não tivesse um "prefixo" para fazer a subtração
+        #o return medias.view(type(self)) é para o retorno ser SerieTemporal
+        acumulada = np.concatenate((np.zeros(1),np.cumsum(self)))
+        medias = (acumulada[janela:] - acumulada[:-janela])/janela
+        return medias.view(type(self))
+    
     def variacao(self) -> SerieTemporal:
         """Diferenças entre pontos consecutivos (`n - 1` valores)."""
         return np.diff(self)
@@ -60,4 +65,10 @@ class SerieTemporal(np.ndarray):
         completam um bloco são descartados. Usa `reshape`, sem laços. Levanta `ValueError`
         se `k < 1` ou `k > len(self)`.
         """
-        raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")
+        if k< 1 or k> len(self):
+            raise ValueError(f"o número de blocos completos deve estar entre 1 e {len(self)}; recebi {k}")
+        blocos = len(self)//k #numero inteiro
+        return self[:blocos*k].reshape(blocos,k).mean(axis=1)
+        #o self[:blocos*k] tira os a mais do final se tiver,
+        #o reshape arrumar os dados numa matriz com uma linha por bloco (pedi dica a IA para descobrir isso)
+
