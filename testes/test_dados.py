@@ -60,9 +60,19 @@ class TestMediaMovelRegressao(unittest.TestCase):
         serie = SerieTemporal.de_lista([1, 2, 3, 4, 5])
         self.assertTrue(np.allclose(serie.media_movel(2), [1.5, 2.5, 3.5, 4.5]))
 
+class TestReamostrar(unittest.TestCase):
+    """Testes de reamostragem."""
 
+    def test_reamostrar_descarta_restante(self):
+        """Descarta pontos que não completam um bloco."""
+        serie = SerieTemporal.de_lista([1, 2, 3, 4, 5, 6])
+        self.assertTrue(np.allclose(serie.reamostrar(5), [3.0])) # (1+2+3+4+5)/5=3.0
 
-
+    def test_reamostrar_nao_modifica_serie(self):
+        """A reamostragem não deve modificar a série original."""
+        serie = SerieTemporal.de_lista([1, 2, 3, 4])
+        serie.reamostrar(2)
+        self.assertTrue(np.array_equal(serie, [1, 2, 3, 4])) 
 
 if __name__ == "__main__":
     unittest.main()
