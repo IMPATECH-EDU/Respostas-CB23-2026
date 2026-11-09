@@ -66,9 +66,9 @@ def valida_tag(s: str) -> bool:
 
 
 def _converte_float(string: str) -> str | float:
-    """Converte uma string em float quando possível
+    """Converte uma string em float quando possível.
     
-    Retorna a string como float, se a conversão pode ser feita, ou retorna a mesma string
+    Retorna a string como float, se a conversão pode ser feita, ou retorna a mesma string.
     """
     try:
         return float(string)
@@ -76,7 +76,7 @@ def _converte_float(string: str) -> str | float:
         return string
 
 
-#: Compilando o patern para avaliar o grupo da linha do texto
+#: Compilando o pattern para avaliar o grupo da linha do texto
 _PARES = re.compile(r'(\w+)=(\S+)')
 
 
@@ -100,18 +100,18 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     """
 
     invalidas, registros = [], []
-    pdr_data_hora = "%Y-%m-%d %H:%M:%S"         # Strimg que o datetime usará para avaliar se uma linha do log possui darta possível
+    pdr_data_hora = "%Y-%m-%d %H:%M:%S"         # String que o datetime usará para avaliar se uma linha do log possui data possível
     texto_linhas = texto.split("\n")
 
     for linha in texto_linhas:
-        if linha.strip() == "":
-            continue
+        if linha.strip() == "":                         # Avalia se a linha é vazia, se for, é ignorada (regra 1)
+            continue                                    # Caso a linha seja vazia, pula para a próxima
         casa_padrão = LINHA.fullmatch(linha)            # Testando se a linha casa com o padrão
-        if casa_padrão is None:
+        if casa_padrão is None:                         # Se o padrão não foi achado na linha, logo o LINHA.fullmatch(linha) é vazio (valor False)
             invalidas.append(linha)                     # Se a linha não casa com o padrão, ela deve ser adicionada como inválida (1)
             continue
-        valores = _PARES.findall(casa_padrão["resto"])
-        if not valores:
+        pares = _PARES.findall(casa_padrão["resto"])
+        if not pares:
             invalidas.append(linha)
             continue 
         datahora = f'{casa_padrão["data"]} {casa_padrão["hora"]}'
@@ -123,7 +123,7 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
         registros.append(Registro(instante, 
                                   casa_padrão["nivel"],
                                   casa_padrão["tag"],
-                                  {chave: _converte_float(valor) for chave, valor in valores }))
+                                  {chave: _converte_float(valor) for chave, valor in pares }))
 
     return (registros, invalidas)
 
