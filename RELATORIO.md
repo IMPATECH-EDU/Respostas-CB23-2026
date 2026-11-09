@@ -89,3 +89,17 @@ Os testes de aceitação somavam somente 10 parcelas com `math.isclose`, tolerâ
 A precisão mede a variabilidade aleatória e repetibilidade (ambas as curvas apresentaram desvio padrão semelhante, cerca de $0.54$ kPa).
 A exatidão mede a proximidade da média com a realidade (viés): a curva linear tem viés de $-1.837$ kPa, enquanto a spline tem viés desprezível de $-0.007$ kPa.
 A média de 600 leituras apenas minimiza a incerteza estatística aleatória ($u \propto 1/\sqrt{N}$), mas é incapaz de eliminar o viés sistemático gerado por um modelo de calibração incorreto.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção depende apenas da largura do intervalo inicial e da tolerância: $k = \lceil \log_2((b - a) / \text{tol}) \rceil$. Com $[a, b]$ e $\text{tol} = 10^{-12}$ idênticos em todas as chamadas de Colebrook, são sempre necessárias 44 iterações.
+Ordem de convergência 2 significa $e_{k+1} \approx C \cdot e_k^2$: os dígitos corretos dobram a cada iteração (na Etapa 2(b), o erro salta de $5 \times 10^{-2}$ para $2.3 \times 10^{-5}$ e $5 \times 10^{-12}$).
+O Newton falha quando a derivada se anula ($f'(x) = 0$), em pontos de inflexão que geram ciclos infinitos ou com chute inicial distante da raiz. A bissecção requer apenas continuidade e troca de sinal nos extremos ($f(a) \cdot f(b) < 0$), convergindo sempre.
+
+### R12 — Issue #9
+
+Testes de regressão: `test_newton_poucas_iteracoes_colebrook` e `test_newton_ordem_convergencia_quadratica`.
+Calcular a derivada uma única vez transforma o método no algoritmo das cordas ($x_{k+1} = x_k - f(x_k)/f'(x_0)$). Como a inclinação da reta secante não se ajusta à curvatura local, o erro decresce por um fator constante ($e_{k+1} \approx C \cdot e_k$), tornando a convergência estritamente linear ($p = 1$).
+Os testes de aceitação verificavam apenas se a raiz final encontrada de $x^2 - 2$ estava correta dentro do limite amplo de `max_iter = 100`, sem avaliar a taxa de redução do erro nem o número de iterações gastas.
