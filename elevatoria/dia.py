@@ -38,10 +38,18 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
       `np.vander(x, grau + 1, increasing=True)`;
     - a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
 
-    Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
+    Levanta `ValueError` se `x` e y não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if grau < 0:
+        raise ValueError(f"grau deve ser >= 0; recebi {grau}")
+    if x.size < grau + 1:
+        raise ValueError(f"número de pontos ({x.size}) insuficiente para grau {grau} (mínimo {grau + 1})")
+    return np.polynomial.polynomial.polyfit(x, y, grau)
 
 
 @dataclass(frozen=True)
@@ -76,4 +84,36 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t = np.asarray(t, dtype=float)
+    vazao = np.asarray(vazao, dtype=float)
+    if t.ndim != 1 or vazao.ndim != 1 or t.size != vazao.size:
+        raise ValueError("t e vazao devem ser vetores 1D do mesmo tamanho")
+
+    limites = {inicio for inicio, _, _ in FAIXAS_TARIFARIAS} | {fim for _, fim, _ in FAIXAS_TARIFARIAS}
+    for lim in limites:
+        if not np.any(np.isclose(t, lim)):
+            raise ValueError(f"limite tarifário {lim} não encontrado em t")
+
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+
+    volume_m3 = float(3.6 * integrador.integrar_tabela(t, vazao))
+    energia_kwh = float(integrador.integrar_tabela(t, potencia))
+
+    custos = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        mask = (t >= inicio - 1e-9) & (t <= fim + 1e-9)
+        t_faixa = t[mask]
+        pot_faixa = potencia[mask]
+        custos.append(float(tarifa * integrador.integrar_tabela(t_faixa, pot_faixa)))
+
+    custo_por_faixa = tuple(custos)
+    custo_reais = float(sum(custo_por_faixa))
+
+    return ResumoDia(
+        volume_m3=volume_m3,
+        energia_kwh=energia_kwh,
+        custo_reais=custo_reais,
+        custo_por_faixa=custo_por_faixa,
+    )
