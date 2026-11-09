@@ -124,7 +124,8 @@ class Newton(MetodoRaiz):
         for k in range(1, self.max_iter + 1):
             if derivada == 0:
                 raise ValueError(f"derivada nula em x = {x}: o método de Newton não pode continuar")
-            x_novo = x - f(x) / derivada
+            #x_novo = x - f(x) / derivada
+            x_novo = x - f(x) / self._derivada(f, x) #Constatou-se necessario atualizar a derivada.
             historico.append(x_novo)
             if abs(x_novo - x) < self.tol:
                 return ResultadoRaiz(x_novo, k, True, tuple(historico))
