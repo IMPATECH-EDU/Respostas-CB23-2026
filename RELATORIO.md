@@ -103,3 +103,18 @@ O Newton falha quando a derivada se anula ($f'(x) = 0$), em pontos de inflexão 
 Testes de regressão: `test_newton_poucas_iteracoes_colebrook` e `test_newton_ordem_convergencia_quadratica`.
 Calcular a derivada uma única vez transforma o método no algoritmo das cordas ($x_{k+1} = x_k - f(x_k)/f'(x_0)$). Como a inclinação da reta secante não se ajusta à curvatura local, o erro decresce por um fator constante ($e_{k+1} \approx C \cdot e_k$), tornando a convergência estritamente linear ($p = 1$).
 Os testes de aceitação verificavam apenas se a raiz final encontrada de $x^2 - 2$ estava correta dentro do limite amplo de `max_iter = 100`, sem avaliar a taxa de redução do erro nem o número de iterações gastas.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+A tarifa de energia tem descontinuidades de salto em $t = 18$ h e $t = 21$ h. As estimativas de erro teórico do trapézio ($O(h^2)$) e do Simpson ($O(h^4)$) pressupõem derivadas contínuas de 2ª e 4ª ordens.
+Integrando o dia de uma vez, os subintervalos que englobam os saltos produzem erro local proporcional ao tamanho do degrau ($O(h)$), degradando a convergência global para ordem 1.
+Ao integrar cada faixa tarifária separadamente, as descontinuidades coincidem com os extremos de integração; a função é suave no interior de cada faixa, restaurando as ordens 2 e 4.
+
+### R14 — Issue #11
+
+Testes de regressão: `test_trapezio_tabela_malha_nao_uniforme` e `test_trapezio_tabela_reta_com_falha_de_leitura`.
+Causa: `Trapezio.integrar_tabela` supunha passo uniforme baseado no primeiro intervalo ($h = x[1] - x[0]$). Como 8 leituras foram perdidas gerando intervalos de 30 e 45 min, as áreas desses períodos foram multiplicadas por 15 min, subestimando o volume. A correção soma as áreas trapezoidais individuais com $0.5 \cdot (y_i + y_{i+1}) \cdot \Delta x_i$.
+Os testes de aceitação usavam apenas malhas perfeitamente uniformes.
+A regra de Simpson não serve para o registro do dia porque exige malha estritamente uniforme e número ímpar de pontos, condições incompatíveis com a perda de pacotes da telemetria.
