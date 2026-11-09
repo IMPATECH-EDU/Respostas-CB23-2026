@@ -103,3 +103,17 @@ Os testes de aceitação somam apenas dez parcelas de 0,1 e comparam com `math.i
 
 Para PT102, o desvio é 0,536 kPa com a linear e 0,537 kPa com a spline: a **precisão** (dispersão das leituras em torno da própria média) é a mesma, porque vem do ruído do transmissor. Já o viés é −1,835 kPa com a linear e −0,006 kPa com a spline: a **exatidão** (distância da média ao valor verdadeiro) é bem diferente.
 A média de ~595 leituras reduz o erro aleatório (o erro padrão cai com √n), mas o erro da curva linear é sistemático: perto de 1790 contagens a reta entre os pontos da tabela fica sempre abaixo da resposta senoidal, e toda leitura é convertida com o mesmo erro. A média converge para o valor enviesado, não para o verdadeiro.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção divide o intervalo ao meio a cada iteração, sem olhar para a forma de f: para sair de [2, 15] (largura 13) e chegar a uma largura menor que 1e-12, precisa de ⌈log2(13 / 1e-12)⌉ = ⌈43,56⌉ = 44 iterações, para qualquer Reynolds.
+Ordem 2 significa e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada passo. Em Re = 1e4, os erros do Newton foram 5,0e-2 → 2,3e-5 → 5,0e-12 (2, 5 e 11 dígitos), e a ordem estimada foi 2,00.
+O Newton falha se a derivada se anula ou se o ponto inicial está longe da raiz: em f(x) = x³ − 2x + 2 a partir de x0 = 0 ele fica oscilando entre 0 e 1 para sempre; a bissecção em [−2, 0] converge, porque só precisa da troca de sinal.
+
+### R12 — Issue #9
+
+Testes de regressão: `test_colebrook_em_poucas_iteracoes`, `test_raiz_de_dois_em_poucas_iteracoes` e `test_digitos_dobram`; os três falhavam com o código original (10 e 32 iterações).
+Com a derivada calculada uma vez só, em x0, o método vira o das cordas: x_{k+1} = x_k − f(x_k)/f'(x0). Perto da raiz, e_{k+1} ≈ (1 − f'(r)/f'(x0))·e_k, ou seja, o erro só é multiplicado por uma constante a cada passo: convergência linear. O Newton precisa da derivada no ponto atual para que esse fator também vá a zero.
+Os testes de aceitação só conferem se o resultado converge e se a raiz está certa, com `max_iter = 100`: o método lento chega à mesma raiz, só que gastando mais iterações, e nenhum teste conferia o número de iterações.
