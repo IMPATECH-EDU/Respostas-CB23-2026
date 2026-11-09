@@ -138,3 +138,19 @@ As duas curvas têm praticamente a mesma precisão, pois os desvios são muito p
 2. 2. Ao calcular a derivada apenas uma vez, o método deixa de atualizar a inclinação da função a cada iteração e passa a usar sempre a inclinação do ponto inicial. Com isso, ele perde a convergência quadrática e passa a convergir de forma linear, ou seja, o erro diminui mais lentamente. Ao recalcular a derivada em cada passo, o método acompanha melhor a função e consegue se aproximar da raiz muito mais rapidamente.
 
 3. Os testes de aceitação não identificaram o defeito porque verificavam apenas se o resultado final estava dentro da tolerância. Como o método original também encontrava a raiz, mesmo que mais lentamente, ele passava nesses testes. Nenhum deles verificava a quantidade de iterações ou a ordem de convergência.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+As regras do trapézio e de Simpson apresentam suas ordens de precisão esperadas quando a função é suave em todo o intervalo. Porém, o custo diário tem mudanças bruscas na tarifa às 18h e às 21h, criando descontinuidades. Ao integrar o dia inteiro de uma vez, essas mudanças ficam dentro dos subintervalos e prejudicam a aproximação, fazendo com que a ordem de convergência diminua. Quando cada faixa de tarifa é integrada separadamente, as descontinuidades ficam nos limites das integrais e as regras conseguem recuperar suas ordens esperadas: 2 para o trapézio e 4 para Simpson. Portanto, é importante dividir a integração nos pontos em que a tarifa muda.
+
+### R14 — Issue #11
+
+1. `test_trapezio_malha_irregular_reta`, `test_trapezio_malha_irregular_constante`, `test_trapezio_registro_com_falhas` e `test_malha_irregular_no_balanco`.
+
+2. O método usava sempre a distância entre os dois primeiros pontos como largura de todos os trapézios, supondo que os intervalos fossem iguais. Porém, com as 8 leituras perdidas, alguns intervalos passaram de 15 para 30 minutos, causando um cálculo menor que o correto. A correção foi considerar a largura real de cada intervalo.
+
+3. Pois utilizavam apenas intervalos regulares ou verificavam somente a quantidade de registros. Como nesses casos os espaçamentos eram iguais, o método funcionava normalmente e o defeito não aparecia.
+
+4. O método de Simpson exige intervalos igualmente espaçados e uma quantidade par de subintervalos. Como o registro possui intervalos misturados de 15 e 30 minutos, ele não consegue processá-lo e gera um ValueError. Já o trapézio aceita espaçamentos diferentes.
