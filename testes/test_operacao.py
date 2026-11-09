@@ -4,9 +4,15 @@ Regras: pelo menos 4 testes seus (o exemplo abaixo não conta), uma docstring em
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou math.isclose, a não
 ser que a igualdade exata seja justamente o que você quer testar.
 """
+import math
 import unittest
 
-from elevatoria.raizes import Bisseccao
+import numpy as np
+
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
+from elevatoria.raizes import Bisseccao, Newton
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -20,19 +26,6 @@ class TestBisseccaoExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
-
-import math
-
-from elevatoria.operacao import ordem_convergencia
-from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import fator_atrito_colebrook
-
-import numpy as np
-
-from elevatoria.calibracao import CurvaCalibracao
-from elevatoria.operacao import ponto_operacao
-from fornecido.hidraulica import Tubulacao
-
 
 class TestNewton(unittest.TestCase):
     """Issue #9: o Newton deve ter ordem de convergência perto de 2."""
@@ -84,6 +77,7 @@ class TestPontoOperacao(unittest.TestCase):
         """Se o resolvedor para em max_iter sem convergir, levanta ValueError."""
         with self.assertRaises(ValueError):
             ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10, max_iter=3))
+
 
 if __name__ == "__main__":
     unittest.main()
