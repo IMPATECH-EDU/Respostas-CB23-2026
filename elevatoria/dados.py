@@ -17,7 +17,7 @@ from typing import Callable
 
 import numpy as np
 
-from serie import SerieTemporal
+from .serie import SerieTemporal
 
 from fornecido.cronometro import cronometrar
 

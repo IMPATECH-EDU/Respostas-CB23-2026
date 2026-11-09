@@ -8,6 +8,9 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 ### Ambiente
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
+Saida do `which python`: /home/al.wedyson.bem/venvs/prog2-venv/bin/python
+Saida de `python marco1.py`: === Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.4 | fornecido 4.0
 
 ### R1 — Expressões regulares
 

@@ -37,8 +37,8 @@ class SerieTemporal(np.ndarray):
         # (do índice 0 a janela-1) na subtração vetorizada
         acumulada = np.cumsum(self)
         cum_zero = np.insert(acumulada, 0, 0.0)
-        return (cum_zero[janela:] - cum_zero[:-janela]) / janela
-
+        return ((cum_zero[janela:] - cum_zero[:-janela]) / janela).view(SerieTemporal)
+        
     def variacao(self) -> SerieTemporal:
         """Diferenças entre pontos consecutivos (`n - 1` valores)."""
         return np.diff(self)
@@ -64,4 +64,19 @@ class SerieTemporal(np.ndarray):
         completam um bloco são descartados. Usa `reshape`, sem laços. Levanta `ValueError`
         se `k < 1` ou `k > len(self)`.
         """
+        if k < 1 or k > len(self):
+            raise ValueError("k inválido")
+
+        # Calculamos quantos elementos vamos ter ao todo (o que também nos fornece quantos sobram)
+        n= k*(len(self)// k) 
+
+        # Tendo n, podemos saber quantos elementos vão sobrar (será sempre l<k essa quantidade), e com isso retirar eles da coleção self
+        elems=np.array(self[:n])
+
+        # Agora vamos usar o método reshape para formarmos os (len(self)//k) blocos de tamanho k
+        resul=elems.reshape((len(self)// k, k))
+
+        # Por fim realizamos o cálculo da média de cada bloco com .mean(axis=1) [já que queremos 1 valor por linha]
+        # e retornamos ele como uma SerieTemporal
+        return SerieTemporal(resul.mean(axis=1))
         raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")

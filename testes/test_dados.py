@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import os
 from elevatoria.serie import SerieTemporal
-from elevatoria.dados import por_tag
+from elevatoria.dados import (por_tag, ler_log)
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestPorTagExemplo(unittest.TestCase):
 class TestMediaMovel(unittest.TestCase):
 
     def test_media_movel_tamanho_correto(self):
-        """Verifica se media_movel retorna n - janela + 1 elementos."""
+        """Verifica se media_movel retorna n - janela + 1 elementos, para as series [i for i in range(600)] e [1, 2, 3, 4, 5]."""
         dados = list(range(600))  # Criamos a lista com 600 numeros de 1 a 600
         serie = SerieTemporal.de_lista(dados) # Convertemos essa lista em uma SerieTemporal
         janela = 30
@@ -39,33 +39,34 @@ class TestMediaMovel(unittest.TestCase):
         resultado_2= SerieTemporal.media_movel(seri, janel)
 
         # 600 - 30 + 1 deve ser 571 (o código antigo retorna 570 e falha neste assert)
-        self.assertAlmostEqual(len(resultado_1), 571)
+        self.assertEqual(len(resultado_1), 571)
         # 5 - 2 + 1 deve ser aproximadamente igual a 4, por ser float 
-        self.assertAlmostEqual(len(resultado_2), 4)
+        self.assertEqual(len(resultado_2), 4)
 
         # Verificamos se o resultado está coerente com o esperado
         self.assertTrue(np.allclose(resultado_2, [1.5, 2.5, 3.5, 4.5]))
 
+    def test_media_movel_janela_igual_serie(self):
+        """Verifica se uma janela do tamanho da série produz uma única média."""
+        serie = SerieTemporal.de_lista([2, 4, 6])
+        resultado = serie.media_movel(3)
+
+        self.assertEqual(len(resultado), 1)
+        self.assertTrue(np.allclose(resultado, [4]))
 
 class TestReamostrar(unittest.TestCase):
     def test_reamostrar_com_k_valido(self):
-        """Analisamos se a função reamostrar está identificando se o k dado como argumento é válido e se 
-        não for lança ValueError"""
+        """Analisamos se reamostrar lança ValueError quando identifica k menor que 1 ou maior que o comprimento da serie"""
+        serie = SerieTemporal.de_lista([10, 20, 30, 40, 50])
 
-        k_1=0
-        k_2=10
-        dadso=SerieTemporal.de_lista([10, 20, 30, 40, 50, 60, 70])
+        with self.assertRaises(ValueError):
+            serie.reamostrar(0)
 
-        # Agora vemos se temos a função lança ValueError
-        try:
-            result_1=dadso.reamostrar(k_1)
-        except ValueError:
-            self.assertTrue(12==10+2)
-        
-        result_2=dadso.reamostrar(k_2)
+        with self.assertRaises(ValueError):
+            serie.reamostrar(6)
 
     def test_reamostrar_media_certa(self):
-
+        """Cobrindo o caso para a serie(10, 20, 30, 40, 50, 60, 70), testa se o método reamostrar está bem implementado"""
         # Vamos usar o caso onde temos 7 itens e queremos separá-los em blocos de tamanho 3
         serie = SerieTemporal.de_lista([10, 20, 30, 40, 50, 60, 70])
         resultado = serie.reamostrar(3)
@@ -73,6 +74,51 @@ class TestReamostrar(unittest.TestCase):
         # Esperamos receber que o resultado seja [20, 50], já que (10+20+30)/3==20 e (40+50+60)/3==50
         assert np.allclose(resultado, [20, 50])
 
+class TestLerLog(unittest.TestCase):
+
+    def test_ignora_linhas_vazias(self):
+        """Verifica se linhas vazias ou com espaços são ignoradas."""
+        texto = "\n   \n\t\n"
+
+        registros, invalidas = ler_log(texto)
+
+        self.assertEqual(registros, [])
+        self.assertEqual(invalidas, [])
+
+    def test_converte_valores_do_log(self):
+        """Verifica se valores numéricos viram float e textos permanecem strings."""
+        texto = "2026-10-05 08:00:00 INFO B1 evento=partida corrente=47.5"
+
+        registros, invalidas = ler_log(texto)
+
+        self.assertEqual(len(invalidas), 0)
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(registros[0].valores["evento"], "partida")
+        self.assertEqual(registros[0].valores["corrente"], 47.5)
+        self.assertIsInstance(registros[0].valores["corrente"], float)
+
+    def test_preserva_ordem_dos_registros(self):
+        """Verifica se os registros são devolvidos na mesma ordem do texto."""
+        texto = (
+            "2026-10-05 08:00:00 INFO B1 evento=partida\n"
+            "2026-10-05 08:00:06 WARN B1 evento=parada"
+        )
+
+        registros, invalidas = ler_log(texto)
+
+        self.assertEqual(len(invalidas), 0)
+        self.assertEqual(len(registros), 2)
+        self.assertEqual(registros[0].valores["evento"], "partida")
+        self.assertEqual(registros[1].valores["evento"], "parada")
+
+    def test_descarta_data_impossivel(self):
+        """Verifica se uma linha com data impossível é descartada."""
+        texto = "2026-13-05 08:00:00 INFO B1 evento=partida"  # Data impossível sendo mês 13
+
+        registros, invalidas = ler_log(texto)
+
+        self.assertEqual(registros, [])
+        self.assertEqual(invalidas, [texto])
 
 if __name__ == "__main__":
     unittest.main()
