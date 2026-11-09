@@ -63,7 +63,29 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica deve ser não negativa; recebi {u_sistematica}")
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError(f"a tag {tag!r} precisa de pelo menos 2 leituras; recebi {len(contagens)}")
+
+    pressoes = np.asarray(curva(np.asarray(contagens, dtype=float)), dtype=float)
+
+    mad = float(stats.median_abs_deviation(pressoes, scale="normal"))
+    if mad == 0.0:
+        raise ValueError(f"MAD zero na tag {tag!r}: o z robusto não está definido")
+    z = (pressoes - np.median(pressoes)) / mad
+    mascara_espuria = np.abs(z) > limiar
+    espurias = [int(i) for i in np.flatnonzero(mascara_espuria)]
+    validas = pressoes[~mascara_espuria]
+    if len(validas) < 2:
+        raise ValueError(f"sobraram {len(validas)} leituras válidas na tag {tag!r}; mínimo 2")
+
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))
+    incerteza = float(np.hypot(erro_padrao, u_sistematica))
+    return Medicao(tag, Medida(media, incerteza), desvio, int(len(validas)), espurias)
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +97,6 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    p_succao = medir(registros, "PT101", curva, u_sistematica).medida
+    p_recalque = medir(registros, "PT102", curva, u_sistematica).medida
+    return (p_recalque - p_succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
