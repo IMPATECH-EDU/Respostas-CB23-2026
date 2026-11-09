@@ -117,3 +117,17 @@ O Newton falha se a derivada se anula ou se o ponto inicial está longe da raiz:
 Testes de regressão: `test_colebrook_em_poucas_iteracoes`, `test_raiz_de_dois_em_poucas_iteracoes` e `test_digitos_dobram`; os três falhavam com o código original (10 e 32 iterações).
 Com a derivada calculada uma vez só, em x0, o método vira o das cordas: x_{k+1} = x_k − f(x_k)/f'(x0). Perto da raiz, e_{k+1} ≈ (1 − f'(r)/f'(x0))·e_k, ou seja, o erro só é multiplicado por uma constante a cada passo: convergência linear. O Newton precisa da derivada no ponto atual para que esse fator também vá a zero.
 Os testes de aceitação só conferem se o resultado converge e se a raiz está certa, com `max_iter = 100`: o método lento chega à mesma raiz, só que gastando mais iterações, e nenhum teste conferia o número de iterações.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+As regras compostas só têm ordem 2 (trapézio) e 4 (Simpson) se o integrando for suave em cada subintervalo. Integrando o custo de uma vez, a tarifa salta às 18 h e às 21 h, e esses instantes caem no meio de um subintervalo: ali a regra aproxima um degrau por um polinômio, com erro proporcional ao salto vezes h. Esse erro O(h) domina os demais, e a ordem observada cai para 1,00 (trapézio) e 0,65 (Simpson).
+Integrando faixa por faixa, os saltos ficam nos extremos dos intervalos de integração, a tarifa é constante em cada faixa e a potência é suave: voltam as ordens 2,00 e 4,00 (erro de 8e-8 com Simpson em n = 110).
+
+### R14 — Issue #11
+
+Testes de regressão: `test_reta_em_malha_irregular`, `test_constante_com_leitura_perdida` e `test_registro_do_dia_com_falhas`; os três falhavam com o código original.
+Causa: `integrar_tabela` do trapézio usava um único passo `h = x[1] − x[0]` (15 min) para todos os trapézios. Onde o SCADA perdeu leituras, intervalos de 30 e 45 min eram contados como 15, e o volume do dia saía 3584,8 m³ em vez de 3888,0 m³ (7,8% abaixo). A correção usa a largura de cada trapézio, `np.diff(x)`.
+Os testes de aceitação só usam malhas uniformes (`linspace` e passos de 1,5 h), em que as duas fórmulas coincidem.
+Simpson não serve porque exige pontos igualmente espaçados e um número par de subintervalos; o registro do dia tem passos de 15, 30 e 45 min, e a própria `Simpson.integrar_tabela` recusa a tabela.
