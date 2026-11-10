@@ -83,3 +83,27 @@ Os testes de aceitação iniciais não detectaram a falha porque executavam pouc
 ### R10 — Precisão × exatidão
 
 A spline cúbica possui maior exatidão em regimes não lineares por ajustar a curvatura física real da bomba, mas menor precisão por ser sensível a ruídos locais dos dados. A regressão linear apresenta menor exatidão se o comportamento for curvo (viés de modelagem), porém entrega maior precisão e estabilidade ao filtrar oscilações estocásticas e manter a incerteza constante.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A Bissecção divide o intervalo pela metade a cada passo, exigindo N=log_2((b-a)/tol) iterações fixas independentemente da função; para [a, b]=[0, 100] e tol=10^-11, isso resulta exatamente em 43.18 = 44 iterações. O Método de Newton possui ordem de convergência quadrática p=2, dobrando a quantidade de algarismos significativos corretos a cada iteração quando próximo da raiz. O Newton falha se f'(x_k) = 0 ou se a estimativa inicial x_0 estiver distante de um ponto de inflexão, gerando oscilações em ciclo infinito; a Bissecção não sofre desse problema, pois depende apenas do Teorema do Valor Intermediário.
+
+### R12 — Issue #9
+
+test_newton_convergencia_quadratica e test_newton_poucas_iteracoes
+
+Fixar o valor da derivada no ponto inicial f'(x_0) para todas as iterações transforma o algoritmo no Método das Cordas (ou Secante Modificada), degradando a ordem de convergência de quadrática p=2 para apenas linear p=1 e elevando expressivamente a quantidade de passos necessários para atingir a tolerância. Os testes de aceitação originais avaliavam unicamente o resíduo da solução final |f(x_k)| < tol, sem verificar a taxa de convergência entre iterações sucessivas nem impor um limite máximo sobre o número de passos consumidos.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+Isso ocorre porque a tarifa apresenta descontinuidades em degrau nos horários de pico 18h e 21h, violando a hipótese de continuidade de derivadas exigida pelas fórmulas de erro de quadratura C^2 para Trapézio e C^4 para Simpson. Ao realizar a integração piecewise (por faixas contínuas nos intervalos [0, 18], [18, 21] e [21, 24]), a suavidade local é preservada, restaurando a ordem teórica 2 para o Trapézio e 4 para o Simpson.
+
+### R14 — Issue #11
+
+test_malha_irregular_linha_reta e test_comparacao_malha_uniforme_vs_irregular
+
+O método Trapezio.integrar_tabela calculava o passo de integração assumindo uma malha estritamente uniforme h = (b-a)/(N-1), desconsiderando os espaçamentos reais (delta)t_i = t_(i+1) - t_i entre amostragens consecutivas. Os testes de aceitação originais utilizavam exclusivamente vetores de tempo com espaçamento perfeitamente uniforme, omitindo cenários reais com perdas de amostragem. A Regra de Simpson exige uma malha uniforme e um número ímpar de pontos (número par de subintervalos idênticos), condição violada em conjuntos de dados com perda de leituras do SCADA.
