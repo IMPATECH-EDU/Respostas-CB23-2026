@@ -8,34 +8,38 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 ### Ambiente
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
-Saida do `which python`: /home/al.wedyson.bem/venvs/prog2-venv/bin/python
-Saida de `python marco1.py`: === Etapa 0: ambiente ===
-Python 3.13.15 | NumPy 2.5.4 | fornecido 4.0
+Saida de `which python`: `/home/al.wedyson.bem/venvs/prog2-venv/bin/python`
+Saida de Etapa 0 do `python marco1.py`: `=== Etapa 0: ambiente === Python 3.13.15 | NumPy 2.5.4 | fornecido 4.0`
 
 ### R1 — Expressões regulares
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
+Sabemos que `re.match` verifica se apenas o começo da string dada no argumento é igual, enquanto `re.fullmatch` verifica se a string por completo é igual ao padrão que desejamos analisar. Assim, se passarmos a string `"PT101 abc"` temos que o primeiro método aceita, mas o segundo rejeita. Evidentemente, uma consequência disso é que se em `valida_tag` usássemos o primeiro método ocasionaria de não cobrirmos esse caso, ou seja, não validaríamos por inteiro a string analisada, mas analisariamos apenas o seu início.
 
 ### R2 — Linhas inválidas
 
 <!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
-
+Além de ser vantajoso termos às linhas onde vemos leituras e/ou dados falhos, se não devolvessemos estaríamos, de certa forma, perdendo uma parcela do conteúdo original das linhas. Com isso, descartaríamos informações que nos permitiria identificar leituras falhas, e, portanto, poderíamos não ser capaz de encontrar uma falha no sistema. Por exemplo, uma linha registra um alarme da estação elevatória, mas está mal formatada. Se ela for descartada sem aviso, a equipe de manutenção pode não perceber que houve uma condição de alarme.
 ### R3 — Late binding
 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
+O problema deriva do fato das funções lambdas serem `Late binding`, ou seja, não armazenam automaticamente o valor de `fator` existente no momento em que são criadas. Dessa forma, quando são executadas, todas elas consultam o último valor armazenado pela variável depois do último laço, utilizando o último fator disponível. Por isso, `errados["PT102"](4095)` retorna `409.5`, pois ele é resultado de `4095 * 0.1`, em que `0.1`foi o último valor armazenado.
+Por essa razão a função `criar_conversores` é usada para corrigir esse comportamento, fazendo isso através do trecho `f=fator` como argumento padrão da `lambda`. Com isso, cada função captura o fator correspondente à sua própria iteração e realiza a conversão corretamente.
 
 ### R4 — Escala nominal
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
-
+No código da `Etapa 2(f)`calculamos a pressão nominal de maneira linear. No código, somamos uma certa quantidade de valores que são todos menores ou iguais a 2000, e depois dividimos por 600 (isso se apresenta como uma boa hipótese também), o que evidencia seu caráter linear. Todavia, em `simulador.py` temos a função que calcula o valor real da pressão, onde vemos uma maneira não linear de se calcular. O que indica, possivelmente, que a justificativa dessa diferença estar na maneira a qual ambas são calculadas.
 ### R5 — Previsão × medição (Etapa 3)
 
 Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
 
+Hash Curt do commit: `076e08f`
+
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | `17 vezes` | |
-| Tempo do laço / tempo vetorizado | `10 vezes`| |
+| Memória da lista / memória do `uint16` | `17 vezes` | `18 vezes`|
+| Tempo do laço / tempo vetorizado | `10 vezes`| `|
 | Tempo da compreensão / tempo do laço | `1.2 vezes`| |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->

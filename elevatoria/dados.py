@@ -17,7 +17,11 @@ from typing import Callable
 
 import numpy as np
 
-from .serie import SerieTemporal
+raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if raiz not in sys.path:
+    sys.path.append(raiz)
+
+from elevatoria.serie import SerieTemporal
 
 from fornecido.cronometro import cronometrar
 
@@ -49,20 +53,22 @@ LINHA: re.pattern= re.compile(
     )
     \s+                             # Espaço
     (?P<nivel>                      # Grupo nomeado 'nivel'
-        [A-Z]+                      # Nível de log em maiúsculas (EX: INFO, WARN ou ALARME)
+        INFO|WARN|ALARME            # Nível de log em maiúsculas (EX: INFO, WARN ou ALARME)
     )
     \s+                             # Espaço
     (?P<tag>                        # Grupo nomeado 'tag'
-        \[?[a-zA-Z0-9_\.-]+\]?      # Nome da tag/módulo, opcionalmente entre colchetes
+        [A-Z]{1,2}\d{1,3}           # Padrão de uma tag, com 1 ou 2 letras maiúsculas [A-Z]{1,2}; e com 1 a 3 dígitos
     )
     \s+                             # Espaço
     (?P<resto>                      # Grupo nomeado 'resto'
-        (\\w+)=(\\S+)                 # Garante ao menos um par chave=valor no conteúdo final
+        \w+=\S+                     # Garante ao menos um par chave=valor no conteúdo final
+        (?:\s+\w+=\S+)*             # Caso em que há mais de um par chave=valor
     )
     $                               # Fim da linha
 """,
     re.VERBOSE,
 )
+#caas dod calf aif
 
 @dataclass(frozen=True)
 class Registro:
@@ -117,10 +123,11 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
         for lina in texto.splitlines():
             sim=LINHA.fullmatch(lina)  # Se for None então ou a linha é inválida ou ela é vazia
             
-            if not sim and len(lina)!=0:      # Caso a linha seja inválida
-                inval.append(lina)
+            if not lina.strip():    # Verifico se a linha possui apenas espaçoes em brancos
                 continue
-            elif lina is None:                # Caso a linha seja vazia
+
+            if not sim:             # Verificação se não houve match, i. e., não é uma linha válida
+                inval.append(lina)
                 continue
             # Daqui em diante consideramos se a linha é válida ou não para os demais critérios dados na docstring
             # Além disso, realizamos a formatação para adicionar a linha na classe Registro, e então colocá-la na lista regis
@@ -251,11 +258,12 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
     """
     # Realizo a verificação de se o argumento é ou não da classe 'ndarray'
-    if type(contagens)!= type(np.ndarray):
+    if not isinstance(contagens, np.ndarray) or contagens.ndim != 1 or not np.issubdtype(contagens.dtype, np.integer):
         raise ValueError("argumento não é um ndarray de 1D de inteiros")
+
     
     # Converto o argumento para list
-    lisa=contagens.tolist
+    lisa=contagens.tolist()
 
     # Criado a array.array com type code 'H'
     aray=array.array('H', contagens)
@@ -297,8 +305,7 @@ def converter_compreensao(contagens: list[int]) -> list[float]:
 def converter_map(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `map` e uma lambda."""
     # Com a função map fzemos a conversão
-    contagen=map(lambda c: c*600/4095, [i for i in contagens])
-    return contagen
+    return list(map(lambda c: c*600/4095, [i for i in contagens]))
 
     raise NotImplementedError("issue #3: converter_map")
 
@@ -322,9 +329,9 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     liusta=contagens.tolist()
     valo = list(map(int, liusta))
 
-    return {"laço": cronometrar(converter_laco(), valo, k),
-           "compreensão": cronometrar(converter_compreensao(), valo, k),
-           "map+lambda": cronometrar(converter_map(), valo, k),
-           "vetorizado": cronometrar(converter_vetorizado(), contagens, k)
+    return {"laço": cronometrar(converter_laco, valo),
+           "compreensão": cronometrar(converter_compreensao, valo),
+           "map+lambda": cronometrar(converter_map, valo),
+           "vetorizado": cronometrar(converter_vetorizado, contagens)
            }
     raise NotImplementedError("issue #3: medir_tempos")

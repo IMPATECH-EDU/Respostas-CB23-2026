@@ -78,5 +78,6 @@ class SerieTemporal(np.ndarray):
 
         # Por fim realizamos o cálculo da média de cada bloco com .mean(axis=1) [já que queremos 1 valor por linha]
         # e retornamos ele como uma SerieTemporal
-        return SerieTemporal(resul.mean(axis=1))
+        
+        return SerieTemporal.de_lista(resul.mean(axis=1).tolist())
         raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")

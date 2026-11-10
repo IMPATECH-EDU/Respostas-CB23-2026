@@ -99,7 +99,7 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
 
     # (f) Converta a média das contagens normais de PT102 (até 2000) com a escala nominal
     #     (certos["PT102"]) e imprima ao lado de verdade["pressao_recalque"].
-    p_nominal = sum(certos["PT102"](int(r.dados["contagens"])) for r in registros if r.tag == "PT102" and "contagens" in r.dados and int(r.dados["contagens"]) <= 2000) / 600
+    p_nominal = sum(certos["PT102"](int(r.valores["contagens"])) for r in registros if r.tag == "PT102" and "contagens" in r.valores and int(r.valores["contagens"]) <= 2000) / 600
     print("Pressão nominal:", p_nominal)
     print("Pressão de conferência:", verdade["pressao_recalque"])
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
@@ -113,9 +113,9 @@ def etapa3() -> None:
 
     # (a) Memória: imprima uma tabela com estrutura, bytes por elemento, bytes totais e a
     #     razão em relação à lista.
-    memoria = medir_memoria(contagens)
+    memoria = medir_memoria(np.array(contagens, dtype=int))
     print("Estruturas | Bytes por elemento | Bytes total ")
-    for estrutura in memoria.items():
+    for estrutura in memoria.keys():
         por_elemento = memoria[estrutura] / n
         print(f"{estrutura} | {por_elemento:.2f} | {memoria[estrutura]}")
     assert memoria["uint16"] == 2_000_000
@@ -124,9 +124,7 @@ def etapa3() -> None:
     # (b) Tempo: imprima uma tabela com o tempo (ms) e a aceleração em relação ao laço.
     tempos = medir_tempos(contagens, k=10)
     print("Operação | Tempo (ms) | Aceleração")
-    for oper in tempos.items():
-        if oper=="laço":
-            continue
+    for oper in tempos.keys():
         aceleracao = tempos["laço"] / tempos[oper]
         print(f"{oper} | {tempos[oper]:.3f} | {aceleracao:.2f}x")
     assert tempos["laço"] / tempos["vetorizado"] >= 5
@@ -166,7 +164,7 @@ def etapa4(registros: list) -> None:
     print(f"{type(s+s)}")
     print(f"{type(s[1:])}")
     print(f"{type(s*2)}")
-    print(f"{type(s.sum)}")
+    print(f"{type(s.sum())}")
     print(f"{type(s[0])}")
 
 

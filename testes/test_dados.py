@@ -7,6 +7,11 @@ import unittest
 import numpy as np
 import sys
 import os
+
+raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if raiz not in sys.path:
+    sys.path.append(raiz)
+
 from elevatoria.serie import SerieTemporal
 from elevatoria.dados import (por_tag, ler_log)
 
@@ -87,12 +92,13 @@ class TestLerLog(unittest.TestCase):
 
     def test_converte_valores_do_log(self):
         """Verifica se valores numéricos viram float e textos permanecem strings."""
-        texto = "2026-10-05 08:00:00 INFO B1 evento=partida corrente=47.5"
+        texto = ("2026-10-05 08:00:00 INFO B1 evento=partida corrente=47.5\n"
+                 "2026-10-05 08:00:06 WARN B1 evento=parada")
 
         registros, invalidas = ler_log(texto)
 
         self.assertEqual(len(invalidas), 0)
-        self.assertEqual(len(registros), 1)
+        self.assertEqual(len(registros), 2)
         self.assertEqual(registros[0].valores["evento"], "partida")
         self.assertEqual(registros[0].valores["corrente"], 47.5)
         self.assertIsInstance(registros[0].valores["corrente"], float)
