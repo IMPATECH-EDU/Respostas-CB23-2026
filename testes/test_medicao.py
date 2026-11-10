@@ -6,7 +6,11 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 """
 import math
 import unittest
+from datetime import datetime
 from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import Registro
+from elevatoria.medicao import medir
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -42,6 +46,22 @@ class TestAcumuladorKahan(unittest.TestCase):
             acc_k.adicionar(e)
         self.assertAlmostEqual(acc_k.total, math.fsum([1.0] + [e] * tot), 12)
 
+class TestMedicao(unittest.TestCase):
+    """Valida o contrato de medir"""
+    def tag_poucos_readings(self) -> None:
+        """Verifica se uma tag com menos de 2 readings é recusada"""
+        
+        IDENTIDADE = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
+        self.assertRaises(ValueError, lambda: medir(self._regs("PT101", [1000]), "PT101", IDENTIDADE))
+    
+    def tag_u_negativo(self) -> None:
+        """Verifica se u_sistematica < 0 é recusado"""
+        IDENTIDADE = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
+        self.assertRaises(ValueError, lambda: medir(self._regs("PT101", [1000, 1001]), "PT101", IDENTIDADE, u_sistematica=-1))
+    
+    def _regs(self, tag, contagens):
+        return [Registro(datetime(2026, 10, 5, 8, 0, i), "INFO", tag, {"contagens": float(c)})
+            for i, c in enumerate(contagens)]
 
 if __name__ == "__main__":
     unittest.main()
