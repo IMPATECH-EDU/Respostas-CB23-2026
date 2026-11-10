@@ -130,3 +130,27 @@ mas a spline é exata (380.0 kPa, viés 0.000) e a linear não (378.2 kPa, viés
 A média de ~595 leituras reduz o erro aleatório (o erro padrão fica em torno de 0.527/√595 ≈ 0.02 kPa),
 mas o viés da linear é sistemático: vem do erro de interpolação da curva (até 2.88 kPa na Etapa 1(a)),
 que é o mesmo em todas as leituras próximas de 1790 contagens, por isso não se cancela na média.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção divide o intervalo ao meio a cada uma das iterações, usando apenas o sinal de f (e não o tamanho dos valores); por isso a
+quantidade de iterações depende somente da largura inicial do intervalo e da tolerância (≈ log2((b − a)/tol)). 
+Como esses dois são os mesmos para todos os Reynolds da Etapa 2(a), a bissecção gasta sempre 44 iterações.
+Ordem de convergência 2 significa e_{k+1} ≈ C·e_k²: em Re = 10^4, os erros do Newton foram 2,9 → 5,0e-2 → 2,3e-5 → 5,0e-12
+e o expoente quase dobra a cada passo (o número de dígitos corretos dobra); a ordem que estimamos foi 2,00.
+O Newton falha quando a derivada é nula ou muito pequena, ou quando o passo sai do intervalo.
+Aqui, a curva da bomba não extrapola, e um passo para fora de [0,100] L/s faz com que o método Newton seja interrompido
+enquanto a bissecção fica sempre dentro do intervalo desejado, com a troca de sinal confirmada. 
+
+### R12 — Issue #9
+
+Nos testes de regressão: `test_iteracoes_raiz_de_2` (no máximo 5 iterações para sqrt(2); o código antigo gastava 8)
+e `test_erro_apos_tres_iteracoes` (erro menor que 1e-10 após 3 iterações, o antigo ainda errava 7,9e-6)
+Com a derivada fixa d = f'(x₀), x_{k+1} = x_k − f(x_k)/d dá e_{k+1} ≈ (1 − f'(r)/d)·e_k:
+o erro é multiplicado por uma constante, e a convergência é linear (para sqrt(2), o fator é próximo a 0,057).
+Recalculando f'(x_k) a cada passo, esse fator vai a zero e e_{k+1} ≈ C·e_k². 
+Em Re = 10^4, o Newton passou de 10 para 5 iterações. Os testes de aceitação não capturaram o defeito porque ele não muda
+a raiz encontrada, só a velocidade: o `test_metodos_de_raiz` passou com o 
+código antigo, pois não confere o número de iterações ou a rapidez da queda do erro.
