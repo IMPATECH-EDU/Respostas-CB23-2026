@@ -48,13 +48,13 @@ class TestAcumuladorKahan(unittest.TestCase):
 
 class TestMedicao(unittest.TestCase):
     """Valida o contrato de medir"""
-    def tag_poucos_readings(self) -> None:
+    def test_poucos_readings(self) -> None:
         """Verifica se uma tag com menos de 2 readings é recusada"""
         
         IDENTIDADE = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
         self.assertRaises(ValueError, lambda: medir(self._regs("PT101", [1000]), "PT101", IDENTIDADE))
     
-    def tag_u_negativo(self) -> None:
+    def test_u_negativo(self) -> None:
         """Verifica se u_sistematica < 0 é recusado"""
         IDENTIDADE = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
         self.assertRaises(ValueError, lambda: medir(self._regs("PT101", [1000, 1001]), "PT101", IDENTIDADE, u_sistematica=-1))

@@ -71,3 +71,31 @@ media_movel devolvia 570 valores em vez de 571. Testes foram  TestMediaMovelRegr
 Causa: a soma da janela x[i:i+j] é C[i+j-1] - C[i-1], mas np.cumsum não tem o termo C[-1] = 0. Sem ele, acumulada[j:] - acumulada[:-j] dá as janelas a partir de i = 1: a primeira se perde e sobram n - j valores.
 Correção: inserir um 0 no início da soma acumulada (np.insert(np.cumsum(self), 0, 0.0)).
 Os testes de aceitação só conferem o tipo de retorno e os ValueError, sem observar o tamanho ou valores.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+Python 3.12.0 | NumPy 1.26.4 | SciPy 1.12.0 | fornecido 4.0 | matrícula 3501
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+Antes de 1e-5 o erro é dominado por truncamento e diminuí com h. O erro cresce por cancelamento catastrófico, que remove valores significativos e deixa lixo, e a divisão por h que magnifica o valor desse lixo. em h = 1e-14 a diferença relativa vira 0 e logo a diferença adiante vira 0 também, com o erro sendo igual à própria derivada.
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+Testes test_original e test_alta_precisao usados para validar AcumuladorKahan. Aritmética de ponto flutuante não é associativa, e como t = s + y ficamos com (s + y) - (s + y) que é sempre 0. Os testes não pegaram o defeito porque não medem especificamente a precisão maior produzida pela soma de Kahan.
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+desvio 0,543 (linear) x 0,545 (spline), viés −1,829 x 0,001 kPa
+A curva linear tem um erro sistemático por estar sempre um pouco abaixo do seno. O número de leituras melhora o desvio de maneira semelhante para ambas as curvas, mas o viés é sistemático.
