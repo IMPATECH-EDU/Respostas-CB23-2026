@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy import stats
+import scipy
 
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.dados import Registro, serie
@@ -63,7 +64,29 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+
+    if u_sistematica < 0:
+        raise ValueError('u_sistematica não pode ser menor que 0')
+    contagens = serie(registros, tag, 'contagens')
+    if len(contagens) < 2:
+            raise ValueError('Tag tem menos de 2 leituras no total')
+
+    x = curva(contagens)
+    MAD = scipy.stats.median_abs_deviation(x, scale="normal")
+    
+    if MAD == 0:
+        raise ValueError('MAD = 0')
+    
+    z = (x - np.median(x)) / MAD
+    espuria = np.abs(z) > limiar
+    x = x[~espuria]
+    espurio = np.flatnonzero(espuria).tolist()
+    if len(x) < 2:
+        raise ValueError('Tag tem menos de 2 leituras válidas')    
+    media, desvio_padrao, erro_padrao = float(np.mean(x)), float(np.std(x, ddof=1)), float(scipy.stats.sem(x))
+
+
+    return Medicao(tag, Medida(media, np.sqrt(erro_padrao**2 + u_sistematica**2)), desvio_padrao, len(x), espurio)
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
