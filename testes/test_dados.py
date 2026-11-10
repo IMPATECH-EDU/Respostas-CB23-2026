@@ -5,7 +5,7 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import por_tag
+from elevatoria.dados import por_tag, valida_tag
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -18,6 +18,42 @@ class TestPorTagExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestValidaTag(unittest.TestCase):
+    def test_tag_valida_duas_letras(self):
+        """Tag com duas letras, valida_tag retorna True"""
+        self.assertTrue(valida_tag("PT302"), [])
+
+    def test_tag_valida_uma_letra(self):
+        """Tag com uma letra, valida_tag retorna True"""
+        self.assertTrue(valida_tag("Z101"), [])
+
+    def test_tag_invalida_sem_letras(self):
+        """Tag sem letras, valida_tag retorna False"""
+        self.assertFalse(valida_tag("103"), [])
+
+    def test_tag_invalida_tres_letras(self):
+        """Tag com três letras, valida_tag retorna False"""
+        self.assertFalse(valida_tag("PTE103"), [])
+
+    def test_tag_valida_um_numero(self):
+        """Tag com um número, valida_tag retorna True"""
+        self.assertTrue(valida_tag("PT3"), [])
+
+    def test_tag_valida_dois_numeros(self):
+        """Tag com dois números, valida_tag retorna True"""
+        self.assertTrue(valida_tag("PT30"), [])
+
+    def test_tag_valida_tres_numeros(self):
+        """Tag com três números, valida_tag retorna True"""
+        self.assertTrue(valida_tag("PT301"), [])
+
+    def test_tag_invalida_sem_numeros(self):
+        """Tag sem números, valida_tag retorna False"""
+        self.assertFalse(valida_tag("PT"), [])
+
+    def test_tag_invalida_quatro_numeros(self):
+        """Tag com quatro números, valida_tag retorna False"""
+        self.assertFalse(valida_tag("PT4141"), [])
 
 
 if __name__ == "__main__":

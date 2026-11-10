@@ -17,7 +17,7 @@ from fornecido.simulador import gerar_log
 from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
                               medir_tempos, serie, valida_tag)
 
-MATRICULA = 123456  # troque pelo seu número de matrícula
+MATRICULA = 3527  # troque pelo seu número de matrícula
 
 
 def _todo(item: str):
@@ -44,11 +44,19 @@ def etapa1(texto: str, verdade: dict) -> list:
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
-    por_nivel = _todo("1(b)")
+    
+    por_nivel = {}
+    for registro in registros:
+        if not por_nivel.get(registro.nivel):
+            por_nivel[registro.nivel] = 1
+        else:
+            por_nivel[registro.nivel] += 1
+        
     assert por_nivel == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
-    total = _todo("1(c)")
+    valores = serie(registros, "FT201", "pulsos")
+    total = np.sum(valores)
     assert total == verdade["pulsos_total"]
 
     # (d) valida_tag.
@@ -63,8 +71,8 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     """Etapa 2 — Lambda e compreensões (issue #2)."""
     print("\n=== Etapa 2: lambda e compreensões ===")
     # (a) Ordene com sorted e key=lambda: (i) por (tag, instante); (ii) por instante decrescente.
-    por_tag_instante = _todo("2(a)(i)")
-    decrescente = _todo("2(a)(ii)")
+    por_tag_instante = sorted(registros, key=lambda r : (r.tag, r.instante))
+    decrescente = sorted(registros, key=lambda r : r.instante, reverse=True)
     assert por_tag_instante[0].tag == "B1"
     assert decrescente[0].instante == max(r.instante for r in registros)
 
