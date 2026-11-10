@@ -66,8 +66,8 @@ class Trapezio(Integrador):
         """
         x, y = _validar_tabela(x, y)
         # O SCADA registra uma leitura a cada 15 min, então o passo é o mesmo em toda a tabela.
-        h = x[1] - x[0]
-        return float(h * (0.5 * y[0] + y[1:-1].sum() + 0.5 * y[-1]))
+        dx = np.diff(x)
+        return float(np.sum(dx * (y[:-1] + y[1:]) * 0.5))
 
 
 class Simpson(Integrador):
