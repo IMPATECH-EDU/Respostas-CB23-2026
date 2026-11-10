@@ -99,3 +99,22 @@ diferentes para PT102. Explique a diferença entre precisão e exatidão com ess
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 desvio 0,543 (linear) x 0,545 (spline), viés −1,829 x 0,001 kPa
 A curva linear tem um erro sistemático por estar sempre um pouco abaixo do seno. O número de leituras melhora o desvio de maneira semelhante para ambas as curvas, mas o viés é sistemático.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+A bissecção só depende do intervalo e da tolerância, não de f. Com [2, 15] com tol 1e-12, são ⌈log2(13 / 1e-12)⌉ = 44 iterações para qualquer Re.
+Ordem 2 significa que o número de dígitos tende a dobrar a cada iteração. Em Re = 1e4 os expoentes dos erros vão −2 -> −5 -> −12, e a ordem estimada é 2.00.
+O Newton falha em f(x) = x^3 − 2x + 2 começando em 0, por alternar entre 0 e 1 sem nunca convergir. A bissecção em [−2, 0], onde há troca de sinal, encontra a raiz −1.7693 normalmente.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+Testes de regressão: TestNewton.test_iteracoes e TestNewton.test_erro.
+Com a derivada fixa no ponto inicial, perto da raiz o erro vira e_{k+1} ≈ (1 − f'(r)/f'(x_0))·e_k, só é multiplicado por uma constante a cada passo, então convergência linear. A quadrática exige f'(x_k), que acompanha a aproximação.
+Os testes de aceitação só verificam que a raiz está certa, e o método lento chega na mesma raiz.
