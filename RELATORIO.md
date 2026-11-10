@@ -13,7 +13,6 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 /home/renan/venvs/prog2-venv/bin/python
 === Etapa 0: ambiente ===
 Python 3.12.3 | NumPy 2.5.4 | fornecido 4.0
-(falta coisa ainda)
 ```
 
 ### R1 — Expressões regulares
@@ -30,6 +29,13 @@ letras maiúsculas e de 1 a 3 dígitos, e não mais que isso.
 ### R2 — Linhas inválidas
 
 <!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
+
+A função ler_log devolve as linhas descartadas devido a integridade da informação: jogar fora os logs inválidos estaria 
+jogando informação fora, não sendo possível resgatar parte dela ou entender um erro que possa estar ocorrendo com os dados,
+de modo que a investigação é sobre a captação ou transmissão deles. Uma situação real para exemplificar o problema de jogar
+os dados fora seria um eventual pico de dados ser considerado inválido e descartado, mas esse pico de dados pode nos estar
+informando que algum aparelho de captação como o RTU dos dados ou alguma rede de comunicação está defeituosa. Com meus dados
+recebi 4 linhas avisando sobre invalides de dados, onde elas apontam falha na comuniação com o RTU, e isso é importante saber.
 
 ### R3 — Late binding
 
