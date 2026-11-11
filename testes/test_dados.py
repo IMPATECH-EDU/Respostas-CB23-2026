@@ -4,8 +4,7 @@ Regras: pelo menos 8 testes seus (o exemplo abaixo não conta), uma docstring em
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.allclose.
 """
 import unittest
-
-from elevatoria.dados import por_tag
+from elevatoria.dados import ler_log, por_tag
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -18,7 +17,19 @@ class TestPorTagExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestLerLogRegras(unittest.TestCase):
+    def test_rejeita_data_impossivel_e_preserva_espacos(self):
+        """Devolve a linha com data impossível e seus espaços finais."""
+        linha = "2026-13-05 08:00:00 INFO PT101 contagens=131  "
 
+        self.assertEqual(ler_log(linha), ([], [linha]))
+
+    def test_rejeita_linha_sem_par_chave_valor(self):
+        """Descarta a linha cujo conteúdo não tem nenhum par chave=valor."""
+        linha = "2026-10-05 08:00:00 INFO PT101 leitura_incompleta"
+
+        self.assertEqual(ler_log(linha), ([], [linha]))
+        
 
 if __name__ == "__main__":
     unittest.main()
