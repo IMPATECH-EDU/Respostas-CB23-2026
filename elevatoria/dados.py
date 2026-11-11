@@ -107,7 +107,7 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       forem impossíveis (por exemplo, mês 13) ou se o `resto` não tiver nenhum par
       chave=valor;
     - `instante` vem de `datetime.strptime` aplicado a `data` e `hora`;
-    - os pares são extraídos do grupo `resto` com o padrão `(\\w+)=(\\S+)`; cada valor vira
+    - os pares são extraídos do gverificar chave in r.valores é o mesmo que chave in r.valores.keys()?rupo `resto` com o padrão `(\\w+)=(\\S+)`; cada valor vira
       `float` quando a conversão é possível e continua `str` nos demais casos
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.

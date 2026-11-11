@@ -18,6 +18,12 @@ from dataclasses import dataclass
 import numpy as np
 from scipy import stats
 
+import os
+import sys
+raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if raiz not in sys.path:
+    sys.path.append(raiz)
+
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.dados import Registro, serie
 from fornecido.medida import Medida
@@ -42,28 +48,72 @@ class Medicao:
 
 def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
           u_sistematica: float = 0.0, limiar: float = 6.0) -> Medicao:
-    """Mede a grandeza registrada pela `tag` no log.
+      """Mede a grandeza registrada pela `tag` no log.
 
-    Passos:
+      Passos:
 
-    1. obtém as contagens da `tag` (chave `"contagens"`) com `serie`, do Marco 1;
-    2. converte as contagens com a `curva`;
-    3. descarta as leituras espúrias pelo z robusto: `z = (x - mediana) / MAD`, com a MAD
-       calculada por `scipy.stats.median_abs_deviation(x, scale="normal")`; uma leitura é
-       espúria se `|z| > limiar`. Os índices em `espurias` são posições na série da tag
-       (a primeira leitura da tag tem índice 0);
-    4. com as leituras válidas, calcula a média, o desvio padrão amostral (`ddof=1`) e o erro
-       padrão da média (`scipy.stats.sem`);
-    5. devolve uma `Medicao` cuja `medida` é `Medida(média, u)`, com
-       `u = sqrt(erro_padrao² + u_sistematica²)`.
+      1. obtém as contagens da `tag` (chave `"contagens"`) com `serie`, do Marco 1;
+      2. converte as contagens com a `curva`;
+      3. descarta as leituras espúrias pelo z robusto: `z = (x - mediana) / MAD`, com a MAD
+      calculada por `scipy.stats.median_abs_deviation(x, scale="normal")`; uma leitura é
+      espúria se `|z| > limiar`. Os índices em `espurias` são posições na série da tag
+      (a primeira leitura da tag tem índice 0);
+      4. com as leituras válidas, calcula a média, o desvio padrão amostral (`ddof=1`) e o erro
+      padrão da média (`scipy.stats.sem`);
+      5. devolve uma `Medicao` cuja `medida` é `Medida(média, u)`, com
+      `u = sqrt(erro_padrao² + u_sistematica²)`.
 
-    `u_sistematica` é a incerteza do instrumento, que não diminui com o número de leituras.
+      `u_sistematica` é a incerteza do instrumento, que não diminui com o número de leituras.
 
-    Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
-    for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
-    fora do domínio) não é tratado: ele chega a quem chamou `medir`.
-    """
-    raise NotImplementedError("issue #6: medir")
+      Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
+      for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
+      fora do domínio) não é tratado: ele chega a quem chamou `medir`.
+      """
+
+      # Levantamos ValueError se u_sistematica for menor que 0
+      if u_sistematica<0:
+         raise ValueError(f"valor inválido para u_sistematica: {u_sistematica}")
+
+      nuem=serie(registros, tag, "contagens")  # SerieTemporal com o valor de chave dos registros da `tag` que têm essa chave
+      
+      if nuem.size<2:       # Verifico se a tag teve menos de 2 leituras
+          raise ValueError(f"Tag possui menos de 2 leituras")
+      
+      conts=curva(nuem)                                        # Valores calibrados por meio de curva
+      medana=np.median(conts)                                  # Cáculo da mediana dos valores
+      mad= stats.median_abs_deviation(conts, scale="normal")   # Cálculo da MAD dos valores já calibrados
+      
+      # Verificação se o MAD é nulo
+      if mad == 0:
+          raise ValueError(f"valor de MAD é nulo.")
+      
+      # np.ndarray com os valores de espurias
+      zsco=(conts-medana)/mad
+
+      # Indicies dos espurias que são maiors que o limiar, usamos operações vetorizadas para realizar essa comparação
+      lisa=np.where(np.abs(zsco)>limiar)[0].tolist() 
+
+      # Calculamos a quantidade de valores válidos e vemos se restam no mínimo 2 medições
+      n_validas=nuem.size - len(lisa)
+      if n_validas<2:
+         raise ValueError(f"Restaram menos de 2 valores: {n_validas}")
+
+      # Vamos usar a ideia de Mascara Booleana do NumPy
+      mascara = np.ones(conts.size, dtype=bool)
+      mascara[lisa] = False
+      validos = conts[mascara]
+
+      # Agora calculamos os dados apenas com os valores válidos
+      media=validos.mean()
+      desvio=np.std(validos, ddof=1)
+      erro=stats.sem(validos)
+      u = np.sqrt(erro**2 + u_sistematica**2)
+      medid_fin = Medida(media, u)
+      
+      # Retornamos a medição como sendo da clase Medicao
+      return Medicao(tag, medid_fin, desvio, n_validas, lisa)
+
+      raise NotImplementedError("issue #6: medir")
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +125,12 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
+
+    # Através da função definida medir() realizamos a medida da pressão para PT101 e para PT102
+    m_1=medir(registros, "PT101", curva, u_sistematica)
+    m_2=medir(registros, "PT102", curva, u_sistematica)
+
+    # Realizamos o cálculo mediante a fórmula dada na dcstring da função
+    return ((m_2.medida-m_1.medida)*1000)/(MASSA_ESPECIFICA*GRAVIDADE)
+
     raise NotImplementedError("issue #6: altura_manometrica")
