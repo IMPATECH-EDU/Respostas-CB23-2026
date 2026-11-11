@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — Mariana Medeiros de Oliveira (3515)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -9,9 +9,16 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
 
+/home/al.mariana.medeiros/venvs/prog2-venv/bin/python
+
+=== Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.4 | fornecido 4.0
+
 ### R1 — Expressões regulares
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
+
+Com PT101abc, re.match encontra PT101 no início da string. re.fullmatch exige que a string inteira siga o padrão e rejeita a entrada por causa do sufixo abc. Se valida_tag usasse match, aceitaria essa tag inválida.
 
 ### R2 — Linhas inválidas
 

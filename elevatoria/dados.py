@@ -29,7 +29,22 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+PADRAO_TAG = r"[A-Z]{1,2}[0-9]{1,3}"
+
+LINHA: re.Pattern = re.compile(
+    rf"""
+    (?P<data>[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}})  # data AAAA-MM-DD
+    [ ]+
+    (?P<hora>[0-9]{{2}}:[0-9]{{2}}:[0-9]{{2}})  # hora HH:MM:SS
+    [ ]+
+    (?P<nivel>INFO|WARN|ALARME)                 # nível do registro
+    [ ]+
+    (?P<tag>{PADRAO_TAG})                       # identificador do instrumento
+    [ ]+
+    (?P<resto>\S.*)                             # conteúdo após a tag
+    """,
+    re.VERBOSE,
+)
 
 
 @dataclass(frozen=True)
@@ -48,8 +63,7 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
-
+    return re.fullmatch(PADRAO_TAG, s) is not None
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     """Lê o texto do log e devolve `(registros, invalidas)`.
