@@ -24,6 +24,8 @@ Com PT101abc, re.match encontra PT101 no início da string. re.fullmatch exige q
 
 <!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
 
+A função `ler_log` devolve as linhas inválidas para que seja possível conferir o que foi descartado e investigar por quê. Por exemplo, se uma falha de comunicação cortar várias linhas de leitura de pressão, descartá-las em silêncio faria parecer que não houve leituras naquele intervalo. Com as linhas originais em mãos, dá para ver que chegaram dados, mas que eles estavam incompletos.
+
 ### R3 — Late binding
 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->

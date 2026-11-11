@@ -83,8 +83,41 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+    registros: list[Registro] = []
+    invalidas: list[str] = []
 
+    for linha in texto.splitlines():
+        if not linha.strip():
+            continue
+
+        campos = LINHA.fullmatch(linha)
+        if campos is None:
+            invalidas.append(linha)
+            continue
+
+        try:
+            instante = datetime.strptime(
+                f"{campos['data']} {campos['hora']}", "%Y-%m-%d %H:%M:%S"
+            )
+        except ValueError:
+            invalidas.append(linha)
+            continue
+
+        pares = re.findall(r"(\w+)=(\S+)", campos["resto"])
+        if not pares:
+            invalidas.append(linha)
+            continue
+
+        valores: dict[str, float | str] = {}
+        for chave, valor in pares:
+            try:
+                valores[chave] = float(valor)
+            except ValueError:
+                valores[chave] = valor
+
+        registros.append(Registro(instante, campos["nivel"], campos["tag"], valores))
+
+    return registros, invalidas
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
     """Registros da `tag`, na ordem original."""
