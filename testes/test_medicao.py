@@ -59,7 +59,7 @@ class TestMedir(unittest.TestCase):
 
     def test_u_sistematica_negativa(self):
         """Verifica se incerteza sistemática negativa gera ValueError."""
-        
+        # Crio dois registros válidos a fim de ver se a função medir lança ValueError ao termos u_sistematica negativa
         inst= datetime.strptime("2026-05-10 08:00:00", "%Y-%m-%d %H:%M:%S")
         
         registros = [
@@ -67,10 +67,28 @@ class TestMedir(unittest.TestCase):
             Registro(instante=inst, nivel= "INFO", tag="PT101", valores={"contagens": 110}),
         ]
 
-        curva=CurvaCalibracao()
+        curva = CurvaCalibracao(
+        [0, 100, 200],
+        [0, 10, 20],
+        "linear")
+
         with self.assertRaises(ValueError):
             medir(registros, "PT101", curva, u_sistematica=-1)
 
+    def test_contagens_fora_do_dominio(self):
+        """Verifica se contagens fora do domínio da curva geram ValueError."""
+        inst = datetime.strptime("2026-05-10 08:00:00", "%Y-%m-%d %H:%M:%S")
+
+        # Com os mesmos registros da função anterior eu faço o teste se as constagens estão fora do domínio
+        registros = [
+            Registro(instante=inst, nivel="INFO", tag="PT101", valores={"contagens": 100}),
+            Registro(instante=inst, nivel="INFO", tag="PT101", valores={"contagens": 110}),
+        ]
+
+        curva = CurvaCalibracao([0, 100, 200], [0, 10, 20], "linear")
+
+        with self.assertRaises(ValueError):
+            medir(registros, "PT101", curva)
 
 if __name__ == "__main__":
     unittest.main()
