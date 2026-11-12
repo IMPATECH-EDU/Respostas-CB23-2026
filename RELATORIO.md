@@ -85,38 +85,35 @@ Saida  da Etapa 0 de `python marco2.py`: `=== Etapa 0: ambiente === Python 3.13.
 depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
 é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
 
-`Tabela obtida`
-(b) derivada exata em c = 1000: 0.213432888873 kPa/contagem
-      k |       h   |      erro
-      0    1e+00    1.658e-05
-      1    1e-01    1.657e-06
-      2    1e-02    1.657e-07
-      3    1e-03    1.654e-08
-      4    1e-04    1.651e-09
-      5    1e-05    6.224e-10
-      6    1e-06    2.336e-08
-      7    1e-07    6.191e-08
-      8    1e-08    6.191e-08
-      9    1e-09    1.415e-05
-     10    1e-10    2.984e-04
-     11    1e-11    2.572e-03
-     12    1e-12    1.394e-02
-     13    1e-13    3.550e-01
-     14    1e-14    2.134e-01
-    menor erro: h = 1e-5, erro = 6.224e-10
+Pela forma de como o computador cálcula a derivada numérica mediante uma aproximação que é dada pela seguinte fórmula: `f'(c)=[f(c+h)-f(c)]/h`. Nesse sentido, quando `h` vai diminuindo, temos que o ponto `(c+h)` se aproxima do ponto `c`, o que, evidentemente, melhora a aproximação. Nesse sentido, inicialmente, temos h grande (igual a 1), o que faz com que essa aproximação não seja bem representada, ou seja, existe erro de truncamento.
 
+Perceba que, no entanto, ao passo que `h` vai ficando cada vez mais pequeno acontece erro de aproximação pela razão da limitação de representação de números não inteiros por parte do python. Além disso, perceba que com `h` ficando cada vez mais pequeno acontece do valor calculado pela fórmula de aproximação o valor cresce na medida que `h` diminui, o que faz um impacto maior no calculo do erro dessa aproximação.
 
-Pela forma de como o computador cálcula a derivada numérica mediante uma aproximação que é dada pela seguinte fórmula: `f'(c)=[f(c+h)-f(c)]/h`. Nesse sentido, quando `h` vai diminuindo, temos que o ponto `(c+h)` se aproxima do ponto `c`, o que, evidentemente, melhora a aproximação. No entanto, ao passo que `h` vai ficando cada vez mais pequeno acontece erro de aproximação pela razão da limitação dos números não inteiros por parte do python. Além disso, perceba que com `h` ficando cada vez mais pequeno acontece do valor calculado pela fórmula de aproximação o valor cresce na medida que `h` diminui, o que faz um impacto maior no calculo do erro dessa aproximação.
-
+Agora note que para h = 10⁻¹⁴, ocorre uma limitação da precisão numérica do computador: a expressão 1000 + 10⁻¹⁴ resulta no próprio valor 1000. Dessa forma, a diferença entre os valores da função torna-se zero, produzindo uma derivada numérica igual a zero,  o que sabendo que a derivada exata é 0,213432888873, o erro absoluto passa a ser exatamente esse valor, evidenciando que o erro é a própria derivada pela razão do computador aproximar para 0 o valor de 1e-14.
 
 ### R9 — Issue #7
 
 <!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
 t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
 de aceitação não pegaram o defeito. -->
+Nome dos testes: 
+`1- test_soma_um_milhao_de_decimos`
+`2- test_kahan_e_mais_preciso_que_ingenuo`
+
+Antes da linha `t-(s+y)`, temos `t=(s+y)`. Portanto, t e s + y representam o mesmo resultado calculado em ponto flutuante para o computador, o que nos dá, basicamente: `(t-t)`. Em suma, o detalhe importante é que, em ponto flutuante, as operações sofrem arredondamentos. Dessa forma, embora as expressões sejam algebricamente equivalentes elas não são necessariamente equivalentes numericamente, porque a ordem das operações altera onde os arredondamentos acontecem.
+
+Agora, veja que os testes de aceitação não identificaram o defeito, porque não verificavam especificamente a precisão do acumulador em uma sequência grande de somas de valores decimais, já que é em uma soma muito grande em que esse erro fica mais destacado. Com essa ideia, os testes de regressão criados abrangem esse caso.
 
 ### R10 — Precisão × exatidão
 
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+
+Sabemos que precisão está ligado ao quanto as medidas estão proximas uma das outras (ou seja, ligada a dispersão delas, logo, podemos notar que quanto menor for o desvio padrão, mais precisa serão as medidas). Com isso, podemos ver que as curvas lineares e spline apresentaram desvios praticamente iguais para o PT102, o que nos induz a perceber que ambsa possuem um desvio padrão semelhante.
+
+Porém, vemos uma distinção quanto aos viéses. Isso, pois ,sabendo que exatidão diz respeito ao quanto as medidas estão próximas do valor verdadeiro, é possível que uma curva produza medições consistentes, mas mesmo assim apresentar um resultado médio distante do valor esperado.
+
+Nesse sentido, podemos notar que a média de quase 600 medidas pode reduzir a influência de erros aleatórios, mas ainda assim não eliminia os erros sistemáticos. Para a curva linear, o viés está ligado à aproximação feita durante a calibração. Mas, como esse erro é introduzido sistematicamente pela curva, ele permanece mesmo quando aumentamos a quantidade de medições.
+
+Portanto, os resultados demonstram que ter boa precisão não significa necessariamente ter boa exatidão. 
