@@ -42,11 +42,12 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` |Cerca de 18×|18,00×|
+| Memória da lista / memória do `uint16` |Cerca de 18×|18.00×|
 | Tempo do laço / tempo vetorizado |Cerca de 10×|19.45×|
 | Tempo da compreensão / tempo do laço |Cerca de 0,8×|0.91×|
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
+A maior diferença foi no tempo do laço em relação ao NumPy. Previ cerca de 10× e medi 19,45×. O NumPy opera sobre o array inteiro em código compilado, enquanto o laço executa a conversão elemento por elemento em Python. Em uint16, 4095 × 20 dá 16364 porque o resultado exato, 81900, excede 65535 e sobra 81900 − 65536. Eu usaria uint16 para as contagens de 0 a 4095 e float64 para as pressões em kPa, que podem ter casas decimais.
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 

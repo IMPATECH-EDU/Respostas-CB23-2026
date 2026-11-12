@@ -148,7 +148,8 @@ def etapa3() -> None:
     estouro = np.array([4095], dtype=np.uint16) * 20
     assert misto.dtype.kind == "U"
     assert estouro[0] == 16364 and 4095 * 20 == 81900
-
+    print(f"Array misto: {misto.tolist()} | dtype: {misto.dtype}")
+    print(f"4095 × 20 em uint16: {estouro[0]} | resultado exato: {4095 * 20}")
 
 def etapa4(registros: list) -> None:
     """Etapa 4 — A série de pressão (issues #4 e #5)."""
