@@ -53,13 +53,14 @@ A maior diferença foi no tempo do laço em relação ao NumPy. Previ cerca de 1
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | SerieTemporal| |
-| `s[1:]` | SerieTemporal| |
-| `s * 2` | SerieTemporal| |
-| `s.sum()` | SerieTemporal de dimensão 0| |
-| `s[0]` |numpy.float64 | |
+| `s + s` | SerieTemporal| SerieTemporal|
+| `s[1:]` | SerieTemporal|SerieTemporal |
+| `s * 2` | SerieTemporal| SerieTemporal|
+| `s.sum()` | SerieTemporal de dimensão 0|SerieTemporal |
+| `s[0]` |numpy.float64 | float64|
 
 <!-- Explique o resultado que mais surpreendeu você. -->
+O resultado que mais me surpreendeu foi `s.sum()`. Mesmo resumindo toda a série a um único valor, a soma preservou o tipo `SerieTemporal` em um array de dimensão zero. Já `s[0]` retornou um escalar `float64` ao acessar um único elemento.
 
 ### R7 — Issue #4
 
