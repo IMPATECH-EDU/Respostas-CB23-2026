@@ -42,9 +42,9 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | | |
-| Tempo do laço / tempo vetorizado | | |
-| Tempo da compreensão / tempo do laço | | |
+| Memória da lista / memória do `uint16` |Cerca de 18×| |
+| Tempo do laço / tempo vetorizado |Cerca de 10×| |
+| Tempo da compreensão / tempo do laço |Cerca de 0,8×| |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
@@ -52,11 +52,11 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` | SerieTemporal| |
+| `s[1:]` | SerieTemporal| |
+| `s * 2` | SerieTemporal| |
+| `s.sum()` | SerieTemporal de dimensão 0| |
+| `s[0]` |numpy.float64 | |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
 
