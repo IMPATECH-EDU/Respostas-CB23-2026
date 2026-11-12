@@ -64,3 +64,4 @@ A maior diferença foi no tempo do laço em relação ao NumPy. Previ cerca de 1
 ### R7 — Issue #4
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
+Para 600 pontos e uma janela de 30, media_movel devolvia 570 médias em vez de 571. Os testes test_inclui_a_primeira_janela e test_janela_do_tamanho_da_serie reproduziram o problema. A soma acumulada começava no primeiro valor da série, então as diferenças entre as fatias pulavam a primeira janela. Acrescentei um zero no início da soma acumulada, e os dois testes passaram.
