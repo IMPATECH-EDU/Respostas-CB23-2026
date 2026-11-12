@@ -29,6 +29,7 @@ A função `ler_log` devolve as linhas inválidas para que seja possível confer
 ### R3 — Late binding
 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
+Na versão errados, as lambdas consultam a mesma variável fator quando são chamadas. Nesse momento, ela já tem o último fator da compreensão, 0,1, que pertence a FT201. Por isso, errados["PT102"](4095) calcula 4095 × 0,1 = 409,5. Em criar_conversores, o argumento padrão fator=fator guarda o valor de cada tag no momento em que a lambda é criada.
 
 ### R4 — Escala nominal
 
