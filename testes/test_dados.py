@@ -5,6 +5,7 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 from elevatoria.dados import ler_log, por_tag
+from elevatoria.serie import SerieTemporal
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -29,7 +30,31 @@ class TestLerLogRegras(unittest.TestCase):
         linha = "2026-10-05 08:00:00 INFO PT101 leitura_incompleta"
 
         self.assertEqual(ler_log(linha), ([], [linha]))
+
+
+class TestMediaMovelRegressao(unittest.TestCase):
+    def test_inclui_a_primeira_janela(self):
+        """Inclui a média dos dois primeiros pontos como primeiro resultado."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 8.0])
+
+        resultado = s.media_movel(2)
+
+        self.assertAlmostEqual(resultado[0], 3.0)
+        self.assertEqual(len(resultado), 2)
+        self.assertAlmostEqual(resultado[1], 6.0)
+
+    def test_janela_do_tamanho_da_serie(self):
+        """Uma janela do tamanho da série devolve uma única média."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0])
+
+        resultado = s.media_movel(3)
+
+        self.assertEqual(len(resultado), 1)
+        self.assertAlmostEqual(resultado[0], 4.0)
+
         
+
+
 
 if __name__ == "__main__":
     unittest.main()
