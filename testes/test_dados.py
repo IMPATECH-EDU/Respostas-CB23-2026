@@ -4,6 +4,7 @@ Regras: pelo menos 8 testes seus (o exemplo abaixo não conta), uma docstring em
 dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.allclose.
 """
 import unittest
+import numpy as np
 from elevatoria.dados import ler_log, por_tag
 from elevatoria.serie import SerieTemporal
 
@@ -52,7 +53,40 @@ class TestMediaMovelRegressao(unittest.TestCase):
         self.assertEqual(len(resultado), 1)
         self.assertAlmostEqual(resultado[0], 4.0)
 
-        
+
+class TestReamostrarProprio(unittest.TestCase):
+    def test_calcula_media_de_cada_bloco(self):
+        """Calcula uma média por bloco completo e preserva o tipo."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0, 8.0])
+
+        resultado = s.reamostrar(2)
+
+        self.assertIsInstance(resultado, SerieTemporal)
+        self.assertTrue(np.allclose(resultado, [3.0, 7.0]))
+
+    def test_descarta_sobra_no_fim(self):
+        """Ignora o ponto final que não completa um bloco."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0, 8.0, 100.0])
+
+        resultado = s.reamostrar(2)
+
+        self.assertEqual(len(resultado), 2)
+        self.assertTrue(np.allclose(resultado, [3.0, 7.0]))
+
+    def test_bloco_unitario_preserva_os_valores(self):
+        """Com k igual a um, cada ponto vira a média do próprio bloco."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0])
+
+        self.assertTrue(np.allclose(s.reamostrar(1), s))
+
+    def test_janela_do_tamanho_da_serie_gera_um_bloco(self):
+        """Com k igual ao tamanho da série, devolve uma única média."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0])
+
+        resultado = s.reamostrar(3)
+
+        self.assertEqual(len(resultado), 1)
+        self.assertAlmostEqual(resultado[0], 4.0)
 
 
 
