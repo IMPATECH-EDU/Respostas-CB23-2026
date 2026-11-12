@@ -17,7 +17,7 @@ if raiz not in sys.path:
 
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.dados import Registro
-from elevatoria.medicao import medir, Medida
+from elevatoria.medicao import medir, Medida, serie
 from fornecido.medida import Medida
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -75,20 +75,27 @@ class TestMedir(unittest.TestCase):
         with self.assertRaises(ValueError):
             medir(registros, "PT101", curva, u_sistematica=-1)
 
-    def test_contagens_fora_do_dominio(self):
-        """Verifica se contagens fora do domínio da curva geram ValueError."""
-        inst = datetime.strptime("2026-05-10 08:00:00", "%Y-%m-%d %H:%M:%S")
+    def test_pelo_menos_duas_leituras(self):
+        """Verifico se a função medir lança ValueError quando a tag que temos fez menos de 2 leituras"""
 
-        # Com os mesmos registros da função anterior eu faço o teste se as constagens estão fora do domínio
+        inst= datetime.strptime("2026-05-10 08:00:00", "%Y-%m-%d %H:%M:%S")
+
+        # Registro hipotético com menos de duas leituras
         registros = [
-            Registro(instante=inst, nivel="INFO", tag="PT101", valores={"contagens": 100}),
-            Registro(instante=inst, nivel="INFO", tag="PT101", valores={"contagens": 110}),
+            Registro(
+                instante=inst,
+                nivel="INFO",
+                tag="PT101",
+                valores={"contagens": 100}
+            )
         ]
-
         curva = CurvaCalibracao([0, 100, 200], [0, 10, 20], "linear")
 
+        # Realizo o teste se a função, de fato, executa ValueError para esse cenário
         with self.assertRaises(ValueError):
             medir(registros, "PT101", curva)
+
+
 
 if __name__ == "__main__":
     unittest.main()

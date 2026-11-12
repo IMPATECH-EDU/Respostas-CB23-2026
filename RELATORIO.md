@@ -39,10 +39,12 @@ Hash Curt do commit: `076e08f`
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
 | Memória da lista / memória do `uint16` | `17 vezes` | `18 vezes`|
-| Tempo do laço / tempo vetorizado | `10 vezes`| `|
-| Tempo da compreensão / tempo do laço | `1.2 vezes`| |
+| Tempo do laço / tempo vetorizado | `10 vezes`| `61.77`|
+| Tempo da compreensão / tempo do laço | `1.2 vezes`| `1.10` |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
+Observe que o que teve maior diferença foi o de tempo vetorizado, o que é razoável já que suas operações são implementadas puramente com a biblioteca do NumPy, logo, suas opewrações devem ser todas mais eficientes  quando comparadas com as operações clássicas do Python.
+
 
 Sabemos que o formato uint16 suporta valores de 0 até 65535. Sendo assim, ao realizarmos a linha `estouro = np.array([4095], dtype=np.uint16) * 20`, teriamos 81.900 que é um valor muito maio do que o suportado pelo tipo `uint16` (processo de overflow). Nesse sentido, o numpy não consegue armazenar esse número e "reinicia" a contagem resultando em [81900-65536]=[16364].
 Acerca do dtype para contagens e para kPa, uma boa escolha seria, para o primeiro, `uint16`. Isso pois esse dtype só armazena números não negativo (contagens é um número de 12 bits e, logo, entre 0 e 4095) e vai no máximo até 65535. Veja ainda que `uint8` não poderia ser uma escolha já que ele abrange apenas número de 0 até 255. 
@@ -51,14 +53,15 @@ Por fim, para a medição de `kPa` poderíamos escolher o dtype de `float64`, qu
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | `SerieTemporal` | |
-| `s[1:]` | `SerieTemporal` | |
-| `s * 2` | `SerieTemporal` | |
-| `s.sum()` | `SerieTemporal` | |
-| `s[0]` | `SerieTemporal` | |
+| `s + s` | `SerieTemporal` | `<class 'elevatoria.serie.SerieTemporal'>` |
+| `s[1:]` | `SerieTemporal` | `<class 'elevatoria.serie.SerieTemporal'>` |
+| `s * 2` | `SerieTemporal` | `<class 'elevatoria.serie.SerieTemporal'>` |
+| `s.sum()` | `SerieTemporal` | `<class 'elevatoria.serie.SerieTemporal'>` |
+| `s[0]` | `SerieTemporal` | `<class 'numpy.float64'>` |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
 Espera-se que o tipo a ser observado seja da mesma classe já que na implementação da mesma temos que ela estar a herdar `np.ndarray`. Isto é, essas operações devem estar todas definidas e dadas pela própria classe `np.ndarray`.
+No entanto, notamos que não foi o que se houve. Isso ocorreu devido a ideia de que ao indexarmos `s` estamos a verificar o tipo de um elemento específico da classe SerieTemporal, exatamente isso é o que nos faz ver que seria um numpy.float64, já que a classe SerieTemporal é composta, basicamente, como sendo uma np.ndarray de np.float64.
 
 
 ### R7 — Issue #4
@@ -67,3 +70,53 @@ Espera-se que o tipo a ser observado seja da mesma classe já que na implementa�
 
 O sintoma era a `media_movel` retornar 570 valores para 600 leituras com janela 30, quando deveria retornar 571. O teste de regressão `test_media_movel_tamanho_correto` identifica esse erro, justamente usando, além desse caso como exemplo, uma situação simples com os valores [1, 2, 3, 4, 5]. A causa era o cálculo da soma acumulada sem um zero inicial, que fazia a primeira janela ser perdida. 
 Podemos corrigir esse erro ao inserir um `0.0` no início da soma acumulada com `np.insert`, permitindo calcular todas as janelas e mantendo o retorno como `SerieTemporal` ao realizarmos, na linha do return, o método `view(SerieTemporal)`. Os testes de aceitação não detectaram o defeito porque verificavam o tipo de retorno e os erros para janelas inválidas, mas não a quantidade nem os valores calculados. Outro caso não coberto era verificar os valores exatos das médias; isso é coberto pelo teste `test_media_movel_valores_corretos`, usando `[1, 2, 3, 4, 5]` e janela 2.
+
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+Saida  da Etapa 0 de `python marco2.py`: `=== Etapa 0: ambiente === Python 3.13.15 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3490`
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+`Tabela obtida`
+(b) derivada exata em c = 1000: 0.213432888873 kPa/contagem
+      k |       h   |      erro
+      0    1e+00    1.658e-05
+      1    1e-01    1.657e-06
+      2    1e-02    1.657e-07
+      3    1e-03    1.654e-08
+      4    1e-04    1.651e-09
+      5    1e-05    6.224e-10
+      6    1e-06    2.336e-08
+      7    1e-07    6.191e-08
+      8    1e-08    6.191e-08
+      9    1e-09    1.415e-05
+     10    1e-10    2.984e-04
+     11    1e-11    2.572e-03
+     12    1e-12    1.394e-02
+     13    1e-13    3.550e-01
+     14    1e-14    2.134e-01
+    menor erro: h = 1e-5, erro = 6.224e-10
+
+
+Pela forma de como o computador cálcula a derivada numérica mediante uma aproximação que é dada pela seguinte fórmula: `f'(c)=[f(c+h)-f(c)]/h`. Nesse sentido, quando `h` vai diminuindo, temos que o ponto `(c+h)` se aproxima do ponto `c`, o que, evidentemente, melhora a aproximação. No entanto, ao passo que `h` vai ficando cada vez mais pequeno acontece erro de aproximação pela razão da limitação dos números não inteiros por parte do python. Além disso, perceba que com `h` ficando cada vez mais pequeno acontece do valor calculado pela fórmula de aproximação o valor cresce na medida que `h` diminui, o que faz um impacto maior no calculo do erro dessa aproximação.
+
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
