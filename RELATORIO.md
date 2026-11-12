@@ -34,6 +34,7 @@ Na versão errados, as lambdas consultam a mesma variável fator quando são cha
 ### R4 — Escala nominal
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
+A escala nominal de 600 / 4095 kPa por contagem deu 262,0 kPa, enquanto o valor de conferência foi 380,0 kPa. A diferença vem da relação usada pelo simulador para gerar as contagens. Na linha 61 de fornecido/simulador.py, as leituras de PT102 são geradas com c_real(PRESSAO_RECALQUE), com ruído e arredondamento. Como c_real segue outra relação entre pressão e contagem, aplicar a escala nominal a essas leituras resulta em um valor diferente da pressão usada pelo simulador.
 
 ### R5 — Previsão × medição (Etapa 3)
 

@@ -71,25 +71,25 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     """Etapa 2 — Lambda e compreensões (issue #2)."""
     print("\n=== Etapa 2: lambda e compreensões ===")
     # (a) Ordene com sorted e key=lambda: (i) por (tag, instante); (ii) por instante decrescente.
-    por_tag_instante = _todo("2(a)(i)")
-    decrescente = _todo("2(a)(ii)")
+    por_tag_instante = sorted(registros, key=lambda r: (r.tag, r.instante))
+    decrescente = sorted(registros, key=lambda r: r.instante, reverse=True)
     assert por_tag_instante[0].tag == "B1"
     assert decrescente[0].instante == max(r.instante for r in registros)
 
     # (b) Contagens de PT102 (só registros com a chave "contagens"): map/filter e compreensão.
-    com_map = _todo("2(b) map/filter")
-    com_compreensao = _todo("2(b) compreensão")
+    com_map = list(map(lambda r: r.valores["contagens"] ,filter(lambda r: r.tag == "PT102" and "contagens" in r.valores, registros, ), ))
+    com_compreensao = [r.valores["contagens"] for r in registros if r.tag == "PT102" and "contagens" in r.valores]
     assert com_map == com_compreensao and len(com_compreensao) == 600
 
     # (c) Contagens acima de 2000 (compreensão de lista) e tags distintas (de conjunto).
-    altas = _todo("2(c) altas")
-    tags = _todo("2(c) tags")
+    altas = [contagem for contagem in com_compreensao if contagem > 2000]
+    tags = {r.tag for r in registros}
     assert len(altas) == 5
     assert tags == {"B1", "PT101", "PT102", "FT201", "LT301"}
 
     # (d) Com re.sub e uma lambda como repl, troque pulsos=N por volume_L=V (V = N * 0,1,
     #     com uma casa decimal; por exemplo, pulsos=3892 vira volume_L=389.2).
-    convertido = _todo("2(d)")
+    convertido = re.sub(r"\bpulsos=([0-9]+)\b", lambda m: f"volume_L={int(m.group(1)) / 10:.1f}", texto,)
     assert convertido.count("volume_L=") == 600 and "pulsos=" not in convertido
 
     # (e) Late binding: a versão errada (não corrija esta linha) e a sua.
@@ -98,11 +98,19 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     certos = criar_conversores(escalas)
     assert math.isclose(errados["PT102"](4095), 409.5)
     assert math.isclose(certos["PT102"](4095), 600.0)
+    print(f"PT102 com a lambda errada: {errados['PT102'](4095):.1f} kPa")
+    print(f"PT102 com a lambda corrigida: {certos['PT102'](4095):.1f} kPa")
 
     # (f) Converta a média das contagens normais de PT102 (até 2000) com a escala nominal
     #     (certos["PT102"]) e imprima ao lado de verdade["pressao_recalque"].
-    p_nominal = _todo("2(f)")
+    normais = [contagem for contagem in com_compreensao if contagem <= 2000]
+    media_normal = sum(normais) / len(normais)
+    p_nominal = certos["PT102"](media_normal)
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
+    print(
+        f"Pressão nominal: {p_nominal:.1f} kPa | "
+        f"Pressão de conferência: {verdade['pressao_recalque']:.1f} kPa"
+    )
 
 
 def etapa3() -> None:
