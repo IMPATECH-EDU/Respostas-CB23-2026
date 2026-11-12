@@ -25,31 +25,31 @@ class TestContratoLerLog(unittest.TestCase):
 
     VALIDA = "2026-10-05 08:00:00 INFO PT101 contagens=131"
 
-    def linhas_branco_nao_invalidadas(self):
+    def test_linhas_branco_nao_invalidadas(self):
         """Linhas vazias ou só com espaços são ignoradas e não entram em `invalidas`."""
         texto = "\n   \n" + self.VALIDA + "\n\t\n"
         registros, invalidas = ler_log(texto)
         self.assertEqual(len(registros), 1)
         self.assertEqual(invalidas, [])
 
-    def data_impossivel_invalida(self):
+    def test_data_impossivel_invalida(self):
         """Linha que casa com LINHA, mas tem mês 13, vai para `invalidas`."""
         linha = "2026-13-05 08:00:00 INFO PT101 contagens=131"
         registros, invalidas = ler_log(linha)
         self.assertEqual(registros, [])
         self.assertEqual(invalidas, [linha])
 
-    def hora_impossivel_e_invalida(self):
+    def test_hora_impossivel_e_invalida(self):
         """Linha com hora 25:00:00 vai para `invalidas`."""
         linha = "2026-10-05 25:00:00 INFO PT101 contagens=131"
         self.assertEqual(ler_log(linha), ([], [linha]))
 
-    def resto_sem_pares_e_invalido(self):
+    def test_resto_sem_pares_e_invalido(self):
         """Linha onde `resto` não tem nenhum par chave=valor vai para `invalidas`."""
         linha = "2026-10-05 08:00:00 INFO PT101 sem_igual"
         self.assertEqual(ler_log(linha), ([], [linha]))
 
-    def invalidas_preservam_texto_e_ordem(self):
+    def test_invalidas_preservam_texto_e_ordem(self):
         """As inválidas voltam exatamente como no texto e na ordem em que aparecem."""
         ruins = ["### falha ###", "2026-10-05 08:20:4"]
         texto = "\n".join([ruins[0], self.VALIDA, ruins[1]])
