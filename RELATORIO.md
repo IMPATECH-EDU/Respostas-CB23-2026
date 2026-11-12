@@ -41,11 +41,12 @@ recebi 4 linhas avisando sobre invalides de dados, onde elas apontam falha na co
 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
 
-A forma errada é escrita assim `errados = {tag: (lambda c: c * k) for tag, k in escalas.items()}`. O problema disso é que o fator k
-usado na função lambda não é correlacionado com ela. Como k sempre varía e não é fixo para cada tag, logo quando a comprehesion acaba
-o valor de k é último possível. Se o último valor foi para um sensor de fluxo, logo ele guarda k = 0.1, e então o cálculo sai errado para
-os sensores de pressão, e por isso temos 409,5, que é 4095 * 0.1. A minha criar_conversores guarda o k junto com a lambda, logo não há o
-problema da variação de k influenciar a lambda: a lambda guarda a sua constante que será usada na hora. Esse problema também ocorre pel fato de criar_conversores ser uma função que apenas cria as conversões: se ela cria-se uma conversão e a aplicasse em seguida ainda daria certo.
+A forma errada é escrita assim `errados = {tag: (lambda c: c * k) for tag, k in escalas.items()}`. Como k sempre varía e não é
+fixo para cada tag, logo quando a comprehesion acaba o valor de k é último possível. Se o último valor foi para um sensor de fluxo,
+logo ele guarda k = 0.1, e então o cálculo sai errado para os sensores de pressão, e por isso temos 409,5, que é 4095 * 0.1. A
+minha criar_conversores guarda o k junto com a lambda, logo não há o problema da variação de k influenciar a lambda: a lambda guarda
+a sua constante que será usada na hora. Esse problema também ocorre pel fato de criar_conversores ser uma função que apenas cria as
+conversões: se ela cria-se uma conversão e a aplicasse em seguida ainda daria certo.
 
 ### R4 — Escala nominal
 
