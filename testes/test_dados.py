@@ -5,7 +5,7 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import por_tag, valida_tag
+from elevatoria.dados import ler_log, por_tag, valida_tag
 from elevatoria.serie import SerieTemporal
 
 
@@ -57,6 +57,38 @@ class TestValidaTag(unittest.TestCase):
         for tag in ["ABC1", "AB1234", " A1", "A1\n", "A1texto", ""]:
             with self.subTest(tag=tag):
                 self.assertFalse(valida_tag(tag))
+
+
+class TestLerLog(unittest.TestCase):
+    """Verifica regras do leitor que os testes de aceitação não cobrem."""
+
+    def test_ignora_linhas_em_branco(self) -> None:
+        """Linhas vazias ou só com espaços não entram nas linhas inválidas."""
+        texto = "\n   \n2026-10-05 08:00:00 INFO PT101 contagens=100\n\n"
+        registros, invalidas = ler_log(texto)
+
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(invalidas, [])
+        self.assertAlmostEqual(registros[0].valores["contagens"], 100.0)
+
+    def test_rejeita_data_e_hora_impossiveis(self) -> None:
+        """Datas e horários impossíveis são devolvidos como linhas inválidas."""
+        linhas = [
+            "2026-02-30 08:00:00 INFO PT101 contagens=100",
+            "2026-10-05 25:00:00 INFO PT101 contagens=100",
+        ]
+        registros, invalidas = ler_log("\n".join(linhas))
+
+        self.assertEqual(registros, [])
+        self.assertEqual(invalidas, linhas)
+
+    def test_rejeita_linha_sem_pares(self) -> None:
+        """Uma linha sem chave=valor é descartada preservando seus espaços."""
+        linha = "2026-10-05 08:00:00 INFO B1 evento de partida   "
+        registros, invalidas = ler_log(linha)
+
+        self.assertEqual(registros, [])
+        self.assertEqual(invalidas, [linha])
 
 
 if __name__ == "__main__":
