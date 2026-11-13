@@ -119,3 +119,23 @@ A precisão descreve a dispersão; a exatidão indica a proximidade do valor de 
 A spline foi mais exata, embora a dispersão tenha sido praticamente a mesma.
 A média das 595 leituras válidas reduz a incerteza aleatória, mas não elimina o viés
 da curva linear; a incerteza sistemática do instrumento também não diminui com a amostra.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+Em Colebrook, a bissecção usa o intervalo [2, 15] e tolerância 1e-12 em todos os casos.
+São 44 divisões para que 13/2^k < 1e-12, independentemente do Reynolds, salvo raiz exata.
+Para Re = 10000, os erros do Newton foram 5,0e-2, 2,3e-5 e 5,0e-12 perto da raiz.
+Ordem 2 significa que o erro seguinte é aproximadamente proporcional ao quadrado do atual;
+as ordens observadas foram 2,00, 1,98 e 2,00, com 5, 4 e 3 iterações de Newton.
+Em f(x) = x³ - 1, no intervalo [-2, 2], Newton com derivada exata falha em x = 0; a bissecção converge.
+
+### R12 — Issue #9
+
+Os testes foram `test_raiz_quadrada_com_derivada_exata` e `test_colebrook_com_derivada_numerica`.
+Ambos falharam antes da correção porque o método não convergia em até seis iterações.
+A derivada era calculada só no ponto inicial: a inclinação ficava fixa enquanto x mudava.
+Isso geralmente deixa um termo linear no erro; recalcular a derivada recupera a ordem 2
+perto de uma raiz simples. Em Colebrook com Re = 10000, foram necessárias 5 iterações.
+A aceitação conferia o valor da raiz e a convergência, mas não a velocidade nem a ordem.
