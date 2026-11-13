@@ -113,5 +113,28 @@ class TestMemoriaEConversao(unittest.TestCase):
         self.assertTrue(np.array_equal(contagens, copia))
 
 
+class TestReamostrar(unittest.TestCase):
+    """Verifica as médias por bloco e o descarte dos pontos restantes."""
+
+    def test_blocos_completos(self) -> None:
+        """Calcula a média de cada bloco sem modificar a série original."""
+        serie = SerieTemporal.de_lista([2, 4, 6, 8, 10, 12])
+        copia = serie.copy()
+        resultado = serie.reamostrar(2)
+
+        self.assertIsInstance(resultado, SerieTemporal)
+        self.assertTrue(np.allclose(resultado, [3.0, 7.0, 11.0]))
+        self.assertTrue(np.array_equal(serie, copia))
+
+    def test_descarta_sobra(self) -> None:
+        """Os pontos que não completam o último bloco são descartados."""
+        serie = SerieTemporal.de_lista([2, 4, 6, 8, 100])
+        resultado = serie.reamostrar(2)
+
+        self.assertIsInstance(resultado, SerieTemporal)
+        self.assertEqual(len(resultado), 2)
+        self.assertTrue(np.allclose(resultado, [3.0, 7.0]))
+
+
 if __name__ == "__main__":
     unittest.main()
