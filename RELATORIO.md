@@ -139,3 +139,23 @@ A derivada era calculada só no ponto inicial: a inclinação ficava fixa enquan
 Isso geralmente deixa um termo linear no erro; recalcular a derivada recupera a ordem 2
 perto de uma raiz simples. Em Colebrook com Re = 10000, foram necessárias 5 iterações.
 A aceitação conferia o valor da raiz e a convergência, mas não a velocidade nem a ordem.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+Integrando o custo de uma vez, as ordens observadas foram 1,00 no trapézio e 0,65 no Simpson.
+Os saltos da tarifa às 18 h e às 21 h quebram a suavidade necessária às ordens teóricas.
+O erro perto desses saltos pode dominar o resultado, reduzindo a ordem para perto de 1.
+Ao integrar por faixas, a tarifa é constante em cada trecho e a potência é suave.
+Assim, as ordens voltaram a 2,00 e 4,00; em n = 110, os erros foram 6,3e-4 e 8,1e-8 reais.
+O custo diário calculado a partir dos dados foi R$ 416,48, com erro de aproximadamente 0,11%.
+
+### R14 — Issue #11
+
+Os testes foram `test_funcao_constante_em_malha_irregular` e `test_reta_em_malha_irregular`.
+O código usava o primeiro intervalo como largura de todos os trapézios, ignorando as falhas.
+A correção usa `np.diff(x)` para calcular a largura de cada área; os testes antigos só
+verificavam o trapézio em malha uniforme, por isso não detectavam o defeito.
+O registro teve 89 leituras, com intervalos de 15, 30 e 45 minutos; Simpson exige malha uniforme.
+Com o trapézio corrigido, o volume foi 3888,29 m³, contra 3888,00 m³ de referência.
