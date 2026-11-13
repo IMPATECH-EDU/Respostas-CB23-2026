@@ -8,7 +8,9 @@ import unittest
 import math
 
 from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import fator_atrito_colebrook
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ponto_operacao
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -42,6 +44,33 @@ class TestNewton(unittest.TestCase):
 
         self.assertTrue(resultado.convergiu)
         self.assertAlmostEqual(fator, 0.03202, delta=5e-5)
+
+
+class TestPontoOperacao(unittest.TestCase):
+    """Verifica as validações do cálculo do ponto de operação."""
+
+    def setUp(self) -> None:
+        """Prepara uma curva de bomba e uma tubulação para os testes."""
+        self.bomba = CurvaCalibracao([0, 50, 100], [50, 40, 10], "spline")
+        self.tubulacao = Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Bisseccao())
+
+    def test_intervalo_invertido_ou_vazio(self) -> None:
+        """O limite inicial deve ser menor que o final."""
+        for a, b in [(90.0, 10.0), (50.0, 50.0)]:
+            with self.subTest(a=a, b=b), self.assertRaisesRegex(ValueError, "a < b"):
+                ponto_operacao(self.bomba, self.tubulacao, Bisseccao(), a, b)
+
+    def test_intervalo_fora_do_dominio(self) -> None:
+        """Os dois limites do intervalo devem pertencer ao domínio da bomba."""
+        for a, b in [(-1.0, 90.0), (10.0, 101.0)]:
+            with self.subTest(a=a, b=b), self.assertRaisesRegex(ValueError, "domínio"):
+                ponto_operacao(self.bomba, self.tubulacao, Bisseccao(), a, b)
+
+    def test_resolvedor_nao_convergiu(self) -> None:
+        """Um resolvedor que atinge max_iter sem convergir provoca ValueError."""
+        metodo = Bisseccao(tol=1e-12, max_iter=1)
+        with self.assertRaisesRegex(ValueError, "não convergiu"):
+            ponto_operacao(self.bomba, self.tubulacao, metodo)
 
 
 if __name__ == "__main__":
