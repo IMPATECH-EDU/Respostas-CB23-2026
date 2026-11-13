@@ -83,3 +83,39 @@ Faltava o zero inicial na soma acumulada, por isso a subtração pulava a primei
 A correção insere esse zero e mantém o retorno como `SerieTemporal`, sem alterar a série.
 Os testes de aceitação verificavam tipo e erros, mas não os valores nem o tamanho da média.
 Outro caso não coberto era log sem chave=valor, verificado por `test_rejeita_linha_sem_pares`.
+
+## Marco 2
+
+### Ambiente
+
+```text
+=== Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.3 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3493
+```
+
+### R8 — Derivada numérica
+
+Com h = 1, o erro foi 1,658e-5; o mínimo foi 6,224e-10, com h = 1e-5.
+No início, domina o erro de truncamento da diferença adiante, que diminui com h.
+Para passos muito pequenos, domina o arredondamento ao subtrair valores quase iguais
+e dividir por h. Por isso, diminuir o passo acaba aumentando o erro.
+Com h = 1e-14, `1000 + 1e-14 == 1000`: o numerador é zero e a aproximação também.
+Assim, o erro absoluto é o módulo da derivada, aproximadamente 0,213432888873.
+
+### R9 — Issue #7
+
+Os testes foram `test_um_milhao_de_pulsos` e `test_parcelas_pequenas_entre_grandes`.
+Como `t` já é o resultado arredondado de `s + y`, calcular `t - (s + y)` dá zero.
+Na expressão corrigida, `(t - s) - y`, a ordem das operações permite recuperar a perda;
+operações em ponto flutuante não são associativas, apesar da equivalência algébrica.
+Com um milhão de parcelas de 0,1, o resultado passou de 100000,00000133288 para 100000,0.
+A aceitação somava só dez parcelas e usava `math.isclose`, tolerando o pequeno erro.
+
+### R10 — Precisão × exatidão
+
+Em PT102, os desvios foram 0,560 kPa (linear) e 0,561 kPa (spline): precisão semelhante.
+Os viéses foram -1,863 kPa e -0,033 kPa, respectivamente, em relação aos 380 kPa.
+A precisão descreve a dispersão; a exatidão indica a proximidade do valor de referência.
+A spline foi mais exata, embora a dispersão tenha sido praticamente a mesma.
+A média das 595 leituras válidas reduz a incerteza aleatória, mas não elimina o viés
+da curva linear; a incerteza sistemática do instrumento também não diminui com a amostra.
