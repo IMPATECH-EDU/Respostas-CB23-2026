@@ -5,8 +5,12 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual, math.isc
 np.allclose, a não ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
+from datetime import datetime
 
 from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import Registro
+from elevatoria.medicao import medir
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -38,6 +42,43 @@ class TestAcumuladorKahan(unittest.TestCase):
         acumulador.adicionar_todos([1e16, 1.0, 1.0, -1e16])
 
         self.assertAlmostEqual(acumulador.total, 2.0)
+
+
+class TestMedir(unittest.TestCase):
+    """Verifica validações de medir não cobertas pelos testes de aceitação."""
+
+    def setUp(self) -> None:
+        """Prepara uma curva identidade para conferir as validações."""
+        self.curva = CurvaCalibracao([0, 2000, 4095], [0, 2000, 4095], "linear")
+
+    def _registros(self, contagens: list[float]) -> list[Registro]:
+        """Cria registros de PT101 com as contagens recebidas."""
+        instante = datetime(2026, 10, 5, 8, 0, 0)
+        return [Registro(instante, "INFO", "PT101", {"contagens": c}) for c in contagens]
+
+    def test_incerteza_negativa(self) -> None:
+        """Uma incerteza sistemática negativa levanta ValueError."""
+        registros = self._registros([10.0, 11.0, 12.0])
+        with self.assertRaisesRegex(ValueError, "incerteza"):
+            medir(registros, "PT101", self.curva, u_sistematica=-1.0)
+
+    def test_mad_zero(self) -> None:
+        """Leituras iguais produzem MAD zero e levantam ValueError."""
+        registros = self._registros([10.0, 10.0, 10.0])
+        with self.assertRaisesRegex(ValueError, "MAD"):
+            medir(registros, "PT101", self.curva)
+
+    def test_poucas_validas_apos_filtro(self) -> None:
+        """O filtro não pode deixar menos de duas leituras válidas."""
+        registros = self._registros([10.0, 11.0, 12.0])
+        with self.assertRaisesRegex(ValueError, "leituras válidas"):
+            medir(registros, "PT101", self.curva, limiar=0.1)
+
+    def test_contagem_fora_do_dominio(self) -> None:
+        """O erro de domínio da curva chega a quem chamou medir."""
+        registros = self._registros([10.0, 11.0, 5000.0])
+        with self.assertRaisesRegex(ValueError, "domínio"):
+            medir(registros, "PT101", self.curva)
 
 
 if __name__ == "__main__":
