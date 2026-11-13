@@ -9,7 +9,7 @@ import math
 
 from elevatoria.raizes import Bisseccao, Newton
 from elevatoria.calibracao import CurvaCalibracao
-from elevatoria.operacao import ponto_operacao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
 from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
 
 
@@ -71,6 +71,24 @@ class TestPontoOperacao(unittest.TestCase):
         metodo = Bisseccao(tol=1e-12, max_iter=1)
         with self.assertRaisesRegex(ValueError, "não convergiu"):
             ponto_operacao(self.bomba, self.tubulacao, metodo)
+
+
+class TestOrdemConvergencia(unittest.TestCase):
+    """Verifica o piso relativo e a seleção dos últimos erros úteis."""
+
+    def test_piso_proporcional_a_raiz(self) -> None:
+        """Erros pequenos em relação à raiz são ignorados mesmo acima do piso absoluto."""
+        historico = [1016.0, 1004.0, 1000.25, 1000.01, 1000.0]
+        ordem = ordem_convergencia(historico, 1000.0, piso=1e-4)
+
+        self.assertAlmostEqual(ordem, 2.0)
+
+    def test_ignora_erros_pequenos_no_meio(self) -> None:
+        """O histórico mantém a ordem dos erros úteis ao remover valores abaixo do piso."""
+        historico = [0.5, 0.25, 1e-16, 0.125, 0.0]
+        ordem = ordem_convergencia(historico, 0.0)
+
+        self.assertAlmostEqual(ordem, 1.0)
 
 
 if __name__ == "__main__":
