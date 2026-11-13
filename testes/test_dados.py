@@ -5,7 +5,7 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import por_tag
+from elevatoria.dados import por_tag, valida_tag
 from elevatoria.serie import SerieTemporal
 
 
@@ -41,6 +41,22 @@ class TestMediaMovel(unittest.TestCase):
 
         self.assertEqual(len(resultado), 1)
         self.assertAlmostEqual(float(resultado[0]), 5.0)
+
+
+class TestValidaTag(unittest.TestCase):
+    """Verifica os limites do formato das tags."""
+
+    def test_limites_validos(self) -> None:
+        """Aceita uma ou duas letras e de um a três dígitos."""
+        for tag in ["A1", "A12", "A123", "AB1", "AB12", "AB123"]:
+            with self.subTest(tag=tag):
+                self.assertTrue(valida_tag(tag))
+
+    def test_caracteres_extras(self) -> None:
+        """Rejeita letras em excesso, espaços e texto depois da tag."""
+        for tag in ["ABC1", "AB1234", " A1", "A1\n", "A1texto", ""]:
+            with self.subTest(tag=tag):
+                self.assertFalse(valida_tag(tag))
 
 
 if __name__ == "__main__":
