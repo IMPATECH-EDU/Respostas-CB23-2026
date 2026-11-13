@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — Stella (3493)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -31,9 +31,13 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | | |
-| Tempo do laço / tempo vetorizado | | |
-| Tempo da compreensão / tempo do laço | | |
+| Memória da lista / memória do `uint16` | aproximadamente 18 | |
+| Tempo do laço / tempo vetorizado | aproximadamente 20 | |
+| Tempo da compreensão / tempo do laço | aproximadamente 0,8 | |
+
+Estimativas iniciais, antes de medir: a lista guarda referências e objetos inteiros,
+enquanto o `uint16` usa 2 bytes por elemento. A conversão vetorizada deve ser mais rápida
+que o laço em Python, e a compreensão deve ser um pouco mais rápida que `for` com `append`.
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
@@ -41,11 +45,11 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` | `SerieTemporal` | |
+| `s[1:]` | `SerieTemporal` | |
+| `s * 2` | `SerieTemporal` | |
+| `s.sum()` | `SerieTemporal` | |
+| `s[0]` | `float64` | |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
 
