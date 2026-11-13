@@ -5,7 +5,9 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import ler_log, por_tag, valida_tag
+import numpy as np
+
+from elevatoria.dados import converter_vetorizado, ler_log, medir_memoria, por_tag, valida_tag
 from elevatoria.serie import SerieTemporal
 
 
@@ -89,6 +91,26 @@ class TestLerLog(unittest.TestCase):
 
         self.assertEqual(registros, [])
         self.assertEqual(invalidas, [linha])
+
+
+class TestMemoriaEConversao(unittest.TestCase):
+    """Verifica os tipos de entrada e a conversão de contagens uint16."""
+
+    def test_memoria_rejeita_lista_e_floats(self) -> None:
+        """A medição de memória rejeita listas e arrays de ponto flutuante."""
+        for entrada in [[0, 100, 4095], np.array([0.0, 100.0, 4095.0])]:
+            with self.subTest(entrada=entrada), self.assertRaises(ValueError):
+                medir_memoria(entrada)
+
+    def test_conversao_uint16_sem_estouro(self) -> None:
+        """A conversão vetorizada evita overflow e preserva as contagens originais."""
+        contagens = np.array([0, 2048, 4095], dtype=np.uint16)
+        copia = contagens.copy()
+        pressoes = converter_vetorizado(contagens)
+
+        self.assertTrue(np.allclose(pressoes, [0.0, 2048 * 600 / 4095, 600.0]))
+        self.assertEqual(pressoes.dtype, np.dtype(float))
+        self.assertTrue(np.array_equal(contagens, copia))
 
 
 if __name__ == "__main__":
