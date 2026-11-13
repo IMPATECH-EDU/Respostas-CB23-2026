@@ -2,9 +2,8 @@
 
 Execute a partir da pasta do projeto, com o ambiente ativado:  python marco1.py
 
-Este esqueleto já traz a estrutura, os imports e todos os assert. Complete os trechos
-marcados com TODO e acrescente as impressões pedidas no enunciado. Não remova nem
-enfraqueça nenhum assert. O script usa apenas a interface pública dos módulos.
+O script demonstra a leitura do log, as conversões e a análise das séries,
+usando apenas a interface pública dos módulos.
 """
 import math
 import re
@@ -17,12 +16,7 @@ from fornecido.simulador import gerar_log
 from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
                               medir_tempos, serie, valida_tag)
 
-MATRICULA = 123456  # troque pelo seu número de matrícula
-
-
-def _todo(item: str):
-    """Marca um trecho ainda não feito; apague as chamadas a _todo ao completar o script."""
-    raise NotImplementedError(f"marco1.py: complete o item {item}")
+MATRICULA = 3493
 
 
 def etapa0() -> None:
@@ -39,16 +33,21 @@ def etapa1(texto: str, verdade: dict) -> list:
     print("\n=== Etapa 1: leitura do log ===")
     # (a) Leia o log e imprima o número de registros válidos e de linhas inválidas.
     registros, invalidas = ler_log(texto)
+    print(f"Registros válidos: {len(registros)}; linhas inválidas: {len(invalidas)}")
+    print(f"Registros por tag: {contagem_por_tag(registros)}")
     assert len(invalidas) == verdade["invalidas"]
     assert len(registros) + len(invalidas) == verdade["linhas"]
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
-    por_nivel = _todo("1(b)")
+    por_nivel = {nivel: len([r for r in registros if r.nivel == nivel])
+                 for nivel in ["INFO", "WARN", "ALARME"]}
+    print(f"Registros por nível: {por_nivel}")
     assert por_nivel == verdade["por_nivel"]
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
-    total = _todo("1(c)")
+    total = int(serie(registros, "FT201", "pulsos").sum())
+    print(f"Total de pulsos: {total}; volume bombeado: {total * 0.1:.1f} L")
     assert total == verdade["pulsos_total"]
 
     # (d) valida_tag.
@@ -63,37 +62,53 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     """Etapa 2 — Lambda e compreensões (issue #2)."""
     print("\n=== Etapa 2: lambda e compreensões ===")
     # (a) Ordene com sorted e key=lambda: (i) por (tag, instante); (ii) por instante decrescente.
-    por_tag_instante = _todo("2(a)(i)")
-    decrescente = _todo("2(a)(ii)")
+    por_tag_instante = sorted(registros, key=lambda r: (r.tag, r.instante))
+    decrescente = sorted(registros, key=lambda r: r.instante, reverse=True)
+    print(f"Primeiro por tag e instante: {por_tag_instante[0]}")
+    print(f"Mais recente: {decrescente[0]}")
     assert por_tag_instante[0].tag == "B1"
     assert decrescente[0].instante == max(r.instante for r in registros)
 
     # (b) Contagens de PT102 (só registros com a chave "contagens"): map/filter e compreensão.
-    com_map = _todo("2(b) map/filter")
-    com_compreensao = _todo("2(b) compreensão")
+    com_map = list(map(lambda r: r.valores["contagens"],
+                       filter(lambda r: r.tag == "PT102" and "contagens" in r.valores,
+                              registros)))
+    com_compreensao = [r.valores["contagens"] for r in registros
+                      if r.tag == "PT102" and "contagens" in r.valores]
+    print(f"Contagens de PT102: {len(com_map)} com map/filter "
+          f"e {len(com_compreensao)} com compreensão")
     assert com_map == com_compreensao and len(com_compreensao) == 600
 
     # (c) Contagens acima de 2000 (compreensão de lista) e tags distintas (de conjunto).
-    altas = _todo("2(c) altas")
-    tags = _todo("2(c) tags")
+    altas = [c for c in com_compreensao if c > 2000]
+    tags = {r.tag for r in registros}
+    print(f"Contagens acima de 2000: {altas}; tags: {sorted(tags)}")
     assert len(altas) == 5
     assert tags == {"B1", "PT101", "PT102", "FT201", "LT301"}
 
     # (d) Com re.sub e uma lambda como repl, troque pulsos=N por volume_L=V (V = N * 0,1,
     #     com uma casa decimal; por exemplo, pulsos=3892 vira volume_L=389.2).
-    convertido = _todo("2(d)")
+    convertido = re.sub(r"pulsos=([0-9]+)",
+                        lambda m: f"volume_L={int(m[1]) * 0.1:.1f}", texto)
+    exemplo = next(linha for linha in convertido.splitlines() if "volume_L=" in linha)
+    print(f"Exemplo de conversão no texto: {exemplo}")
     assert convertido.count("volume_L=") == 600 and "pulsos=" not in convertido
 
     # (e) Late binding: a versão errada (não corrija esta linha) e a sua.
     escalas = {"PT101": 600 / 4095, "PT102": 600 / 4095, "FT201": 0.1}
     errados = {tag: (lambda c: c * k) for tag, k in escalas.items()}
     certos = criar_conversores(escalas)
+    print(f"PT102 com 4095 contagens: conversor errado = {errados['PT102'](4095):.1f}; "
+          f"correto = {certos['PT102'](4095):.1f}")
     assert math.isclose(errados["PT102"](4095), 409.5)
     assert math.isclose(certos["PT102"](4095), 600.0)
 
     # (f) Converta a média das contagens normais de PT102 (até 2000) com a escala nominal
     #     (certos["PT102"]) e imprima ao lado de verdade["pressao_recalque"].
-    p_nominal = _todo("2(f)")
+    normais = [c for c in com_compreensao if c <= 2000]
+    p_nominal = certos["PT102"](float(np.mean(normais)))
+    print(f"Pressão nominal de recalque: {p_nominal:.2f} kPa; "
+          f"referência: {verdade['pressao_recalque']:.2f} kPa")
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
 
 
