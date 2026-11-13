@@ -41,7 +41,15 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if grau < 0:
+        raise ValueError("o grau não pode ser negativo")
+    if x.size < grau + 1:
+        raise ValueError("o número de pontos deve ser pelo menos grau + 1")
+    return np.polynomial.polynomial.polyfit(x, y, grau)
 
 
 @dataclass(frozen=True)
@@ -76,4 +84,23 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t = np.asarray(t, dtype=float)
+    vazao = np.asarray(vazao, dtype=float)
+    if t.ndim != 1 or vazao.ndim != 1 or t.size != vazao.size:
+        raise ValueError("t e vazao devem ser vetores 1D do mesmo tamanho")
+    for inicio, fim, _ in FAIXAS_TARIFARIAS:
+        if inicio not in t or fim not in t:
+            raise ValueError(f"os limites da faixa [{inicio}, {fim}] devem estar em t")
+
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+
+    custos: list[float] = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        faixa = (t >= inicio) & (t <= fim)
+        custos.append(tarifa * integrador.integrar_tabela(t[faixa], potencia[faixa]))
+
+    return ResumoDia(volume, energia, sum(custos), tuple(custos))
