@@ -6,6 +6,7 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
+from elevatoria.operacao import ordem_convergencia
 from elevatoria.raizes import Bisseccao, Newton
 from fornecido.hidraulica import fator_atrito_colebrook
 
@@ -48,6 +49,23 @@ class TestNewtonRegressao(unittest.TestCase):
         self.assertTrue(resultado.convergiu)
         self.assertAlmostEqual(fator, referencia, places=10)
         self.assertLessEqual(resultado.iteracoes, 5)
+
+
+class TestOrdemConvergencia(unittest.TestCase):
+    """Casos de filtragem dos erros ausentes nos testes de aceitação."""
+
+    def test_erro_igual_ao_piso_nao_conta(self) -> None:
+        """Erro exatamente no piso é descartado, restando menos de três erros."""
+        with self.assertRaises(ValueError):
+            ordem_convergencia([8.0, 4.0, 2.0], raiz=0.0, piso=2.0)
+
+    def test_piso_escalado_pelo_modulo_da_raiz(self) -> None:
+        """Para raiz de módulo maior que um, o piso é multiplicado por esse módulo."""
+        # O limiar é (1/16) * 16 = 1: só os erros 8, 4 e 2 contam.
+        # Os erros 1/4 e 1/8 seriam incluídos se o piso não fosse escalado.
+        historico = [24.0, 20.0, 18.0, 16.25, 16.125]
+        ordem = ordem_convergencia(historico, raiz=16.0, piso=0.0625)
+        self.assertAlmostEqual(ordem, 1.0, places=12)
 
 
 if __name__ == "__main__":
