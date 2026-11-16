@@ -41,6 +41,14 @@ class TestNewtonRegressao(unittest.TestCase):
             esperado = atual - (atual * atual - 2.0) / (2.0 * atual)
             self.assertAlmostEqual(seguinte, esperado, places=12)
 
+    def test_colebrook_converge_em_ate_cinco_iteracoes(self) -> None:
+        """Colebrook em Re = 10⁴ converge em até cinco passos com derivada numérica."""
+        fator, resultado = fator_atrito_colebrook(1e4, 1e-4, Newton(tol=1e-10))
+        referencia, _ = fator_atrito_colebrook(1e4, 1e-4, Bisseccao(tol=1e-12))
+        self.assertTrue(resultado.convergiu)
+        self.assertAlmostEqual(fator, referencia, places=10)
+        self.assertLessEqual(resultado.iteracoes, 5)
+
 
 if __name__ == "__main__":
     unittest.main()
