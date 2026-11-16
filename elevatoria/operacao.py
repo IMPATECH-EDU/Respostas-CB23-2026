@@ -49,21 +49,40 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+
+    def f(Q):
+        return bomba(Q) - tubulacao.altura_sistema(Q)
+
+    resultado_raiz = resolvedor.encontrar(f, a, b)
+    return PontoOperacao(vazao=resultado_raiz.raiz, altura=bomba(resultado_raiz.raiz), resultado=resultado_raiz)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
-    """Estimativa da ordem de convergência `p` de uma sequência de aproximações.
+    """Estimativa da ordem de convergência `ordem_converg` de uma sequência de aproximações.
 
     Com os erros `e_k = |x_k - raiz|`, se `e_{k+1} ≈ C·e_k^p`, então
 
-        p ≈ log(e_{k+1} / e_k) / log(e_k / e_{k-1}).
+        ordem_converg ≈ log(e_{k+1} / e_k) / log(e_k / e_{k-1}).
 
     Use os **três últimos** erros, na ordem do `historico`, que forem maiores que
     `piso · max(1, |raiz|)`: erros menores estão no nível do arredondamento e não dizem nada
-    sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
-    quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
+    sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `ordem_converg = 2` (convergência
+    quadrática); erros 0.5, 0.25, 0.125 dão `ordem_converg = 1` (convergência linear).
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    # filtra os três últimos erros fora do nível do arredondamento, na ordem do histórico
+    tres_ultimos_erros = []
+    for erro in reversed(historico):
+        e = abs(erro - raiz)
+        if e > piso * max(1.0, abs(raiz)):
+            tres_ultimos_erros.append(e)
+            if len(tres_ultimos_erros) == 3:
+                tres_ultimos_erros = list(reversed(tres_ultimos_erros))
+                break
+    if len(tres_ultimos_erros) < 3:
+        raise ValueError("menos de 3 erros acima do piso; não é possível estimar a ordem de convergência")
+
+    ordem_converg = math.log(tres_ultimos_erros[2] / tres_ultimos_erros[1]) / math.log(tres_ultimos_erros[1] / tres_ultimos_erros[0])
+
+    return ordem_converg
