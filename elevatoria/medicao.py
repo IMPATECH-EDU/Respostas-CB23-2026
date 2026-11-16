@@ -63,7 +63,34 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica deve ser não negativa; recebi {u_sistematica}")
+    contagens = serie(registros, tag, "contagens")
+    if contagens.size < 2:
+        raise ValueError(f"a tag {tag} precisa de pelo menos 2 leituras")
+
+    valores = curva(contagens)
+    mediana = np.median(valores)
+    mad = stats.median_abs_deviation(valores, scale="normal")
+    if mad == 0:
+        raise ValueError(f"MAD zero para a tag {tag}: não é possível calcular o z robusto")
+
+    espurias = np.abs((valores - mediana) / mad) > limiar
+    validas = valores[~espurias]
+    if validas.size < 2:
+        raise ValueError(f"a tag {tag} precisa de pelo menos 2 leituras válidas após o descarte")
+
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))
+    incerteza = float(np.hypot(erro_padrao, u_sistematica))
+    return Medicao(
+        tag=tag,
+        medida=Medida(media, incerteza),
+        desvio=desvio,
+        n_validas=int(validas.size),
+        espurias=np.flatnonzero(espurias).tolist(),
+    )
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +102,6 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(registros, "PT101", curva, u_sistematica=u_sistematica).medida
+    recalque = medir(registros, "PT102", curva, u_sistematica=u_sistematica).medida
+    return (recalque - succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
