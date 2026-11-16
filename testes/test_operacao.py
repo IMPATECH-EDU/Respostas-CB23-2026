@@ -6,7 +6,8 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.raizes import Bisseccao
+from elevatoria.raizes import Bisseccao, Newton
+from fornecido.hidraulica import fator_atrito_colebrook
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -20,6 +21,25 @@ class TestBisseccaoExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+
+class TestNewtonRegressao(unittest.TestCase):
+    """Regressões da derivada congelada descrita na issue #9."""
+
+    def test_aproximacoes_usam_derivada_no_ponto_atual(self) -> None:
+        """Cada passo de Newton para x² − 2 usa a derivada da aproximação atual."""
+        def f(x: float) -> float:
+            return x * x - 2.0
+
+        def f_prime(x: float) -> float:
+            return 2.0 * x
+
+        resultado = Newton(df=f_prime).encontrar(f, 1.0, 2.0)
+
+        self.assertGreaterEqual(len(resultado.historico), 3)
+        for atual, seguinte in zip(resultado.historico, resultado.historico[1:]):
+            esperado = atual - (atual * atual - 2.0) / (2.0 * atual)
+            self.assertAlmostEqual(seguinte, esperado, places=12)
 
 
 if __name__ == "__main__":
