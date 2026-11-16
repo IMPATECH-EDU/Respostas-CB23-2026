@@ -199,3 +199,26 @@ Precisão mede quão próximas as medidas estão da média delas. Exatidão (ou 
 As duas curvas convertem as mesmas contagens (com o mesmo ruído) portanto, devem ter a mesma dispersão. De fato, as curvas lineares tiveram desvios 0.706 (PT101) e 0.515 (PT102) e as spline 0.710 e 0.517.
 
 A linear teve viés -1.840 e a spline -0.010 em PT102: a resposta do transmissor é curva, e a linear a aproxima por retas entre os pontos da tabela, errando sempre para o mesmo lado. A média de quase 600 leituras reduz só o erro aleatório (o erro padrão é de cerca de 0.02 kPa), mas não elimina o viés da curva linear, pois ele é igual em toda leitura, então não se cancela.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+A cada iteração do método da bissecção, o intervalo em que a raiz está é dividido exatamente por duas metades.
+Assim, em 44 iterações o comprimento do intervalo vai ser exatamente $\dfrac{b-a}{2^44}$.
+Como o intervalo inicial e a tolerância são os mesmos para todos os Reynolds, a quantidade de iterações necessária é sempre a mesma.
+Em $n$ iterações, o intervalo em que sabemos que a raiz está é de tamanho $\dfrac{b-a}{2^n}$.
+Ordem de convergência 2 significa que, perto da raiz, o erro seguinte é aproximadamente proporcional ao quadrado do atual, dobrando aproximadamente os dígitos corretos por passo.
+Newton pode falhar quando a derivada no ponto inicial é nula. Para $f(x)=x^3 + 1$ em $[-2,2]$, o ponto médio do intervalo é 0, $f'(0)=0$ e o método de Newton falha, enquanto a bissecção converge.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+A derivada é usada no método de Newton, porque fornece a inclinação da melhor aproximação linear da curva em um determinado ponto. 
+Calcular a derivada uma vez só deixa a convergência linear, pois não estaremos utilizando calculando a melhor aproximação lienar sempre, e sim pegando uma reta com direção constante. Os testes de aceitação não pegaram o defeito porque, apesar de ter menor eficiência, o algorítmo encontrava a raiz que procurava; e nenhum teste verificava a eficiência.
+Testes de regressão: test_aproximacoes_usam_derivada_no_ponto_atual, test_colebrook_converge_em_ate_cinco_iteracoes
