@@ -66,3 +66,31 @@ O resultado que mais me surpreendeu foi `s.sum()`. Mesmo resumindo toda a série
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 Para 600 pontos e uma janela de 30, media_movel devolvia 570 médias em vez de 571. Os testes test_inclui_a_primeira_janela e test_janela_do_tamanho_da_serie reproduziram o problema. A soma acumulada começava no primeiro valor da série, então as diferenças entre as fatias pulavam a primeira janela. Acrescentei um zero no início da soma acumulada, e os dois testes passaram.
+
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+=== Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3515
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+Ao reduzir h de 1 até 10⁻⁵, o erro diminuiu de 1,658 × 10⁻⁵ para 6,224 × 10⁻¹⁰, pois diminui o erro de truncamento da diferença adiante. Para passos menores, passam a dominar os erros de arredondamento e a perda de precisão ao subtrair valores próximos. Com h = 10⁻¹⁴, o ponto flutuante representa 1000 + h como 1000. Assim, o numerador da diferença adiante vira zero, a derivada calculada é zero e o erro absoluto coincide com a derivada exata, aproximadamente 0,213432888873.
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
