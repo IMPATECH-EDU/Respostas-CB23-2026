@@ -88,6 +88,7 @@ Ao reduzir h de 1 até 10⁻⁵, o erro diminuiu de 1,658 × 10⁻⁵ para 6,224
 <!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
 t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
 de aceitação não pegaram o defeito. -->
+Os testes `test_soma_um_milhao_de_decimos` e `test_recupera_duas_parcelas_pequenas` reproduziram o defeito. Como `t` já era o resultado arredondado de `s + y`, calcular `t - (s + y)` sempre dava zero. A correção `(t - s) - y` recupera o erro de arredondamento porque muda a ordem das operações. O teste de aceitação somava apenas dez parcelas de 0,1 e usava `math.isclose`, cuja tolerância aceitava o pequeno erro dessa soma.
 
 ### R10 — Precisão × exatidão
 
