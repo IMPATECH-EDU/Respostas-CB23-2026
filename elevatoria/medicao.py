@@ -107,4 +107,12 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(
+        registros, "PT101", curva, u_sistematica=u_sistematica
+    )
+    recalque = medir(
+        registros, "PT102", curva, u_sistematica=u_sistematica
+    )
+
+    diferenca_pressao = recalque.medida - succao.medida
+    return diferenca_pressao * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
