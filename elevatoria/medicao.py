@@ -40,8 +40,9 @@ class Medicao:
     espurias: list[int]   # índices das leituras descartadas, em ordem crescente
 
 
-def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
-          u_sistematica: float = 0.0, limiar: float = 6.0) -> Medicao:
+def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao, 
+         u_sistematica: float = 0.0, limiar: float = 6.0) -> Medicao:
+    
     """Mede a grandeza registrada pela `tag` no log.
 
     Passos:
@@ -63,6 +64,47 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
+
+    if u_sistematica < 0:
+        raise ValueError
+
+    contagens = serie(registros, tag, 'contagens')
+
+    if len(contagens) < 2:
+        raise ValueError
+
+    convertido = np.array([curva(contagem) for contagem in contagens])
+
+    MAD = stats.median_abs_deviation(convertido, scale = 'normal')
+
+    if MAD == 0:
+        raise ValueError
+
+    z = (convertido - np.median(convertido))/MAD
+
+    validas_mask = np.abs(z) <= limiar 
+
+    validas = convertido[validas_mask]
+
+    indices_espurias = np.flatnonzero(abs(z) > limiar) 
+
+    media = np.mean(validas)
+
+    std_dev = np.std(validas, ddof=1)
+
+    err = stats.sem(validas)
+
+    u = np.sqrt(err**2 + u_sistematica**2)
+
+    return(Medicao(
+        tag = tag,
+        medida = Medida(media, u),
+        desvio = std_dev,
+        n_validas = len(validas),
+        espurias = indices_espurias.tolist()
+    )
+    )
+
     raise NotImplementedError("issue #6: medir")
 
 
@@ -75,4 +117,13 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
+
+    P_PT101 = medir(registros, 'PT101', curva, u_sistematica).medida
+    P_PT102 = medir(registros, 'PT102', curva, u_sistematica).medida
+
+    H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
+
+    return(H)
+    
+   
     raise NotImplementedError("issue #6: altura_manometrica")
