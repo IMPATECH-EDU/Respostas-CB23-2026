@@ -13,6 +13,7 @@ Funções auxiliares privadas (`_nome`) são permitidas.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -63,7 +64,23 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica não pode ser negativa; recebi {u_sistematica}")
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError(f"{tag} tem {len(contagens)} leitura(s) no log; preciso de pelo menos 2")
+    x = np.asarray(curva(contagens))
+    mad = stats.median_abs_deviation(x, scale="normal")
+    if mad == 0:
+        raise ValueError(f"a MAD de {tag} é zero: não dá para calcular o z robusto")
+    z = (x - np.median(x)) / mad
+    espuria = np.abs(z) > limiar
+    validas = x[~espuria]
+    if validas.size < 2:
+        raise ValueError(f"só {validas.size} leitura(s) de {tag} passaram pelo limiar {limiar}")
+    u = math.hypot(stats.sem(validas), u_sistematica)
+    return Medicao(tag=tag, medida=Medida(validas.mean(), u), desvio=float(validas.std(ddof=1)),
+                   n_validas=int(validas.size), espurias=np.flatnonzero(espuria).tolist())
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +92,6 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(registros, "PT101", curva, u_sistematica).medida
+    recalque = medir(registros, "PT102", curva, u_sistematica).medida
+    return (recalque - succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
