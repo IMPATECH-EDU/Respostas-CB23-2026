@@ -96,11 +96,12 @@ em 2 bytes), convertendo antes de fazer conta, como o `converter_vetorizado`. Pa
 
 <!-- Explique o resultado que mais surpreendeu você. -->
 
-O que me pegou foi `s.sum()`: devolve uma `SerieTemporal` de zero dimensões (`shape == ()`), e não um
-número. A soma é uma redução de ufunc (`np.add.reduce`), e o NumPy embrulha o resultado na classe da
-entrada mesmo sem dimensão nenhuma. Já `s[0]` é indexação por inteiro, que extrai o elemento como o
-escalar `float64` do NumPy. Ele herda de `float`, então `isinstance(s[0], float)` dá `True`, enquanto
-`isinstance(s.sum(), float)` dá `False`. Agora entendo por que a `amplitude()` faz `float(...)`.
+O que me pegou foi `s.sum()`, que devolve uma `SerieTemporal` de zero dimensões (`shape == ()`) no
+lugar do `float` que eu previ. A soma é uma redução de ufunc (`np.add.reduce`), e o NumPy embrulha o
+resultado na classe da entrada mesmo sem dimensão nenhuma. Já `s[0]` é indexação por inteiro, que
+extrai o elemento como o escalar `float64` do NumPy. Ele herda de `float`, então
+`isinstance(s[0], float)` dá `True`, enquanto `isinstance(s.sum(), float)` dá `False`. Agora entendo
+por que a `amplitude()` faz `float(...)`.
 
 ### R7 — Issue #4
 
@@ -172,13 +173,12 @@ encolhe a parte aleatória (erro padrão 0,526/√595 ≈ 0,02 kPa); o erro repe
 quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
 situação em que o Newton falha e a bissecção não. -->
 
-A bissecção só olha o sinal de `g`: corta [2, 15] ao meio a cada iteração e para quando a largura
-`13 / 2**k` fica abaixo de 1e-12, o que pede k = 44 (`2**43` ≈ 8,8e12 não basta). O Reynolds muda a
-raiz, não a largura do intervalo. Ordem 2 quer dizer `e_{k+1} ≈ C * e_k**2`, e os dígitos certos
-mais ou menos dobram por passo: em Re = 1e4 os erros foram 5,0e-2, 2,3e-5 e 5,0e-12, com
-`e_{k+1} / e_k**2` igual a 0,0094 e 0,0093. O Newton falha em `x**3 - 2*x + 2` com [-2, 2]: sai de
-0, vai a 1, volta a 0 e fica no ciclo até `max_iter`; a bissecção acha -1,7693 em 42 iterações, só
-com a troca de sinal.
+A bissecção só olha o sinal de `g` e corta [2, 15] ao meio até a largura `13 / 2**k` ficar abaixo de
+1e-12, o que pede k = 44 (`2**43` ≈ 8,8e12 não basta); esse número só depende da largura e da
+tolerância. Ordem 2 quer dizer `e_{k+1} ≈ C * e_k**2`: os dígitos certos quase dobram por passo. Em
+Re = 1e4 os erros foram 5,0e-2, 2,3e-5 e 5,0e-12, e `e_{k+1} / e_k**2` deu 0,0094 e 0,0093. O Newton
+falha em `x**3 - 2*x + 2` com [-2, 2]: sai de 0, vai a 1, volta a 0 e cicla até `max_iter`, e a
+bissecção acha -1,7693 em 42 iterações.
 
 ### R12 — Issue #9
 
@@ -201,22 +201,20 @@ de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as 
 Por quê? -->
 
 As estimativas de erro do trapézio (`h**2 * f''`) e do Simpson (`h**4 * f''''`) supõem o integrando
-suave dentro de cada subintervalo. O custo é potência vezes tarifa, e a tarifa salta de 0,50 para
-1,50 às 18 h e volta às 21 h. De uma vez, cada salto cai no meio de algum subintervalo, a regra
-passa uma reta (ou parábola) por cima do degrau e erra ali algo da ordem de `h * salto`: esse termo
-O(h) domina tudo. No Simpson o erro ainda oscila conforme o salto fica perto de um nó ou do meio do
-painel, e a ordem medida saiu irregular, 0,65. Por faixa, os saltos ficam nas bordas, cada
-integrando é suave e voltam 2,00 e 4,00.
+suave em cada subintervalo. A tarifa salta de 0,50 para 1,50 às 18 h e volta às 21 h. Integrando o
+dia de uma vez, cada salto cai dentro de algum subintervalo, a regra passa uma reta (ou parábola)
+por cima do degrau e erra ali algo como `h * salto`, um termo O(h) que domina o erro. No Simpson
+esse erro ainda oscila conforme o salto cai perto de um nó ou do meio do painel, e a ordem saiu
+irregular (0,65). Por faixa, os saltos ficam nas bordas e voltam 2,00 e 4,00.
 
 ### R14 — Issue #11
 
 <!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
 aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
 
-Testes: `test_reta_em_malha_irregular`, `test_leitura_perdida_no_meio` e
-`test_volume_do_registro_3487`, em `TestTrapezioRegressao`. `integrar_tabela` usava
-`h = x[1] - x[0]` na tabela inteira, confiando que o SCADA lê a cada 15 min. Com as 8 leituras
-perdidas surgem intervalos de 30 min, que entravam como 15: o volume caía para 3564,1 m³, 8,3%
-abaixo da conferência (agora 3876,9 m³, 0,29%). A aceitação só usa malhas uniformes (`linspace` e
-passo de 1,5 h), onde `x[1] - x[0]` acerta. O Simpson composto encaixa uma parábola em cada par de
-intervalos iguais, e o registro mistura 15 e 30 min: ele recusa com `ValueError`.
+`integrar_tabela` usava `h = x[1] - x[0]` para tudo, como se houvesse leitura a cada 15 min; com 8
+leituras perdidas surgem intervalos de 30 min, que contavam como 15, e o volume caía para 3564,1 m³,
+8,3% abaixo da conferência (corrigido: 3876,9 m³, 0,29%). A aceitação só usa malhas uniformes
+(`linspace` e passo de 1,5 h), onde `x[1] - x[0]` acerta. O Simpson composto pede pares de
+intervalos iguais; com passos de 15 e 30 min, ele recusa a tabela. Testes:
+`test_reta_em_malha_irregular`, `test_leitura_perdida_no_meio` e `test_volume_do_registro_3487`.
