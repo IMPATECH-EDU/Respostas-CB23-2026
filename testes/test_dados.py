@@ -40,6 +40,28 @@ class TestMediaMovelRegressao(unittest.TestCase):
         self.assertAlmostEqual(float(mm[0]), 3.0)
 
 
+class TestReamostrar(unittest.TestCase):
+    """Issue #5: SerieTemporal.reamostrar."""
+
+    def test_sobra_no_fim_e_descartada(self):
+        """Com 7 pontos e k = 3 o sétimo fica de fora: duas médias, sem o 100."""
+        r = SerieTemporal.de_lista([1, 2, 3, 4, 5, 6, 100]).reamostrar(3)
+        self.assertEqual(len(r), 2)
+        self.assertTrue(np.allclose(r, [2.0, 5.0]))
+
+    def test_k_igual_ao_tamanho(self):
+        """k = len(s) dá um bloco só, com a média da série inteira."""
+        r = SerieTemporal.de_lista([1.0, 2.0, 6.0]).reamostrar(3)
+        self.assertEqual(len(r), 1)
+        self.assertAlmostEqual(float(r[0]), 3.0)
+
+    def test_nao_altera_a_serie(self):
+        """Depois de reamostrar, a série original continua com os mesmos 5 valores."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0, 5.0])
+        s.reamostrar(2)
+        self.assertTrue(np.allclose(s, [1.0, 2.0, 3.0, 4.0, 5.0]))
+
+
 class TestLerLogContrato(unittest.TestCase):
     """Issue #1: regras de ler_log que os testes de aceitação não conferem."""
 
