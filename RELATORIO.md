@@ -191,3 +191,32 @@ raiz cada passo multiplica o erro por `1 - f'(r) / d`. Como `d` não é `f'(r)`,
 convergência é linear: em `x**2 - 2`, saindo de 1, ele vale `1 - 2.83 / 2 ≈ -0,41`. Recalculando
 `d = f'(x_k)`, o fator vai a zero e o erro cai ao quadrado. A aceitação só confere se o método chega
 ao valor certo, e com a derivada fixa ele chega, só que devagar (10 iterações contra 5 em Re = 1e4).
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+As estimativas de erro do trapézio (`h**2 * f''`) e do Simpson (`h**4 * f''''`) supõem o integrando
+suave dentro de cada subintervalo. O custo é potência vezes tarifa, e a tarifa salta de 0,50 para
+1,50 às 18 h e volta às 21 h. De uma vez, cada salto cai no meio de algum subintervalo, a regra
+passa uma reta (ou parábola) por cima do degrau e erra ali algo da ordem de `h * salto`: esse termo
+O(h) domina tudo. No Simpson o erro ainda oscila conforme o salto fica perto de um nó ou do meio do
+painel, e a ordem medida saiu irregular, 0,65. Por faixa, os saltos ficam nas bordas, cada
+integrando é suave e voltam 2,00 e 4,00.
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+
+Testes: `test_reta_em_malha_irregular`, `test_leitura_perdida_no_meio` e
+`test_volume_do_registro_3487`, em `TestTrapezioRegressao`. `integrar_tabela` usava
+`h = x[1] - x[0]` na tabela inteira, confiando que o SCADA lê a cada 15 min. Com as 8 leituras
+perdidas surgem intervalos de 30 min, que entravam como 15: o volume caía para 3564,1 m³, 8,3%
+abaixo da conferência (agora 3876,9 m³, 0,29%). A aceitação só usa malhas uniformes (`linspace` e
+passo de 1,5 h), onde `x[1] - x[0]` acerta. O Simpson composto encaixa uma parábola em cada par de
+intervalos iguais, e o registro mistura 15 e 30 min: ele recusa com `ValueError`.
