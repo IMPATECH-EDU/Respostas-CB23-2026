@@ -9,6 +9,7 @@ import numpy as np
 
 from elevatoria.dados import (converter_vetorizado, criar_conversores, ler_log, medir_memoria,
                               por_tag)
+from elevatoria.serie import SerieTemporal
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -19,8 +20,24 @@ class TestPorTagExemplo(unittest.TestCase):
         self.assertEqual(por_tag([], "PT101"), [])
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestMediaMovelRegressao(unittest.TestCase):
+    """Issue #4: media_movel devolvia um valor a menos. Escritos antes da correção."""
+
+    def test_tamanho_do_relato(self):
+        """600 leituras com janela 30 dão 571 médias (o relato recebia 570)."""
+        s = SerieTemporal.de_lista(np.linspace(1700.0, 1800.0, 600))
+        self.assertEqual(len(s.media_movel(30)), 571)
+
+    def test_primeira_janela_aparece(self):
+        """O primeiro valor é a média de s[0:janela], que o código antigo pulava."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0, 8.0])
+        self.assertAlmostEqual(float(s.media_movel(2)[0]), 3.0)
+
+    def test_janela_do_tamanho_da_serie(self):
+        """Com janela = len(s) sai uma média só, a da série inteira (antes saía vazio)."""
+        mm = SerieTemporal.de_lista([1.0, 2.0, 6.0]).media_movel(3)
+        self.assertEqual(len(mm), 1)
+        self.assertAlmostEqual(float(mm[0]), 3.0)
 
 
 class TestLerLogContrato(unittest.TestCase):
