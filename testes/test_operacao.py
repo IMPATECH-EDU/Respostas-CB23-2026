@@ -50,7 +50,7 @@ class TestNewtonRegressao(unittest.TestCase):
 
 
 class TestPontoOperacaoContrato(unittest.TestCase):
-    """Issue #8: regras de ponto_operacao que a aceitação não confere."""
+    """Issue #8: quando ponto_operacao recusa o intervalo ou o resultado."""
 
     def test_intervalo_vazio(self):
         """a = b levanta ValueError."""
@@ -74,7 +74,7 @@ class TestPontoOperacaoContrato(unittest.TestCase):
 
 
 class TestOrdemConvergenciaContrato(unittest.TestCase):
-    """Issue #8: regras de ordem_convergencia que a aceitação não confere."""
+    """Issue #8: o piso relativo de ordem_convergencia e o caso degenerado."""
 
     def test_piso_relativo_a_raiz(self):
         """Com raiz 1e6 o piso vira 1e-8, e o erro de 1e-9 fica fora da conta."""

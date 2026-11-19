@@ -69,13 +69,13 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     contagens = serie(registros, tag, "contagens")
     if len(contagens) < 2:
         raise ValueError(f"{tag} tem {len(contagens)} leitura(s) no log; preciso de pelo menos 2")
-    x = np.asarray(curva(contagens))
-    mad = stats.median_abs_deviation(x, scale="normal")
+    kpa = np.asarray(curva(contagens))
+    mad = stats.median_abs_deviation(kpa, scale="normal")
     if mad == 0:
         raise ValueError(f"a MAD de {tag} é zero: não dá para calcular o z robusto")
-    z = (x - np.median(x)) / mad
+    z = (kpa - np.median(kpa)) / mad
     espuria = np.abs(z) > limiar
-    validas = x[~espuria]
+    validas = kpa[~espuria]
     if validas.size < 2:
         raise ValueError(f"só {validas.size} leitura(s) de {tag} passaram pelo limiar {limiar}")
     u = math.hypot(stats.sem(validas), u_sistematica)

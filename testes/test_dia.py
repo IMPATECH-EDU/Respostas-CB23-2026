@@ -35,14 +35,14 @@ class TestTrapezioRegressao(unittest.TestCase):
         self.assertAlmostEqual(Trapezio().integrar_tabela(t, np.full(4, 50.0)), 50.0)
 
     def test_volume_do_registro_3487(self):
-        """Com as 8 leituras perdidas do registro 3487, o volume fica a menos de 1% da conferência."""
+        """Registro 3487, com 8 leituras perdidas: volume a menos de 1% da conferência."""
         t, q = vazao_registrada(3487)
         volume = 3.6 * Trapezio().integrar_tabela(t, q)
         self.assertLess(abs(volume / verdade_dia()["volume_m3"] - 1), 0.01)
 
 
 class TestAjustarPolinomioContrato(unittest.TestCase):
-    """Issue #10: regras de ajustar_polinomio que a aceitação não confere."""
+    """Issue #10: entradas que ajustar_polinomio recusa e um caso mal condicionado."""
 
     def test_grau_negativo(self):
         """grau = -1 levanta ValueError."""
@@ -63,12 +63,12 @@ class TestAjustarPolinomioContrato(unittest.TestCase):
         """Parábola exata com x entre 1000 e 1010 volta com resíduo abaixo de 1e-7."""
         x = np.linspace(1000.0, 1010.0, 11)
         y = 3.0 - 0.5 * (x - 1005.0) ** 2
-        coef = ajustar_polinomio(x, y, 2)
-        self.assertTrue(np.allclose(np.polynomial.polynomial.polyval(x, coef), y, rtol=0, atol=1e-7))
+        ajuste = np.polynomial.polynomial.polyval(x, ajustar_polinomio(x, y, 2))
+        self.assertTrue(np.allclose(ajuste, y, rtol=0, atol=1e-7))
 
 
 class TestDiaDeOperacaoContrato(unittest.TestCase):
-    """Issue #10: regras de dia_de_operacao que a aceitação não confere."""
+    """Issue #10: o registro precisa ter leitura nos limites das faixas."""
 
     def test_falta_o_limite_das_21h(self):
         """Um registro sem a leitura das 21 h levanta ValueError."""

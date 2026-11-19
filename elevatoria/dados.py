@@ -23,10 +23,9 @@ from fornecido.cronometro import cronometrar
 # Issue #1: leitor do log
 # ---------------------------------------------------------------------------------------
 
-# Tag de instrumento, usada em LINHA e em valida_tag. [0-9] em vez de \d de propósito: num
-# padrão str, \d casa qualquer dígito Unicode, e o strptime aceita "２０２６-10-05" (dígitos de
-# largura total) como data válida.
-_TAG = r"[A-Z]{1,2}[0-9]{1,3}"
+# Os padrões usam [0-9], e não \d: num padrão str, \d casa qualquer dígito Unicode, e o
+# strptime aceita "２０２６-10-05" (dígitos de largura total) como uma data comum.
+_TAG = r"[A-Z]{1,2}[0-9]{1,3}"   # o mesmo em LINHA e em valida_tag
 
 #: Padrão de uma linha válida do log, compilado com `re.compile(..., re.VERBOSE)` e com um
 #: comentário em cada parte. Grupos nomeados: `data` (AAAA-MM-DD), `hora` (HH:MM:SS),
@@ -36,7 +35,7 @@ _TAG = r"[A-Z]{1,2}[0-9]{1,3}"
 #: aplicado com `LINHA.fullmatch(linha)`.
 LINHA: re.Pattern = re.compile(
     r"""
-    (?P<data>[0-9]{4}-[0-9]{2}-[0-9]{2}) [ ]+   # 2026-10-05; um mês 13 passa aqui, o strptime barra
+    (?P<data>[0-9]{4}-[0-9]{2}-[0-9]{2}) [ ]+   # 2026-10-05; mês 13 passa e o strptime barra
     (?P<hora>[0-9]{2}:[0-9]{2}:[0-9]{2}) [ ]+   # 08:00:06
     (?P<nivel>INFO|WARN|ALARME)          [ ]+   # DEBUG ou "info" não valem
     (?P<tag>%s)                          [ ]+   # PT101, FT201, B1
@@ -182,11 +181,9 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros ou se alguma
     contagem sair da faixa de 0 a 4095.
     """
-    if not isinstance(contagens, np.ndarray):
-        raise ValueError(f"contagens deve ser um ndarray; recebi {type(contagens).__name__}")
-    if contagens.ndim != 1 or not np.issubdtype(contagens.dtype, np.integer):
-        raise ValueError("contagens deve ser 1D e de inteiros; recebi "
-                         f"ndim={contagens.ndim}, dtype={contagens.dtype}")
+    if not (isinstance(contagens, np.ndarray) and contagens.ndim == 1
+            and np.issubdtype(contagens.dtype, np.integer)):
+        raise ValueError("contagens deve ser um ndarray 1D de inteiros")
     if contagens.size and (contagens.min() < 0 or contagens.max() > 4095):
         raise ValueError(f"contagens fora de 0 a 4095 (mín. {contagens.min()}, "
                          f"máx. {contagens.max()})")
@@ -219,9 +216,9 @@ def converter_map(contagens: list[int]) -> list[float]:
 
 def converter_vetorizado(contagens: np.ndarray) -> np.ndarray:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma operação vetorizada do NumPy."""
-    # Passa para float64 antes de multiplicar: num array uint16, 4095 * 600 daria a volta
-    # (o estouro da Etapa 3(c)). E c * 600 é exato em float64, então o resultado sai igual,
-    # bit a bit, ao das versões em Python puro.
+    # float64 antes de multiplicar: num array uint16, 4095 * 600 daria a volta (o estouro da
+    # Etapa 3(c)). Como c * 600 é exato em float64, o resultado bate bit a bit com o das
+    # versões em Python puro.
     return np.asarray(contagens, dtype=np.float64) * 600 / 4095
 
 

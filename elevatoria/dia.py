@@ -51,7 +51,8 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
     if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
-        raise ValueError(f"x e y devem ser vetores 1D do mesmo tamanho; recebi {x.shape} e {y.shape}")
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho; "
+                         f"recebi formas {x.shape} e {y.shape}")
     if grau < 0:
         raise ValueError(f"o grau não pode ser negativo; recebi {grau}")
     if x.size < grau + 1:
@@ -60,19 +61,19 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
         raise ValueError("x e y não podem ter NaN nem infinito")
     distintos = np.unique(x).size
     if distintos < grau + 1:
-        raise ValueError(f"só {distintos} valores distintos de x: o grau {grau} fica indeterminado")
-    # Na base 1, x, x², ... com x de 0 a 100, as colunas vão de 1 a 100**grau e ficam quase
-    # paralelas. Em t, todas ficam em [-1, 1] e o QR resolve sem perder dígitos à toa.
+        raise ValueError(f"só {distintos} valores distintos de x: grau {grau} fica indeterminado")
+    # Com x de 0 a 100 (as vazões do ensaio), as colunas 1, x, x² da Vandermonde vão de 1 a 10⁴
+    # e ficam quase paralelas. Em t ficam todas em [-1, 1], e o QR não perde dígitos à toa.
     centro = (x.max() + x.min()) / 2
     raio = (x.max() - x.min()) / 2
     if raio == 0:   # todos os x iguais, o que só passa com grau 0
         raio = 1.0
     q, r = np.linalg.qr(np.vander((x - centro) / raio, grau + 1, increasing=True))
     coef_t = solve_triangular(r, q.T @ y)
-    return _base_de_x(coef_t, centro, raio)
+    return _coeficientes_em_x(coef_t, centro, raio)
 
 
-def _base_de_x(coef_t: np.ndarray, centro: float, raio: float) -> np.ndarray:
+def _coeficientes_em_x(coef_t: np.ndarray, centro: float, raio: float) -> np.ndarray:
     """Coeficientes em x de `sum(coef_t[k] * t**k)`, com `t = (x - centro) / raio`.
 
     Horner com polinômios: começa pelo coeficiente mais alto e, a cada passo, multiplica o

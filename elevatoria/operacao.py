@@ -81,10 +81,11 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
     corte = piso * max(1.0, abs(raiz))
-    erros = [e for e in (abs(x - raiz) for x in historico) if e > corte]
-    if len(erros) < 3:
-        raise ValueError(f"preciso de 3 erros acima de {corte:.1e}; o histórico tem {len(erros)}")
-    e0, e1, e2 = erros[-3:]
+    erros = [abs(x - raiz) for x in historico]
+    uteis = [e for e in erros if e > corte]
+    if len(uteis) < 3:
+        raise ValueError(f"preciso de 3 erros acima de {corte:.1e}; o histórico tem {len(uteis)}")
+    e0, e1, e2 = uteis[-3:]
     try:
         return math.log(e2 / e1) / math.log(e1 / e0)
     except ZeroDivisionError:

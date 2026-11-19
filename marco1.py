@@ -49,8 +49,9 @@ def etapa1(texto: str, verdade: dict) -> list:
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
     total = int(serie(registros, "FT201", "pulsos").sum())
-    print(f"(c) {total} pulsos de FT201 = {total / 10:.1f} L ({total / 10_000:.3f} m³) na hora, "
-          f"vazão média de {total / 10 / 3600:.2f} L/s (conferência: {verdade['vazao_media']:.2f})")
+    litros = total / 10
+    print(f"(c) {total} pulsos de FT201 = {litros:.1f} L ({litros / 1000:.3f} m³) na hora, "
+          f"vazão média {litros / 3600:.2f} L/s (conferência: {verdade['vazao_media']:.2f})")
     assert total == verdade["pulsos_total"]
 
     # (d) valida_tag.

@@ -46,7 +46,7 @@ class TestKahanRegressao(unittest.TestCase):
 
 
 class TestMedirContrato(unittest.TestCase):
-    """Issue #6: regras de medir que os testes de aceitação não conferem."""
+    """Issue #6: os ValueError da docstring de medir e a contagem dos índices."""
 
     def setUp(self):
         self.contagens = [100, 101, 99, 100, 102, 98, 100, 101]
@@ -64,7 +64,7 @@ class TestMedirContrato(unittest.TestCase):
             medir(regs, "PT101", IDENTIDADE)
 
     def test_menos_de_duas_validas(self):
-        """Com limiar 0,5 em [10, 11, 12] só a leitura do meio passa, e medir levanta ValueError."""
+        """Limiar 0,5 em [10, 11, 12]: só a leitura do meio passa, e medir levanta ValueError."""
         regs = [leitura(i, "PT101", contagens=c) for i, c in enumerate([10, 11, 12])]
         with self.assertRaisesRegex(ValueError, "limiar"):
             medir(regs, "PT101", IDENTIDADE, limiar=0.5)

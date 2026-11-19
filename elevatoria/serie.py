@@ -33,8 +33,8 @@ class SerieTemporal(np.ndarray):
         if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
         acumulada = np.cumsum(self)
-        # A soma da janela que começa em i é acumulada[i + janela - 1] - acumulada[i - 1], e
-        # para i = 0 não há o que descontar. A versão antiga começava em i = 1.
+        # A janela que começa em i soma acumulada[i + janela - 1] - acumulada[i - 1]; para
+        # i = 0 não há o que descontar.
         somas = acumulada[janela - 1:].copy()
         somas[1:] -= acumulada[:-janela]
         return somas / janela
