@@ -5,7 +5,10 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import criar_conversores, ler_log, por_tag
+import numpy as np
+
+from elevatoria.dados import (converter_vetorizado, criar_conversores, ler_log, medir_memoria,
+                              por_tag)
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -60,6 +63,27 @@ class TestConversores(unittest.TestCase):
         conversores = criar_conversores(escalas)
         escalas["PT101"] = 1000.0
         self.assertAlmostEqual(conversores["PT101"](3.0), 6.0)
+
+
+class TestMemoriaEConversao(unittest.TestCase):
+    """Issue #3: casos de medir_memoria e da conversão que a aceitação não testa."""
+
+    def test_vetorizado_com_uint16(self):
+        """Contagens em uint16 não estouram na conversão: 4095 vira 600 kPa."""
+        kpa = converter_vetorizado(np.array([0, 4095], dtype=np.uint16))
+        self.assertTrue(np.allclose(kpa, [0.0, 600.0]))
+
+    def test_memoria_recusa_lista_e_float(self):
+        """Lista comum e ndarray de float levantam ValueError."""
+        for entrada in ([1, 2, 3], np.array([1.0, 2.0, 3.0])):
+            with self.subTest(entrada=entrada), self.assertRaises(ValueError):
+                medir_memoria(entrada)
+
+    def test_memoria_recusa_fora_da_faixa(self):
+        """Contagens negativas ou acima de 4095 levantam ValueError."""
+        for ruins in ([0, 4096], [-1, 10]):
+            with self.subTest(contagens=ruins), self.assertRaises(ValueError):
+                medir_memoria(np.array(ruins))
 
 
 if __name__ == "__main__":
