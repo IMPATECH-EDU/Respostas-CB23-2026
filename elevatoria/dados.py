@@ -23,13 +23,29 @@ from fornecido.cronometro import cronometrar
 # Issue #1: leitor do log
 # ---------------------------------------------------------------------------------------
 
+# Tag de instrumento, usada em LINHA e em valida_tag. [0-9] em vez de \d de propósito: num
+# padrão str, \d casa qualquer dígito Unicode, e o strptime aceita "２０２６-10-05" (dígitos de
+# largura total) como data válida.
+_TAG = r"[A-Z]{1,2}[0-9]{1,3}"
+
 #: Padrão de uma linha válida do log, compilado com `re.compile(..., re.VERBOSE)` e com um
 #: comentário em cada parte. Grupos nomeados: `data` (AAAA-MM-DD), `hora` (HH:MM:SS),
 #: `nivel` (INFO, WARN ou ALARME), `tag` (1 ou 2 letras maiúsculas seguidas de 1 a 3
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+LINHA: re.Pattern = re.compile(
+    r"""
+    (?P<data>[0-9]{4}-[0-9]{2}-[0-9]{2}) [ ]+   # 2026-10-05; um mês 13 passa aqui, o strptime barra
+    (?P<hora>[0-9]{2}:[0-9]{2}:[0-9]{2}) [ ]+   # 08:00:06
+    (?P<nivel>INFO|WARN|ALARME)          [ ]+   # DEBUG ou "info" não valem
+    (?P<tag>%s)                          [ ]+   # PT101, FT201, B1
+    (?P<resto>\S.*)                             # contagens=1623 ...; começa sem espaço
+    """ % _TAG,
+    re.VERBOSE,
+)
+
+_PAR = re.compile(r"(\w+)=(\S+)")
 
 
 @dataclass(frozen=True)
@@ -48,7 +64,7 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    return re.fullmatch(_TAG, s) is not None
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -69,7 +85,37 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+    registros: list[Registro] = []
+    invalidas: list[str] = []
+    for linha in texto.splitlines():
+        if not linha.strip():
+            continue
+        try:
+            registros.append(_registro(linha))
+        except ValueError:
+            invalidas.append(linha)
+    return registros, invalidas
+
+
+def _registro(linha: str) -> Registro:
+    """O `Registro` de uma linha do log; `ValueError` se ela for inválida (regras de `ler_log`)."""
+    m = LINHA.fullmatch(linha)
+    if m is None:
+        raise ValueError(f"linha fora do formato do log: {linha!r}")
+    instante = datetime.strptime(f"{m['data']} {m['hora']}", "%Y-%m-%d %H:%M:%S")
+    pares = _PAR.findall(m["resto"])
+    if not pares:
+        raise ValueError(f"linha sem nenhum par chave=valor: {linha!r}")
+    valores = {chave: _numero_ou_texto(valor) for chave, valor in pares}
+    return Registro(instante, m["nivel"], m["tag"], valores)
+
+
+def _numero_ou_texto(valor: str) -> float | str:
+    """`float(valor)` quando a conversão é possível; senão, o próprio texto."""
+    try:
+        return float(valor)
+    except ValueError:
+        return valor
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
@@ -83,7 +129,8 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
     de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    tags = {r.tag for r in registros}
+    return {tag: len(por_tag(registros, tag)) for tag in sorted(tags)}
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
@@ -92,7 +139,8 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
     """
-    raise NotImplementedError("issue #1: serie")
+    return SerieTemporal.de_lista(
+        [r.valores[chave] for r in por_tag(registros, tag) if chave in r.valores])
 
 
 # ---------------------------------------------------------------------------------------
