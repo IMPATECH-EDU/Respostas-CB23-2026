@@ -68,8 +68,8 @@ Previsões registradas no commit: 503b68c
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
 | Memória da lista / memória do `uint16` | ≈ 18 | 18,00 |
-| Tempo do laço / tempo vetorizado | ≈ 30 | 29,6 |
-| Tempo da compreensão / tempo do laço | ≈ 0,7 | 0,79 |
+| Tempo do laço / tempo vetorizado | ≈ 30 | 23,3 |
+| Tempo da compreensão / tempo do laço | ≈ 0,7 | 0,93 |
 
 Conta por trás da previsão: na lista, cada contagem custa um ponteiro de 8 bytes mais um `int`
 de 28 bytes, contra 2 bytes no `uint16`. Para o tempo, chutei uns 60 ns por volta do laço
@@ -77,12 +77,12 @@ contra 2 ns por elemento no NumPy.
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
-Memória e vetorizado bateram; a maior diferença foi a compreensão, 0,79 contra 0,7. Ela só poupa a
-busca de `kpa.append` e a chamada do método, e o resto (a conta e um `float` novo por elemento) pesa
-mais. `uint16 * 20` dá 16364 porque 81900 não cabe em 16 bits: o NumPy mantém o dtype e guarda
-81900 - 65536 = 16364, sem erro nem aviso. Para contagens eu usaria `uint16` (os 12 bits do A/D cabem
-em 2 bytes), convertendo antes de fazer conta, como o `converter_vetorizado`. Para kPa, `float64`: o
-`float32` tem uns 7 dígitos e já perderia centésimos de kPa na soma acumulada da `media_movel`.
+A maior diferença foi a compreensão: previ 0,7 e medi 0,93 (em mais seis rodadas, de 0,90 a 1,06; o
+laço/vetorizado foi de 23 a 36). Ela só poupa a busca de `kpa.append` e a chamada; a conta e o
+`float` novo de cada elemento pesam mais. `uint16 * 20` dá 16364 porque 81900 não cabe em 16 bits: o
+NumPy mantém o dtype e guarda 81900 - 65536 = 16364, sem aviso. Para contagens, `uint16` (os 12 bits
+cabem em 2 bytes), passando para `float64` antes da conta; para kPa, `float64` também, porque o
+`float32` (uns 7 dígitos) perde centésimos de kPa na soma acumulada da `media_movel`.
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
