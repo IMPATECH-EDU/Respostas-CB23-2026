@@ -163,3 +163,31 @@ e perto de 1788 contagens as duas inclinações quase coincidem (0,178 kPa por c
 outra história, -1,800 kPa na linear e 0,030 na spline. A reta liga nós a cada 512 contagens e passa
 por baixo da senoide côncava, por isso erra para menos em toda leitura. A média de 595 leituras só
 encolhe a parte aleatória (erro padrão 0,526/√595 ≈ 0,02 kPa); o erro repetido fica inteiro.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+A bissecção só olha o sinal de `g`: corta [2, 15] ao meio a cada iteração e para quando a largura
+`13 / 2**k` fica abaixo de 1e-12, o que pede k = 44 (`2**43` ≈ 8,8e12 não basta). O Reynolds muda a
+raiz, não a largura do intervalo. Ordem 2 quer dizer `e_{k+1} ≈ C * e_k**2`, e os dígitos certos
+mais ou menos dobram por passo: em Re = 1e4 os erros foram 5,0e-2, 2,3e-5 e 5,0e-12, com
+`e_{k+1} / e_k**2` igual a 0,0094 e 0,0093. O Newton falha em `x**3 - 2*x + 2` com [-2, 2]: sai de
+0, vai a 1, volta a 0 e fica no ciclo até `max_iter`; a bissecção acha -1,7693 em 42 iterações, só
+com a troca de sinal.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+Testes: `test_colebrook_com_re_1e4` e `test_erro_cai_ao_quadrado`, em `TestNewtonRegressao`. Com a
+derivada `d` congelada no ponto inicial, `x - f(x) / d` é uma iteração de ponto fixo, e perto da
+raiz cada passo multiplica o erro por `1 - f'(r) / d`. Como `d` não é `f'(r)`, o fator não zera e a
+convergência é linear: em `x**2 - 2`, saindo de 1, ele vale `1 - 2.83 / 2 ≈ -0,41`. Recalculando
+`d = f'(x_k)`, o fator vai a zero e o erro cai ao quadrado. A aceitação só confere se o método chega
+ao valor certo, e com a derivada fixa ele chega, só que devagar (10 iterações contra 5 em Re = 1e4).
