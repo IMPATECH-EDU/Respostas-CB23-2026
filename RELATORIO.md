@@ -112,3 +112,54 @@ começa em i soma `S[i+janela-1] - S[i-1]`, com `S[-1] = 0`; o código fazia `S[
 que são as janelas a partir de i = 1, e a de i = 0 sumia. Corrigi com `somas = S[janela-1:].copy()` e
 `somas[1:] -= S[:-janela]`. A aceitação só olha tipo e erros, nunca o tamanho, e não tenta janela =
 `len(s)`, que voltava vazia: `test_janela_do_tamanho_da_serie` cobre esse caso.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+
+```
+$ python marco2.py
+=== Etapa 0: ambiente ===
+Python 3.13.18 | NumPy 2.5.5 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3487
+```
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+De h = 1 até 1e-4 o erro cai dez vezes por década (1,66e-5 até 1,65e-9): é o truncamento da
+diferença adiante, cerca de `h * |f''| / 2`. Abaixo de 1e-5 manda o arredondamento: cada valor de
+`f` (uns 224,6 kPa em c = 1000) erra na ordem de `eps * 224`, e a divisão por h amplia esse erro,
+que cresce como `eps * |f| / h`. O equilíbrio fica perto de `sqrt(eps * |f| / |f''|)`, uns 4e-5, e o
+menor erro da tabela saiu em h = 1e-5. Em h = 1e-14, `1000 + 1e-14 == 1000` (o ulp de 1000 é
+1,1e-13), `f(x+h) - f(x)` dá 0 e o erro é a própria derivada, 0,2134.
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+
+Testes: `test_milhao_de_decimos` e `test_parcelas_menores_que_o_ulp`, em `TestKahanRegressao`. Com
+`t = s + y` já arredondado, `t - (s + y)` calcula `s + y` de novo, com os mesmos operandos e o mesmo
+arredondamento: dá o mesmo `t`, e `t - t = 0`. Em `(t - s) - y`, `t` e `s` são próximos e `t - s`
+sai exato; é a parte de `y` que entrou na soma, e tirando `y` sobra o que o arredondamento comeu. A
+aceitação soma 0,1 dez vezes e usa `math.isclose(total, 1.0)`: o erro do ingênuo ali é 1,1e-16,
+longe do `rel_tol` de 1e-9, e o Kahan quebrado passava.
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+
+Precisão é o quanto as leituras se repetem; exatidão, o quanto o resultado chega perto do
+verdadeiro. No PT102 as duas curvas têm o mesmo desvio (0,526 e 0,527 kPa): ele vem do ruído do A/D,
+e perto de 1788 contagens as duas inclinações quase coincidem (0,178 kPa por contagem). O viés é
+outra história, -1,800 kPa na linear e 0,030 na spline. A reta liga nós a cada 512 contagens e passa
+por baixo da senoide côncava, por isso erra para menos em toda leitura. A média de 595 leituras só
+encolhe a parte aleatória (erro padrão 0,526/√595 ≈ 0,02 kPa); o erro repetido fica inteiro.
