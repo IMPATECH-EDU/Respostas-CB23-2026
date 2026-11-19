@@ -5,7 +5,7 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import ler_log, por_tag
+from elevatoria.dados import criar_conversores, ler_log, por_tag
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -49,6 +49,17 @@ class TestLerLogContrato(unittest.TestCase):
         """Data com dígitos de largura total (２０２６) é inválida, apesar do strptime aceitar."""
         linha = "２０２６-10-05 08:00:00 INFO PT101 contagens=131"
         self.assertEqual(ler_log(linha)[1], [linha])
+
+
+class TestConversores(unittest.TestCase):
+    """Issue #2: criar_conversores."""
+
+    def test_fator_fica_fixo_na_criacao(self):
+        """Mudar o dicionário de escalas depois não altera os conversores já criados."""
+        escalas = {"PT101": 2.0, "FT201": 0.1}
+        conversores = criar_conversores(escalas)
+        escalas["PT101"] = 1000.0
+        self.assertAlmostEqual(conversores["PT101"](3.0), 6.0)
 
 
 if __name__ == "__main__":
