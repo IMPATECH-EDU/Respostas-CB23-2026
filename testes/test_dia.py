@@ -6,7 +6,10 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.integracao import Simpson
+import numpy as np
+
+from elevatoria.integracao import Simpson, Trapezio
+from fornecido.energia import vazao_registrada
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -17,8 +20,24 @@ class TestSimpsonExemplo(unittest.TestCase):
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestRegressaoTrapezioTabela(unittest.TestCase):
+    """Issue #11: Trapezio.integrar_tabela deve aceitar malha não uniforme."""
+
+    def test_reta_em_malha_irregular(self):
+        """∫ x dx de 0 a 3 com pontos 0, 1 e 3 dá 4,5 (o trapézio é exato para retas)."""
+        x = np.array([0.0, 1.0, 3.0])
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, x), 4.5)
+
+    def test_constante_da_o_comprimento_do_intervalo(self):
+        """Integrar a constante 1 numa malha irregular dá o comprimento do intervalo."""
+        x = np.array([0.0, 0.25, 0.75, 1.0, 2.0, 2.5])
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, np.ones_like(x)), 2.5)
+
+    def test_reta_na_malha_do_registro_com_falhas(self):
+        """Na malha real do dia (com leituras perdidas), ∫ (2t + 1) dt de 0 a 24 dá 600."""
+        t, _ = vazao_registrada(3507)
+        self.assertGreater(np.ptp(np.diff(t)), 0.0)   # a malha é mesmo irregular
+        self.assertAlmostEqual(Trapezio().integrar_tabela(t, 2 * t + 1), 600.0)
 
 
 if __name__ == "__main__":
