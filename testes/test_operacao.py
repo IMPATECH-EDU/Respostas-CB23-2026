@@ -7,8 +7,20 @@ ser que a igualdade exata seja justamente o que você quer testar.
 import math
 import unittest
 
+import numpy as np
+
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
 from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import fator_atrito_colebrook
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
+
+VAZOES = np.linspace(0.0, 100.0, 11)
+BOMBA = CurvaCalibracao(VAZOES, 50.0 - 0.004 * VAZOES ** 2, "spline")
+
+
+def _adutora() -> Tubulacao:
+    """A adutora da estação, com a bissecção resolvendo Colebrook."""
+    return Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Bisseccao(tol=1e-12))
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -45,6 +57,47 @@ class TestRegressaoNewton(unittest.TestCase):
         e1, e2 = erros[2], erros[3]
         self.assertGreater(e1, 1e-8)
         self.assertLess(e2, e1 ** 2)
+
+
+class TestContratoPontoOperacao(unittest.TestCase):
+    """Issue #8: regras de ponto_operacao que os testes de aceitação não verificam."""
+
+    def test_intervalo_invertido(self):
+        """a >= b levanta ValueError antes de chamar o resolvedor."""
+        for a, b in [(80.0, 20.0), (50.0, 50.0)]:
+            with self.subTest(a=a, b=b), self.assertRaises(ValueError):
+                ponto_operacao(BOMBA, _adutora(), Bisseccao(), a=a, b=b)
+
+    def test_intervalo_fora_do_dominio_da_bomba(self):
+        """Um intervalo que sai do domínio do ensaio (0 a 100 L/s) levanta ValueError."""
+        with self.assertRaisesRegex(ValueError, "domínio"):
+            ponto_operacao(BOMBA, _adutora(), Bisseccao(), a=10.0, b=120.0)
+
+    def test_resolvedor_que_nao_converge(self):
+        """Se o resolvedor para em max_iter sem convergir, ponto_operacao levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(BOMBA, _adutora(), Bisseccao(tol=1e-10, max_iter=3))
+
+
+class TestContratoOrdemConvergencia(unittest.TestCase):
+    """Issue #8: regras de ordem_convergencia que os testes de aceitação não verificam."""
+
+    def test_erros_abaixo_do_piso_sao_ignorados(self):
+        """Erros no nível do arredondamento ficam de fora; valem os 3 últimos acima do piso."""
+        historico = [2.0 + 1e-1, 2.0 + 1e-3, 2.0 + 1e-9, 2.0 + 1e-15, 2.0 + 4e-16, 2.0]
+        self.assertAlmostEqual(ordem_convergencia(historico, 2.0), 3.0, delta=1e-3)
+
+    def test_piso_relativo_ao_tamanho_da_raiz(self):
+        """Para raízes grandes, o piso escala com |raiz|: 1e-14 · 1e6 = 1e-8."""
+        raiz = 1e6
+        historico = [raiz + 1.0, raiz + 1e-1, raiz + 5e-9, raiz + 1e-9]   # só 2 acima de 1e-8
+        with self.assertRaises(ValueError):
+            ordem_convergencia(historico, raiz)
+
+    def test_ordem_cubica(self):
+        """Erros 1e-1, 1e-3, 1e-9 indicam convergência de ordem 3."""
+        historico = [1.0 + 1e-1, 1.0 + 1e-3, 1.0 + 1e-9]
+        self.assertAlmostEqual(ordem_convergencia(historico, 1.0), 3.0, delta=1e-4)
 
 
 if __name__ == "__main__":
