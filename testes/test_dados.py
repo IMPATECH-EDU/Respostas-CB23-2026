@@ -36,7 +36,7 @@ class TestMediaMovelRegressao(unittest.TestCase):
     def test_janela_do_tamanho_da_serie(self):
         """Com janela = len(s) sai uma média só, a da série inteira (antes saía vazio)."""
         mm = SerieTemporal.de_lista([1.0, 2.0, 6.0]).media_movel(3)
-        self.assertEqual(len(mm), 1)
+        self.assertEqual(len(mm), 1)   # antes do valor: np.allclose([], [3.0]) dá True
         self.assertAlmostEqual(float(mm[0]), 3.0)
 
 
