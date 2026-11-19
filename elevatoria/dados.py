@@ -159,7 +159,9 @@ def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], 
     Cada `f` é uma lambda. Cuidado com o *late binding*: cada função deve usar o fator da
     sua tag, e não o último fator do dicionário (veja a issue #2 no enunciado).
     """
-    raise NotImplementedError("issue #2: criar_conversores")
+    # O argumento padrão `k=fator` é avaliado quando cada lambda é criada, e não quando ela
+    # é chamada: assim cada função guarda o fator da sua própria tag.
+    return {tag: (lambda c, k=fator: c * k) for tag, fator in escalas.items()}
 
 
 # ---------------------------------------------------------------------------------------
