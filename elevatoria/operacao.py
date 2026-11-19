@@ -47,9 +47,23 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     Levanta `ValueError` se `a >= b`, se `[a, b]` não estiver dentro do domínio da bomba
     (`bomba.dominio`) ou se o resolvedor não convergir (`resultado.convergiu` falso). Um
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
-    tratado: ele chega a quem chamou `ponto_operacao`.
+    tratado: ele chega a quem chamou `ponto_operacao`. Também levanta `ValueError` se a raiz
+    cair fora de `[a, b]`: o Newton não fica preso ao intervalo e, num `[a, b]` sem raiz, pode
+    convergir para uma raiz de fora, onde a bissecção recusaria o mesmo intervalo.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    inicio, fim = bomba.dominio
+    if a < inicio or b > fim:
+        raise ValueError(f"[{a}, {b}] sai do domínio da bomba, [{inicio}, {fim}]")
+    resultado = resolvedor.encontrar(lambda q: bomba(q) - tubulacao.altura_sistema(q), a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"{type(resolvedor).__name__} não convergiu em "
+                         f"{resultado.iteracoes} iterações")
+    q = resultado.raiz
+    if not a <= q <= b:
+        raise ValueError(f"a raiz {q:.3f} L/s caiu fora de [{a}, {b}]")
+    return PontoOperacao(vazao=q, altura=bomba(q), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +80,12 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    corte = piso * max(1.0, abs(raiz))
+    erros = [e for e in (abs(x - raiz) for x in historico) if e > corte]
+    if len(erros) < 3:
+        raise ValueError(f"preciso de 3 erros acima de {corte:.1e}; o histórico tem {len(erros)}")
+    e0, e1, e2 = erros[-3:]
+    try:
+        return math.log(e2 / e1) / math.log(e1 / e0)
+    except ZeroDivisionError:
+        raise ValueError("os erros pararam de mudar; a ordem não está definida") from None
