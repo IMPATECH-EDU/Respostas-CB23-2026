@@ -35,7 +35,7 @@ Python 3.13.5 | NumPy 2.4.6 | fornecido 4.0
 ### R1 — Expressões regulares
 
 <!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
-re.match aceita 'PT103weubcwo9ien\n\nscv658212r5', mas re.fullmacth rejeita. Usar re.macth permite falsos positivos, já todos os positivos de fullmatch está contido em todos os positivos de match (O contrário não vale).
+re.match aceita 'PT103weubcwo9ien\n\nscv658212r5', mas re.fullmatch rejeita. Usar re.match permite falsos positivos, já todos os positivos de fullmatch está contido em todos os positivos de match (O contrário não vale).
 
 ### R2 — Linhas inválidas
 
@@ -45,12 +45,12 @@ Ainda que uma linha não seja útil para as medições, o sensor pode comunicar 
 ### R3 — Late binding
 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
-Ao definirmos uma função lambda, criamos um escopo onde podemos definir variáveis. Errados define a variável de entrada, mas usa diretamente o k definido no escopo do for in line. Então quando chamamos a função, ela tenta usar uma variável que não existe no seu escopo e segue procurando nos escopos que contém a função. No escopo do for in line, k refere-se ao último valor acessaso. Na nossa função, k é definido no escopo de lambda.
+Ao definirmos uma função lambda, criamos um escopo onde podemos definir variáveis. Errados define a variável de entrada, mas usa diretamente o k definido no escopo do for in line. Então quando chamamos a função, ela tenta usar uma variável que não existe no seu escopo e segue procurando nos escopos que contêm a função. No escopo do for in line, k refere-se ao último valor acessado. Na nossa função, k é definido no escopo de lambda.
 
 ### R4 — Escala nominal
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
-Nossa função de conversão é linear, mas a conversão real se da pela expressão c = 4095 · (2/π) · arcsin(p / 600), como pode ser visto em c_real em simulador.py.
+Nossa função de conversão é linear, mas a conversão real se dá pela expressão c = 4095 · (2/π) · arcsin(p / 600), como pode ser visto em c_real em simulador.py.
 
 ### R5 — Previsão × medição (Etapa 3)
 
