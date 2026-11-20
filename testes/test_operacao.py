@@ -85,6 +85,16 @@ class TestPontoOperacao(unittest.TestCase):
         with self.assertRaises(ValueError):
             Newton(df=df).encontrar(lambda x: x * x - 4.0, 0.0, 6.0)
 
-            
+
+class TestOrdemConvergencia(unittest.TestCase):
+    """Issue #8: regra do piso de ordem_convergencia que os testes de aceitação não verificam."""
+
+    def test_ordem_com_piso_relativo_a_raiz(self):
+        """Com raiz 1000, o erro 1e-12 fica abaixo de piso·|raiz| e é ignorado: a ordem é 2."""
+        raiz = 1000.0
+        historico = [raiz + e for e in (1e-1, 1e-2, 1e-4, 1e-8, 1e-12)]
+        self.assertAlmostEqual(ordem_convergencia(historico, raiz), 2.0, places=2)
+
+
 if __name__ == "__main__":
     unittest.main()
