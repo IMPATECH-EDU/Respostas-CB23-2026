@@ -33,19 +33,19 @@ class TestLevantamentoDeErroPontoOperacao(unittest.TestCase):
 
     def test_a_menor_que_b(self):
         """Testa se a função levanta ValueError para a=b e a>b"""
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "deve satisfazer a < b"):
             ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10), a=90.0, b=90.0)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "deve satisfazer a < b"):
             ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10), a=90.0, b=40.0)
 
     def test_a_b_fora_do_dominio(self):
         """Testa se a função levanta ValueError se [a,b] estiver fora do intervalo de domínio de bomba.dominio"""
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "domínio da bomba"):
             ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10), a=-900.0, b=900.0)
 
     def test_resolvedor_nao_convergiu(self):
         """Testa se a função levanta ValueError quando o resolvedor não converge"""
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "não convergiu"):
             ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10, max_iter=1), a=10.0, b=90.0)
 
 class TestLevantamentoDeErroOrdemConvergencia(unittest.TestCase):
