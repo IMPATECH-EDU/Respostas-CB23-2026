@@ -150,8 +150,15 @@ Como Colebrook é quase uma reta, esse fator é pequeno (0,039 em Re = 1e4), e o
 de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
 Por quê? -->
 
+Os erros do trapézio (∝ h²) e do Simpson (∝ h⁴) supõem f'' e f⁽⁴⁾ limitadas; na função suave da Etapa 1(a) deu 2,01 e 4,06.
+O custo tem a tarifa descontínua às 18 h e às 21 h (0,50 → 1,50 R$/kWh): o subintervalo que contém o salto erra uma área da ordem de h × salto, e esse erro O(h) domina (ordem 1,00 no trapézio e 0,65 no Simpson).
+Por faixa, a tarifa é constante e o integrando é suave em cada uma, então voltam as ordens 2,00 e 4,00.
+
 ### R14 — Issue #11
 
 <!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
 aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
-```
+
+Testes de regressão: `test_reta_em_malha_irregular` (dava 9,5 em vez de 16,5), `test_vazao_constante_com_leitura_perdida` (37,5 em vez de 50) e `test_igual_ao_numpy_em_malha_irregular`.
+Causa: o trapézio usava o mesmo passo `h = x[1] - x[0]` (15 min) em toda a tabela, e os intervalos de 30 e 45 min das leituras perdidas ficavam com área a menos: 3581,1 m³ contra 3887,8 m³ depois da correção (conferência 3888,0). Os testes de aceitação só usam malha uniforme, em que esse erro não aparece.
+O Simpson exige passo constante e número ímpar de pontos, e o registro do dia não tem nenhum dos dois (89 leituras, intervalos de 15, 30 e 45 min).
