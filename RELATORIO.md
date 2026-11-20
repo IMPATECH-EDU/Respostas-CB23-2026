@@ -88,3 +88,41 @@ O sintoma é que a media movel retorna 570 invés de 571.
 O teste de regressão (test_media_move) avalia se a função retorna a quantidade correta.
 A causa foi que uso de acumulada[janela:] descartava um valor da soma acumulada, reduzindo em um a quantidade de resultados. Além disso, a primeira janela precisa ser tratada separadamente, pois não existe uma soma anterior a subtrair.
 Para corrigir isso utilizei acumulada[janela - 1:].copy() e subtraí as somas acumuladas anteriores apenas das posições seguintes. A solução não utiliza laços, não modifica a série original e retorna uma SerieTemporal.
+
+## Marco 2
+
+### Ambiente
+
+Python 3.14.10 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3547
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+O erro de 1 a 1e-5 é o erro de truncamento. que diminui junto com h a cada passo que a secante se aproxima da tangente.
+a partir de 1e-5, o erro de arredondamento domina. subtrai algo pequeno de algo grande perde precisão por causa do limite de digitos no ponto flutuante.
+
+
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+test_desoma e test_cancelamento.
+no test de soma, tentei acumular 1000 numeros 0.1.
+a causa do erro é que s+y é arredondado para t em ponto flutuante. fazendo com que dê zero. a ordem da operação muda os resultados. operar t-s primeira não arrendonda para y. não vai dar zero.
+
+no test cancelamento,
+o float nao tem casas para guardar 1e16 e 1.0 ao mesmo tempo, os numeros 1.0 sao perdidos no arredondamento. fazendo com que 1e16+1.0+1.0-1e16 resulte em 0.0
+
+
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+
+Fazer a média de quase 600 leituras não elimina o viés da curva linear porque a média só cancela o ruído aleatório, que varia para cima e para baixo. Como a aproximação por reta da interpolação linear empurra todas as leituras para baixo nessa faixa, o erro é sistemático e a média continua deslocada.
