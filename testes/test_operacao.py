@@ -49,6 +49,7 @@ class TestLevantamentoDeErroPontoOperacao(unittest.TestCase):
             ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10, max_iter=1), a=10.0, b=90.0)
 
 class TestLevantamentoDeErroOrdemConvergencia(unittest.TestCase):
+    """Issue #8: erro de ordem_convergencia quando faltam erros acima do piso."""
     def test_ordem_convergencia_menos_de_tres_erros(self):
         """Verifica se a função levanta ValueError quando há menos de 3 erros acima do piso."""
         with self.assertRaises(ValueError): #o erro de 0.0001 não será considerado válido

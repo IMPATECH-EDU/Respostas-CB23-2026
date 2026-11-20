@@ -22,6 +22,7 @@ class TestSimpsonExemplo(unittest.TestCase):
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 class TestIntegracaoTrapezio(unittest.TestCase):
+    """Regressão da issue #11: o trapézio usava a mesma largura em toda a tabela."""
     def test_exato_para_afim_com_tabela_irregular(self):
         """Método do trapézio calcula a área de função afim com erro 0"""
         valores_x = [1,4,6,8,9]
@@ -41,12 +42,14 @@ class TestIntegracaoTrapezio(unittest.TestCase):
         self.assertAlmostEqual(integrador.integrar_tabela(x=valores_x,y=valores_y), 10)
 
 class TestLevantamentoDeErroAjustarPolinomio(unittest.TestCase):
+    """Issue #10: regra do contrato de ajustar_polinomio que a aceitação não verifica."""
     def test_x_y_tamanhos_diferentes(self):
         """ajustar_polinomio levanta erro para len(x)!=len(y)"""
         with self.assertRaises(ValueError):
             ajustar_polinomio([1,2,3,4],[4],2)            
 
 class TestLevantamentoDeErroDiaDeOperacao(unittest.TestCase):
+    """Issue #10: regra do contrato de dia_de_operacao que a aceitação não verifica."""
     def test_faixas_faltando(self):
         """dia_de_operacao levanta erro para algum elemento de (0, 18, 21, 24) faltando em t"""
         t = np.asarray([0,4,18,19,21])
