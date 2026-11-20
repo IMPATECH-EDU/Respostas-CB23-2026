@@ -16,7 +16,6 @@ import fornecido
 from fornecido.simulador import gerar_log
 from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
                               medir_tempos, serie, valida_tag)
-from fornecido.testes_aceitacao.test_aceitacao_m2 import registros
 
 MATRICULA = 3472  # troque pelo seu número de matrícula
 
@@ -40,6 +39,9 @@ def etapa1(texto: str, verdade: dict) -> list:
     print("\n=== Etapa 1: leitura do log ===")
     # (a) Leia o log e imprima o número de registros válidos e de linhas inválidas.
     registros, invalidas = ler_log(texto)
+    print(f"Registros válidos: {len(registros)} | linhas inválidas: {len(invalidas)}")
+    for linha in invalidas:
+        print(f"    descartada: {linha!r}")
     assert len(invalidas) == verdade["invalidas"]
     assert len(registros) + len(invalidas) == verdade["linhas"]
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
