@@ -65,6 +65,8 @@ LINHA: re.Pattern = re.compile(r"""
     )
 """, re.VERBOSE) 
 
+#: Padrão de um par chave=valor no `resto` da linha.
+_CHAVE_VALOR: re.Pattern = re.compile(r"(\w+)=(\S+)")
 
 @dataclass(frozen=True)
 class Registro:
@@ -107,43 +109,42 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     - texto vazio devolve `([], [])`.
     """
 
-    validas = []; invalidas = []
+    validas = []
+    invalidas = []
 
     linhas = texto.split("\n")
-    linhas_filtradas = filter(lambda s: s.strip() != "", linhas) #Filtra as linhas vazias (ou só com espaços).
+    linhas_filtradas = filter(lambda s: s.strip() != "", linhas)  # Ignora linhas vazias.
 
     for linha in linhas_filtradas:
-   
         resultado = LINHA.fullmatch(linha)
-        if resultado is None: #Invalida a linha que não casa com `LINHA` (com `fullmatch`).
-            invalidas.append(linha); continue 
+        if resultado is None:  # Não casa com `LINHA` (com `fullmatch`).
+            invalidas.append(linha)
+            continue
 
         try:
-            data = datetime.strptime(resultado.groupdict()["data"], "%Y-%m-%d").date()
-            hora = datetime.strptime(resultado.groupdict()["hora"], "%H:%M:%S").time()
-        except ValueError: #Invalida a linha que a data ou a hora forem impossíveis.
-            invalidas.append(linha); continue
+            data = datetime.strptime(resultado["data"], "%Y-%m-%d").date()
+            hora = datetime.strptime(resultado["hora"], "%H:%M:%S").time()
+        except ValueError:  # Data ou hora impossível (mês 13, hora 25...).
+            invalidas.append(linha)
+            continue
         instante = datetime.combine(data, hora)
 
-        nivel = resultado.groupdict()["nivel"]
-        tag = resultado.groupdict()["tag"]
+        partes = _CHAVE_VALOR.findall(resultado["resto"])
+        if partes == []:  # Nenhum par chave=valor.
+            invalidas.append(linha)
+            continue
 
-        resto = resultado.groupdict()["resto"]
-        valores = {}; CHAVE_VALOR: re.Pattern = re.compile(r"(\w+)=(\S+)")
-        partes = re.findall(CHAVE_VALOR, resto)
-        if partes == []: #Invalida a linha que não tenha nenhum par chave=valor.
-            invalidas.append(linha); continue
-        for parte in partes:
-            chave = parte[0]; valor = parte[1]
-            try: #Transforma valor em float quando possivel.
+        valores = {}
+        for chave, valor in partes:
+            try:  # Transforma o valor em float quando possível.
                 valor = float(valor)
-            except ValueError: pass
-                
+            except ValueError:
+                pass
             valores[chave] = valor
-        
-        validas.append(Registro(instante, nivel, tag, valores))
 
-    return (validas, invalidas)
+        validas.append(Registro(instante, resultado["nivel"], resultado["tag"], valores))
+
+    return validas, invalidas
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
@@ -158,14 +159,8 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     de conjunto. Lista vazia devolve `{}`.
     """
 
-    # contagem = {} #Relizando o algoritimo de forma convencional.
-    # for r in registros:
-    #     tag = r.tag
-    #     if contagem.get(tag, None) is None: contagem[tag] = 1
-    #     else: contagem[tag] += 1
-
     conjunto = {r.tag for r in registros}
-    contagem = {tag: len(por_tag(registros, tag)) for tag in conjunto} #O algoritimo ficou menos eficiente.
+    contagem = {tag: len(por_tag(registros, tag)) for tag in conjunto}
 
     return contagem
 
