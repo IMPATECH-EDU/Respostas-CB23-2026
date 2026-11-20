@@ -69,11 +69,11 @@ Tinha colocado a previsão na coluna errada, mas corrigi. A memória deu exata p
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` | SerieTemporal | |
+| `s[1:]` | SerieTemporal | |
+| `s * 2` | SerieTemporal | |
+| `s.sum()` | SerieTemporal (0-d) | |
+| `s[0]` | float64 | |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
 
