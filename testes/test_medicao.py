@@ -31,7 +31,7 @@ class TestAcumuladorKahan(unittest.TestCase):
         acumulador = AcumuladorKahan()
         for _ in range(1_000_000):
             acumulador.adicionar(0.1)
-        self.assertAlmostEqual(acumulador.total, 1_000_000.0, delta=1e-9)
+        self.assertAlmostEqual(acumulador.total, 100000.0, delta=1e-9)
 
     def test_kahan_e_ingenuo(self):
         """O erro do Kahan em 1e6 parcelas de 0,1 é ao menos 1000x menor que o do ingênuo."""
