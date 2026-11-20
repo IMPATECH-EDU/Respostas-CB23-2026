@@ -145,3 +145,9 @@ As ordens 2 e 4 valem para integrandos suaves: o erro de cada subintervalo é O(
 <!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
 aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
 Testes: `TestRegressaoTrapezioTabela.test_reta_em_malha_irregular` (dava 9.5 em vez de 16.5), `test_constante_com_leitura_perdida` (0.75 em vez de 1), `test_registro_do_dia_com_vazao_constante` (1100 em vez de 1200) e `test_primeiro_passo_maior_que_os_outros` (3.5 em vez de 2). Causa: `integrar_tabela` usava `h = x[1] - x[0]` para todos os trapézios, supondo leituras a cada 15 min. No meu registro, 8 das 97 leituras se perderam e há 8 intervalos de 30 min; cada um entrava como se fosse de 15 min, perdendo cerca de 8/96 ≈ 8% da área (o volume deu 3577.7 m³, 7.98% abaixo de 3888.0). A correção usa `np.diff(x)`, a largura de cada trapézio. Os testes de aceitação só chamavam `integrar_tabela` com malhas uniformes (`linspace` e passo de 1,5 h), onde o passo fixo é o passo certo: o mesmo motivo de "em dias sem falhas, as contas batem". O Simpson composto ajusta uma parábola a cada par de subintervalos iguais, e a fórmula 1-4-2-4-...-1 só vale com passo constante e número par de subintervalos; o registro mistura passos de 15 e 30 min (e a ponta tem 12 pontos, número par), por isso `integrar_tabela` do Simpson recusa a tabela com `ValueError`.
+
+---
+
+**Uso de IA.** A partir do commit 2b38e74, parte do código, dos testes e do texto deste relatório foi escrita com ajuda do Claude Code, como permitido pelas regras da disciplina. Cada etapa foi executada, testada e revisada por mim antes do push.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
