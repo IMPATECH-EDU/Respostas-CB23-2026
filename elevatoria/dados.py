@@ -168,6 +168,8 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
 
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
     """
+    if not isinstance(contagens, np.ndarray):
+        raise ValueError(f"contagens deve ser um ndarray 1D de inteiros; recebi {type(contagens).__name__}")
     if contagens.ndim!=1 or not np.issubdtype(contagens.dtype, np.integer):
         raise ValueError(f"contagens deve ser um ndarray 1D de inteiros; recebi ndim={contagens.ndim} e dtype={contagens.dtype}")
     lista=contagens.tolist()
