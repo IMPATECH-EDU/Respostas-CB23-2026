@@ -17,7 +17,6 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy import stats
-import scipy
 
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.dados import Registro, serie
@@ -65,29 +64,31 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
 
-    if u_sistematica < 0: raise ValueError
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica não pode ser negativa; recebi {u_sistematica}")
 
     s = serie(registros, tag, "contagens")
-    if len(s) < 2: raise ValueError
+    if len(s) < 2:
+        raise ValueError(f"a tag {tag} precisa de pelo menos 2 leituras; recebi {len(s)}")
 
-    x = curva(s)
+    x = curva(s)    # um ValueError da curva (fora do domínio) não é tratado: chega a quem chamou
 
     mediana = np.median(x)
-    MAD = scipy.stats.median_abs_deviation(x, scale="normal")
-    if MAD == 0: raise ValueError
-    z = (x - mediana) / MAD
-    mask = np.abs(z) > limiar
-    validas = x[~mask] #reverte a mascara boleana
-    n_validas = len(validas)
-    if n_validas < 2: raise ValueError
-    list_espurias = np.flatnonzero(mask).tolist()
+    mad = stats.median_abs_deviation(x, scale="normal")
+    if mad == 0:
+        raise ValueError(f"a MAD das leituras de {tag} é zero: não dá para calcular o z robusto")
+    z = (x - mediana) / mad
+    espuria = np.abs(z) > limiar
+    validas = x[~espuria]
+    if validas.size < 2:
+        raise ValueError(f"sobraram {validas.size} leituras válidas de {tag}; são necessárias 2")
 
-
-    media = np.mean(validas)
-    desvio_padrao = np.std(validas, ddof=1)
-    erro_padrao = scipy.stats.sem(validas)
-
-    return Medicao(tag, Medida(media, np.sqrt(erro_padrao**2 + u_sistematica**2)), desvio_padrao, n_validas, list_espurias)
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))
+    incerteza = float(np.sqrt(erro_padrao ** 2 + u_sistematica ** 2))
+    return Medicao(tag=tag, medida=Medida(media, incerteza), desvio=desvio,
+                   n_validas=int(validas.size), espurias=np.flatnonzero(espuria).tolist())
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
