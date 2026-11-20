@@ -66,4 +66,12 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    corte = piso * max(1.0, abs(raiz))
+    # erros no nível do arredondamento ficam de fora, mas a ordem do histórico é mantida
+    uteis = [e for e in (abs(x - raiz) for x in historico) if e > corte]
+    if len(uteis) < 3:
+        raise ValueError(f"são precisos 3 erros acima de {corte:.1e}; há {len(uteis)}")
+    e_antes, e_meio, e_depois = uteis[-3:]
+    if e_meio == e_antes:
+        raise ValueError("dois erros consecutivos iguais: a sequência não está convergindo")
+    return math.log(e_depois / e_meio) / math.log(e_meio / e_antes)
