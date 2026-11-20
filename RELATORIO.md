@@ -16,7 +16,7 @@ A string `PT1010` é aceita por `re.match(r"[A-Z]{1,2}\d{1,3}", ...)`, pois `mat
 
 ### R2 — Linhas inválidas
 
-`ler_log` devolve as linhas descartadas, exatamente como apareceram, para que os erros possam ser investigados e contabilizados; linhas vazias são ignoradas. Por exemplo, se uma falha de comunicação truncar mensagens do transmissor PT102, descartá-las silenciosamente esconderia uma falha da RTU e dificultaria perceber que faltam leituras.
+`ler_log` devolve as linhas descartadas, exatamente como apareceram, para que os erros possam ser investigados e contabilizados; linhas vazias são ignoradas. No meu log foram 4 linhas inválidas: duas `### falha de comunicacao com a RTU ###` e duas truncadas (`2026-10-05 08:03` e `2026-10-05 08:20:4`). Descartá-las em silêncio esconderia que a RTU perdeu a comunicação e que faltam leituras naqueles instantes.
 
 ### R3 — Late binding
 
@@ -48,7 +48,7 @@ A maior diferença foi a aceleração do método vetorizado: 63,1× em vez dos 3
 | `s.sum()` | `SerieTemporal` (0-d, a subclasse costuma ser mantida) | `SerieTemporal` |
 | `s[0]` | `np.float64` | `float64` |
 
-O resultado mais surpreendente é `s.sum()`: embora a soma reduza a série a um único valor, o NumPy mantém a subclasse e devolve um objeto `SerieTemporal` de dimensão zero. Já `s[0]` é um escalar NumPy (`float64`), não uma série.
+Todas as previsões se confirmaram; o caso menos intuitivo é `s.sum()`: embora a soma reduza a série a um único valor, o NumPy mantém a subclasse e devolve um `SerieTemporal` de dimensão zero (`ndim == 0`), e não um número. Já `s[0]` é indexação por um inteiro, que devolve um escalar NumPy (`float64`), não uma série; para ter um número Python a partir da soma, é preciso `float(s.sum())`.
 
 ### R7 — Issue #4
 
@@ -82,15 +82,17 @@ Mesmo com 595 leituras válidas, a média reduz a variação aleatória, mas nã
 
 ### R11 — Bissecção × Newton
 
-A bissecção usa sempre o intervalo `[2, 15]` e tolerância `1e-12` para resolver Colebrook; como reduz a largura pela metade a cada iteração, precisa de 44 iterações, independentemente de `Re`.
+A bissecção usa sempre o intervalo `[2, 15]` e tolerância `1e-12` para resolver Colebrook; como reduz a largura pela metade a cada iteração, para quando `13/2ᵏ < 10⁻¹²`, isto é, em `k = ⌈log₂(1,3·10¹³)⌉ = ⌈43,6⌉ = 44`, número que só depende do intervalo e da tolerância, não de `Re`.
 Newton precisou de 5, 4 e 3 iterações para `Re = 10⁴`, `10⁵` e `10⁶`, com ordens estimadas de `2.00`, `1.98` e `2.00`.
-Ordem 2 significa que, perto da raiz, o erro seguinte é aproximadamente proporcional ao quadrado do erro atual, fazendo os dígitos corretos tenderem a dobrar a cada iteração.
-Por exemplo, para `f(x) = x³` em `[-1, 1]`, Newton começa em `x = 0` e falha porque `f′(0) = 0`; a bissecção encontra a raiz `0` imediatamente.
+Ordem 2 significa que o erro seguinte é proporcional ao quadrado do erro atual: na Etapa 2(b), com `Re = 10⁴`, os erros caem de `5.0e-02` para `2.3e-05` e depois para `5.0e-12`, cada um cerca de `0,009` vezes o quadrado do anterior, então os dígitos corretos praticamente dobram a cada iteração.
+Por exemplo, para `f(x) = x³ − 2x + 2` em `[-3, 3]`, Newton começa no ponto médio `x = 0` e fica preso no ciclo `0 → 1 → 0 → 1`, sem convergir; a bissecção não falha, porque `f(-3) = -19` e `f(3) = 23` têm sinais opostos, e converge para a raiz `≈ -1,7693`.
 
 ### R12 — Issue #9
 
 Os testes de regressão são `test_newton_recalcula_derivada` e `test_newton_converge_em_poucas_iteracoes`.
-Calcular a derivada apenas no ponto inicial mantém a inclinação fixa nas iterações seguintes; em geral, isso perde a convergência quadrática de Newton e resulta em convergência linear perto da raiz.
+Com a derivada fixa `d = f′(x₀)`, a iteração vira `xₖ₊₁ = xₖ − f(xₖ)/d`; perto da raiz `r`, `f(xₖ) ≈ f′(r)·eₖ`, então `eₖ₊₁ ≈ (1 − f′(r)/d)·eₖ`.
+Como `d ≠ f′(r)`, esse fator é uma constante diferente de zero: o erro é multiplicado sempre pelo mesmo número, o que é convergência linear; no Newton correto, `d = f′(xₖ) → f′(r)`, o fator tende a zero e sobra um termo em `eₖ²`, por isso a convergência é quadrática.
+No código original, `Re = 10⁴` levava 10 iterações, com ordem estimada `0.99`; com a correção, são 5 iterações e ordem `2.00`.
 Os testes de aceitação verificavam principalmente a correção da raiz/fator calculado, mas não impunham um limite de iterações nem verificavam a ordem de convergência, então o resultado correto escondia a lentidão.
 
 ## Marco 4
@@ -98,6 +100,8 @@ Os testes de aceitação verificavam principalmente a correção da raiz/fator c
 ### R13 — Integração e descontinuidade
 
 Na Etapa 1(b), o custo integrado de uma vez atravessa os saltos da tarifa às 18 h e às 21 h, deixando o integrando descontínuo; por isso a ordem observada cai para 1,00 no trapézio e 0,65 no Simpson.
+As ordens 2 e 4 vêm das fórmulas de erro, que supõem o integrando suave (`f″` e `f⁽⁴⁾` limitadas); no subintervalo que contém um salto, a regra aproxima um degrau por uma reta ou parábola, e o erro desse pedaço é proporcional a `h` em qualquer das duas regras e domina o total.
+No Simpson, a constante desse erro muda com a posição dos saltos dentro de cada par de subintervalos, então os erros oscilam de um `n` para outro e o ajuste dá 0,65, e não exatamente 1.
 Separando a integral por faixa tarifária, cada trecho tem tarifa constante e os saltos ficam nos limites dos trechos. Assim, as ordens voltam a 2,00 para o trapézio e 4,00 para Simpson.
 Para `n = 110`, os erros por faixa foram `6.3e-04` (trapézio) e `8.1e-08` (Simpson).
 
