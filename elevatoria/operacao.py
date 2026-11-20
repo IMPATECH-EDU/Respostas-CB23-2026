@@ -77,11 +77,9 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    # print(historico) (8.5, 5.539275527805685, 5.590733203813757, 5.588710280271638, 5.588788830438279...)
-    # print(raiz) 5.588785892966379
-    # print(piso) 1e-14
     
-    list_erros = [abs(x - raiz) for x in historico if abs(x - raiz) > piso]
+    limite = piso * max(1.0, abs(raiz))   # erros abaixo disso são só arredondamento
+    list_erros = [abs(x - raiz) for x in historico if abs(x - raiz) > limite]
 
     if len(list_erros) < 3:
         raise ValueError("Sequencia sem erros suficientes acima do piso")
