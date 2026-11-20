@@ -79,5 +79,12 @@ class TestPontoOperacao(unittest.TestCase):
             ponto_operacao(BOMBA, tubulacao(), Bisseccao(tol=1e-10, max_iter=3))
 
 
+    def test_derivada_nula_depois_do_inicio(self):
+        """Se a derivada zera numa iteração posterior, levanta ValueError (e não ZeroDivisionError)."""
+        df = lambda x: 6.0 if x == 3.0 else 0.0
+        with self.assertRaises(ValueError):
+            Newton(df=df).encontrar(lambda x: x * x - 4.0, 0.0, 6.0)
+
+            
 if __name__ == "__main__":
     unittest.main()
