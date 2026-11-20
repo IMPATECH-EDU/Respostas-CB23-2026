@@ -108,6 +108,7 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
                 valores[chave] = valor
         registro.append(Registro(instante, nivel, tag, valores))
     return registro, invalidas
+
         
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
     """Registros da `tag`, na ordem original."""
