@@ -49,7 +49,20 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    q_min, q_max = bomba.dominio
+    if a < q_min or b > q_max:
+        raise ValueError(f"[{a}, {b}] sai do domínio da bomba [{q_min}, {q_max}]")
+
+    def desequilibrio(q: float) -> float:
+        """Sobra de altura da bomba em relação ao que o sistema pede; zero no ponto de operação."""
+        return bomba(q) - tubulacao.altura_sistema(q)
+
+    resultado = resolvedor.encontrar(desequilibrio, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"{type(resolvedor).__name__} não convergiu em {resultado.iteracoes} iterações")
+    return PontoOperacao(vazao=resultado.raiz, altura=bomba(resultado.raiz), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
