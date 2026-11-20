@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 
-from elevatoria.dados import ler_log, por_tag
+from elevatoria.dados import ler_log, por_tag, medir_memoria
 from elevatoria.serie import SerieTemporal
 
 
@@ -117,6 +117,15 @@ class TestLerLogRegrasDoContrato(unittest.TestCase):
         registros, invalidas = ler_log(f"{self.VALIDA}\n{lixo}\n{segunda}")
         self.assertEqual([r.valores["contagens"] for r in registros], [131.0, 140.0])
         self.assertEqual(invalidas, [lixo])
+
+
+class TestMedirMemoria(unittest.TestCase):
+    """Issue #3: regra do contrato de medir_memoria que os testes de aceitação não verificam."""
+
+    def test_lista_em_vez_de_ndarray_levanta_valueerror(self):
+        """Uma lista de inteiros não é um ndarray 1D: medir_memoria levanta ValueError."""
+        with self.assertRaises(ValueError):
+            medir_memoria([1, 2, 3])
 
 
 if __name__ == "__main__":
