@@ -7,11 +7,10 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 import unittest
 from datetime import datetime, timedelta
 
-from elevatoria.acumuladores import AcumuladorIngenuo
+from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.dados import Registro
 from elevatoria.medicao import medir
-
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
     """Exemplo do formato. `AcumuladorIngenuo` é código existente da base."""
@@ -23,6 +22,28 @@ class TestAcumuladorIngenuoExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #7 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+class TestAcumuladorKahan(unittest.TestCase):
+    """Regressão da issue #7: o AcumuladorKahan deve compensar o arredondamento."""
+
+    def test_total_exato(self):
+        """Somar 1e6 parcelas de 0,1 deve dar 100000.0, com erro < 1e-9."""
+        acumulador = AcumuladorKahan()
+        for _ in range(1_000_000):
+            acumulador.adicionar(0.1)
+        self.assertAlmostEqual(acumulador.total, 1_000_000.0, delta=1e-9)
+
+    def test_kahan_e_ingenuo(self):
+        """O erro do Kahan em 1e6 parcelas de 0,1 é ao menos 1000x menor que o do ingênuo."""
+        ingenuo, kahan = AcumuladorIngenuo(), AcumuladorKahan()
+        for _ in range(1_000_000):
+            ingenuo.adicionar(0.1)
+            kahan.adicionar(0.1)
+        erro_ingenuo = abs(ingenuo.total - 100000.0)
+        erro_kahan = abs(kahan.total - 100000.0)
+        self.assertGreater(erro_ingenuo, 0)
+        self.assertLessEqual(erro_kahan, erro_ingenuo / 1000)
+
 class TestMedirContrato(unittest.TestCase):
     """Regras do contrato de `medir` que os testes de aceitação não verificam."""
 
