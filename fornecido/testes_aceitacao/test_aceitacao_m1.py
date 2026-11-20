@@ -7,7 +7,6 @@ issue #4). Os seus próprios testes ficam em `testes/`.
 import dataclasses
 import re
 import unittest
-
 import numpy as np
 
 from elevatoria import dados
