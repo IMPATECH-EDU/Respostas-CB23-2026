@@ -69,14 +69,17 @@ Tinha colocado a previsão na coluna errada, mas corrigi. A memória deu exata p
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | SerieTemporal | |
-| `s[1:]` | SerieTemporal | |
-| `s * 2` | SerieTemporal | |
-| `s.sum()` | SerieTemporal (0-d) | |
-| `s[0]` | float64 | |
+| `s + s` | SerieTemporal | SerieTemporal |
+| `s[1:]` | SerieTemporal | SerieTemporal |
+| `s * 2` | SerieTemporal | SerieTemporal |
+| `s.sum()` | SerieTemporal (0-d) | SerieTemporal (0-d, `ndim == 0`) |
+| `s[0]` | float64 | float64 |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
+Previsões no commit 92f6ee2. O que mais chama atenção é `s.sum()`: o resultado é um número, mas continua sendo `SerieTemporal` (com `ndim == 0`). A soma é uma redução de ufunc (`np.add.reduce`), e o NumPy devolve o resultado passando pelo `__array_wrap__` da subclasse, que mantém o tipo mesmo sem dimensão. Já `s[0]` é indexação de um elemento só, que devolve um escalar do NumPy (`float64`), e não uma view. Por isso o `marco1.py` usa `float(...)` antes de comparar ou formatar médias e somas: senão estaríamos passando uma "série" de zero dimensões.
 
 ### R7 — Issue #4
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
+Sintoma: com a série de PT102 (600 leituras) e janela 30, `media_movel` devolvia 570 valores, e não 571. Teste de regressão: `TestRegressaoMediaMovel.test_quantidade_de_valores` (falhava com `570 != 571`), junto com mais três da mesma classe. Causa: `np.cumsum` dá `A[i] = s[0] + ... + s[i]`, então `A[j+w] - A[j]` é a soma de `s[j+1 .. j+w]`. A primeira janela, `s[0:w]`, precisaria de um "A[-1] = 0" que não existe: ela some, e todas as médias ficam deslocadas um ponto para frente. Correção: colocar um 0 na frente da soma acumulada (`np.insert(np.cumsum(self), 0, 0.0)`), daí `A[j+w] - A[j]` passa a ser exatamente a soma de `s[j : j+w]`.
+Os testes de aceitação só conferiam o tipo do retorno e o `ValueError` para janelas 0 e 6, nunca o tamanho nem os valores. Outro caso que eles não cobrem: janela igual ao tamanho da série, que deve dar um único valor (a média de tudo); o código antigo devolvia uma série vazia. Coberto por `test_janela_igual_ao_tamanho`.
