@@ -7,8 +7,8 @@ ser que a igualdade exata seja justamente o que você quer testar.
 import unittest
 import numpy as np
 
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 from elevatoria.integracao import Simpson, Trapezio
-
 
 class TestSimpsonExemplo(unittest.TestCase):
     """Exemplo do formato. `Simpson` é código existente da base."""
@@ -40,6 +40,47 @@ class TestTrapezioTabela(unittest.TestCase):
         x = np.sort(rng.uniform(0.0, 24.0, 40))
         y = 40.0 + 10.0 * np.sin(x)
         self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), float(np.trapezoid(y, x)))
+
+
+T = np.arange(0.0, 24.0 + 1e-9, 1.5)    # um dia com leituras a cada 1,5 h
+
+class TestAjustarPolinomioContrato(unittest.TestCase):
+    """Issue #10: regras do contrato de ajustar_polinomio que os testes de aceitação não verificam."""
+
+    def test_grau_negativo(self):
+        """Com grau < 0, levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 2.0, 3.0], -1)
+
+    def test_entradas_invalidas(self):
+        """Com x e y de tamanhos diferentes ou x 2D, levanta ValueError."""
+        casos = [([0.0, 1.0, 2.0], [1.0, 2.0]), ([[0.0, 1.0], [2.0, 3.0]], [1.0, 2.0, 3.0, 4.0])]
+        for x, y in casos:
+            with self.subTest(x=x, y=y), self.assertRaises(ValueError):
+                ajustar_polinomio(x, y, 1)
+
+    def test_grau_zero_e_a_media(self):
+        """Com grau 0, o único coeficiente é a média de y."""
+        y = np.array([2.0, 5.0, 3.0, 6.0])
+        coef = ajustar_polinomio([0.0, 1.0, 2.0, 3.0], y, 0)
+        self.assertEqual(len(coef), 1)
+        self.assertAlmostEqual(coef[0], float(y.mean()))
+
+
+class TestDiaDeOperacaoContrato(unittest.TestCase):
+    """Issue #10: regras do contrato de dia_de_operacao que os testes de aceitação não verificam."""
+
+    def test_falta_limite_de_faixa(self):
+        """Sem a leitura das 18 h (início da ponta), levanta ValueError."""
+        t = T[T != 18.0]
+        with self.assertRaises(ValueError):
+            dia_de_operacao(t, np.full(t.size, 50.0), [40.0], [0.8], Trapezio())
+
+    def test_custo_total_e_a_soma_das_faixas(self):
+        """O custo total é a soma das faixas, e a ponta custa 3 vezes mais que as 3 h finais."""
+        resumo = dia_de_operacao(T, np.full(T.size, 50.0), [40.0], [0.8], Trapezio())
+        self.assertAlmostEqual(resumo.custo_reais, sum(resumo.custo_por_faixa))
+        self.assertAlmostEqual(resumo.custo_por_faixa[1], 3 * resumo.custo_por_faixa[2])
 
 if __name__ == "__main__":
     unittest.main()
