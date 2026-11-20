@@ -53,6 +53,38 @@ class TestRegressaoMediaMovel(unittest.TestCase):
         self.assertTrue(np.allclose(mm, s))
 
 
+class TestReamostrar(unittest.TestCase):
+    """Issue #5: médias de blocos consecutivos de k pontos."""
+
+    def test_sobra_no_fim_e_descartada(self):
+        """Com 7 pontos e k = 3, o 7º ponto (que não completa bloco) não entra em média alguma."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 1000.0])
+        r = s.reamostrar(3)
+        self.assertEqual(len(r), 2)
+        self.assertTrue(np.allclose(r, [2.0, 5.0]))
+
+    def test_k_igual_ao_tamanho(self):
+        """k == len(s) gera um único bloco, cuja média é a da série toda."""
+        s = SerieTemporal.de_lista([4.0, 8.0, 15.0, 16.0, 23.0, 42.0])
+        r = s.reamostrar(6)
+        self.assertEqual(len(r), 1)
+        self.assertAlmostEqual(float(r[0]), float(s.mean()))
+
+    def test_k_um_preserva_os_valores(self):
+        """k = 1: cada bloco tem um ponto, e o resultado é igual à série."""
+        s = SerieTemporal.de_lista([0.5, -2.0, 3.25])
+        self.assertTrue(np.allclose(s.reamostrar(1), s))
+
+    def test_tipo_e_imutabilidade(self):
+        """Devolve SerieTemporal 1D e não altera a série original."""
+        s = SerieTemporal.de_lista(np.arange(25.0))
+        antes = np.array(s)
+        r = s.reamostrar(10)
+        self.assertIsInstance(r, SerieTemporal)
+        self.assertEqual(r.ndim, 1)
+        self.assertTrue(np.array_equal(s, antes))
+
+
 class TestContratoLerLog(unittest.TestCase):
     """Regras da docstring de ler_log que os testes de aceitação não exercitam."""
 
