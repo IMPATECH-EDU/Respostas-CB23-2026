@@ -147,20 +147,30 @@ def etapa4(registros: list) -> None:
     s = serie(registros, "PT102", "contagens")
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
+    print(f"(a) média = {float(s.mean()):.2f} | desvio (ddof=1) = {float(s.std(ddof=1)):.2f} "
+          f"| amplitude = {s.amplitude():.0f} contagens")
     assert len(s) == 600 and s.amplitude() > 300
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
+    print(f"(b) {'':<14}{'tamanho':>8}{'mínimo':>10}{'máximo':>10}")
+    for nome, x in [("série", s), ("média móvel", mm)]:
+        print(f"    {nome:<14}{len(x):>8}{float(x.min()):>10.2f}{float(x.max()):>10.2f}")
     assert len(mm) == 571
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
+    print(f"(c) {len(por_minuto)} médias por minuto, de {float(por_minuto.min()):.2f} "
+          f"a {float(por_minuto.max()):.2f}; média delas = {float(por_minuto.mean()):.2f}")
     assert len(por_minuto) == 60
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    expressoes = {"s + s": s + s, "s[1:]": s[1:], "s * 2": s * 2, "s.sum()": s.sum(), "s[0]": s[0]}
+    print("(d) tipos:")
+    for texto, valor in expressoes.items():
+        print(f"    {texto:<9}-> {type(valor).__name__}")
 
 
 def main(matricula: int = MATRICULA) -> None:
