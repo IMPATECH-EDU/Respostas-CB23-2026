@@ -49,7 +49,19 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+      raise ValueError("A maior do que B")
+
+    dom_min, dom_max = bomba.dominio
+    if a < dom_min or b > dom_max:
+        raise ValueError("Intervalo [a, b] fora do domínio da bomba")
+
+    resolvido = resolvedor.encontrar(lambda Q : float(bomba(Q) - tubulacao.altura_sistema(Q)), a, b)
+
+    if not resolvido.convergiu:
+        raise ValueError("Resultado não convergiu")
+
+    return PontoOperacao(vazao=resolvido.raiz, altura=float(bomba(resolvido.raiz)), resultado=resolvido)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +78,13 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+
+    piso_verdadeiro = piso*max(1, abs(raiz))
+    erros = [abs(x - raiz) for x in historico if abs(x - raiz) > piso_verdadeiro]
+
+    if len(erros) < 3:
+        raise ValueError("Menos de 3 erros acima do piso")
+
+    p = math.log(erros[-1]/erros[-2])/math.log(erros[-2]/erros[-3])
+
+    return p

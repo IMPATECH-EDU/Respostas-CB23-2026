@@ -41,7 +41,17 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+
+    if len(x) != len(y):
+        raise ValueError("Vetores de tamanhos diferentes")
+    if grau < 0:
+        raise ValueError("Grau menor que 0")
+    if len(x) < (grau+1) or len(y) < (grau+1):
+        raise ValueError("Menos pontos do que coeficientes")
+
+    coeficientes = np.polynomial.polynomial.polyfit(x, y, grau)
+
+    return coeficientes
 
 
 @dataclass(frozen=True)
@@ -76,4 +86,31 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    limites = (0.0, 18.0, 21.0, 24.0)
+    for lim in limites:
+        if not np.any(np.isclose(t, lim)):
+          raise ValueError("Limite de faixa ausente entre os instantes de t")
+    if t.size != vazao.size:
+        raise ValueError("t e vazao possuem tamanhos diferentes")
+
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    bomba = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, bomba)
+
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+
+    custo_total = 0
+    custo_faixa = np.zeros(len(FAIXAS_TARIFARIAS))
+    index = 0
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        mask = (inicio<=t) & (t<=fim)
+        t_inter = t[mask]
+        potencia_inter = potencia[mask]
+        val = tarifa * integrador.integrar_tabela(t_inter, potencia_inter)
+        custo_faixa[index] = val
+        index += 1
+    custo_faixa = tuple(custo_faixa)
+    custo_total = sum(custo_faixa)
+    
+    return ResumoDia(volume, energia, custo_total, custo_faixa)
