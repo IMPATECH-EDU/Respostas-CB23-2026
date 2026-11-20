@@ -115,3 +115,18 @@ Testes: `TestRegressaoKahan.test_pulsos_de_um_decimo`, `test_parcelas_menores_qu
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 Precisão é o quanto as leituras se espalham entre si; exatidão é o quanto a média fica perto do valor verdadeiro. Para PT102, o desvio é 0.523 kPa na linear e 0.524 kPa na spline: as duas curvas têm quase a mesma inclinação perto de 380 kPa, então espalham o ruído das contagens do mesmo jeito (mesma precisão). Já o viés é −1.841 kPa na linear e −0.012 kPa na spline: a resposta real (um seno) é côncava, e a reta entre dois pontos da tabela fica abaixo dela, então a linear subestima toda leitura nessa região. A média das 595 leituras válidas reduz o erro aleatório (o erro padrão fica ~0.524/√595 ≈ 0.02 kPa), mas o viés é sistemático: todas as leituras são convertidas pela mesma curva errada e erram para o mesmo lado, então a média herda o erro inteiro.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+A bissecção não olha para a forma de g, só para o sinal: cada iteração corta o intervalo ao meio, e ela para quando a largura fica abaixo de tol. Começando em [2, 15] (largura 13) com tol = 1e-12, são precisas n iterações com 13/2^n < 1e-12, ou seja n > log2(1.3e13) ≈ 43.6, logo 44, para qualquer Reynolds. Ordem 2 quer dizer e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada passo. Em Re = 1e4, os erros do Newton foram 5.0e-2 → 2.3e-5 → 5.0e-12, e as razões e_{k+1}/e_k² dão 0.0092 e 0.0095, praticamente constantes. O Newton falha quando a reta tangente manda o próximo ponto para longe: se a derivada for quase nula (f plana) ou o chute estiver longe, ele pode divergir ou sair do domínio, como na curva da bomba, que não extrapola e levanta `ValueError` fora de [0, 100] L/s. A bissecção, com troca de sinal em [a, b], nunca sai do intervalo e sempre converge.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+Testes: `TestRegressaoNewton.test_colebrook_re_1e4_em_poucas_iteracoes` (10 iterações em vez de no máximo 6), `test_raiz_de_dois_converge_quadraticamente` (32 iterações) e `test_derivada_reavaliada_em_cada_aproximacao` (a df era chamada em 1 ponto só, em 27 iterações). Com a derivada d0 = f'(x0) fixa, o método vira a iteração de ponto fixo x_{k+1} = g(x_k), com g(x) = x − f(x)/d0. Perto da raiz r, e_{k+1} ≈ g'(r)·e_k, com g'(r) = 1 − f'(r)/d0, que só é zero se d0 = f'(r). Como d0 é a derivada do ponto inicial, g'(r) ≠ 0 e a convergência é linear, com taxa |1 − f'(r)/f'(x0)| (em x² − 2 a partir de 1, a taxa é |1 − 2√2/2| ≈ 0.41, por isso 32 iterações). O Newton de verdade recalcula a derivada e consegue g'(r) = 0, que é o que dá a ordem 2. Os testes de aceitação só conferiam que o método convergia e que a raiz estava certa; como a versão linear também converge para a raiz certa, só que mais devagar, eles passavam. Nenhum teste conferia o número de iterações nem a ordem.
