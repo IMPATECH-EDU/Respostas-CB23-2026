@@ -72,7 +72,7 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
    mediana= np.median(convertido)
    mad = stats.median_abs_deviation(convertido, scale="normal")
    if mad==0:
-      raise ValueError(f"A MAD é igual a 0, não é possível calcular o z robusto")
+      raise ValueError("A MAD é igual a 0, não é possível calcular o z robusto")
    validas=[]
    espurias=[]
    for i in range(len(convertido)):
@@ -81,7 +81,7 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
       else:
          validas.append(convertido[i])
    if len(validas)<2:
-      raise ValueError(f"Devem haver ao menos 2 leituras válidas, recebi {len(validas)}")
+      raise ValueError(f"Deve haver ao menos 2 leituras válidas, recebi {len(validas)}")
    media = float(np.mean(validas))
    desvio = float(np.std(validas, ddof=1))
    erro_padrao = float(stats.sem(validas))

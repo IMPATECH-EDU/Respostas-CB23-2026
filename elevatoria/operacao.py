@@ -90,6 +90,7 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     if len(erros_validos)!=3:
         raise ValueError("Não há 3 erros acima do piso")
     den = math.log(erros_validos[1]/erros_validos[2])
-    if den == 0: #Se log(e_k / e_{k-1}) = 0 vai ter divisão por 0, esse if levanta o erro para especificar o problema que aconteceu
+    # Se log(e_k / e_{k-1}) = 0, a fórmula dividiria por zero: avisa com uma mensagem clara.
+    if den == 0:
         raise ValueError("Não é possível estimar a ordem de convergência pois ocorre divisão por 0")
     return math.log(erros_validos[0]/erros_validos[1])/den
