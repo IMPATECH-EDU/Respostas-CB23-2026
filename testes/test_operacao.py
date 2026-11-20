@@ -7,10 +7,23 @@ ser que a igualdade exata seja justamente o que você quer testar.
 import math
 import unittest
 
+import numpy as np
+
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
 from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import fator_atrito_colebrook
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
 
 RUGOSIDADE_RELATIVA = 0.15e-3 / 0.20
+
+# Bomba de teste definida só entre 20 e 90 L/s: H = 48 − 0,003·Q².
+_Q = np.arange(20.0, 91.0, 10.0)
+BOMBA_CURTA = CurvaCalibracao(_Q, 48.0 - 0.003 * _Q ** 2, "spline")
+
+
+def _adutora() -> Tubulacao:
+    """A adutora da estação, resolvendo Colebrook pelo Newton."""
+    return Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Newton(tol=1e-12))
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -53,6 +66,53 @@ class TestRegressaoNewton(unittest.TestCase):
         resultado = Newton(tol=1e-12, df=derivada).encontrar(lambda x: x ** 3 - 8.0, 1.0, 4.0)
         self.assertAlmostEqual(resultado.raiz, 2.0, places=10)
         self.assertEqual(len(set(pontos)), resultado.iteracoes)
+
+
+class TestContratoPontoOperacao(unittest.TestCase):
+    """Regras da docstring de ponto_operacao que os testes de aceitação não verificam."""
+
+    def test_intervalo_invertido_ou_degenerado(self):
+        """a >= b levanta ValueError antes de chamar o resolvedor."""
+        for a, b in [(60.0, 30.0), (50.0, 50.0)]:
+            with self.subTest(a=a, b=b), self.assertRaises(ValueError):
+                ponto_operacao(BOMBA_CURTA, _adutora(), Bisseccao(), a, b)
+
+    def test_intervalo_fora_do_dominio_da_bomba(self):
+        """Os valores padrão [10, 100] saem do domínio [20, 90] da bomba: ValueError."""
+        with self.assertRaisesRegex(ValueError, "domínio"):
+            ponto_operacao(BOMBA_CURTA, _adutora(), Bisseccao())
+
+    def test_resolvedor_que_nao_converge(self):
+        """Se o resolvedor para em max_iter sem convergir, ponto_operacao levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(BOMBA_CURTA, _adutora(), Bisseccao(tol=1e-12, max_iter=3), 20.0, 90.0)
+
+    def test_dentro_do_dominio_funciona(self):
+        """Com [a, b] dentro do domínio, a bomba e o sistema se igualam na vazão encontrada."""
+        adutora = _adutora()
+        ponto = ponto_operacao(BOMBA_CURTA, adutora, Newton(tol=1e-10), 20.0, 90.0)
+        self.assertTrue(ponto.resultado.convergiu)
+        self.assertAlmostEqual(ponto.altura, adutora.altura_sistema(ponto.vazao), places=6)
+
+
+class TestContratoOrdemConvergencia(unittest.TestCase):
+    """Regras da docstring de ordem_convergencia que os testes de aceitação não verificam."""
+
+    def test_piso_escala_com_a_raiz(self):
+        """Com raiz 1e6, o piso vira 1e-8: o erro 1e-9 é descartado e a ordem continua 2."""
+        raiz = 1e6
+        historico = [raiz + e for e in (1e-1, 1e-2, 1e-4, 1e-8)] + [raiz + 1e-9]
+        self.assertAlmostEqual(ordem_convergencia(historico, raiz), 2.0, delta=0.05)
+
+    def test_erros_abaixo_do_piso_nao_contam(self):
+        """Erros abaixo do piso não completam os 3 necessários: ValueError."""
+        with self.assertRaises(ValueError):
+            ordem_convergencia([2.0 + 1e-3, 2.0 + 1e-6, 2.0 + 1e-15, 2.0], 2.0)
+
+    def test_usa_os_tres_ultimos_uteis(self):
+        """Uma fase rápida no começo não muda a estimativa: valem só os três últimos erros úteis."""
+        historico = [1e-1, 1e-3, 1e-9] + [1e-9 / 2 ** k for k in range(1, 6)]   # raiz 0
+        self.assertAlmostEqual(ordem_convergencia(historico, 0.0), 1.0, delta=1e-9)
 
 
 if __name__ == "__main__":
