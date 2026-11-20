@@ -83,3 +83,35 @@ Previsões no commit 92f6ee2. O que mais chama atenção é `s.sum()`: o resulta
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 Sintoma: com a série de PT102 (600 leituras) e janela 30, `media_movel` devolvia 570 valores, e não 571. Teste de regressão: `TestRegressaoMediaMovel.test_quantidade_de_valores` (falhava com `570 != 571`), junto com mais três da mesma classe. Causa: `np.cumsum` dá `A[i] = s[0] + ... + s[i]`, então `A[j+w] - A[j]` é a soma de `s[j+1 .. j+w]`. A primeira janela, `s[0:w]`, precisaria de um "A[-1] = 0" que não existe: ela some, e todas as médias ficam deslocadas um ponto para frente. Correção: colocar um 0 na frente da soma acumulada (`np.insert(np.cumsum(self), 0, 0.0)`), daí `A[j+w] - A[j]` passa a ser exatamente a soma de `s[j : j+w]`.
 Os testes de aceitação só conferiam o tipo do retorno e o `ValueError` para janelas 0 e 6, nunca o tamanho nem os valores. Outro caso que eles não cobrem: janela igual ao tamanho da série, que deve dar um único valor (a média de tudo); o código antigo devolvia uma série vazia. Coberto por `test_janela_igual_ao_tamanho`.
+
+## Marco 2
+
+### Ambiente
+
+No meu windows pessoal (SciPy instalado no mesmo venv com `python -m pip install scipy`).
+```
+-> python marco2.py
+=== Etapa 0: ambiente ===
+Python 3.13.5 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3472
+```
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+De h = 1 até 1e-5 domina o erro de truncamento da diferença adiante, que é ~ h·|f''|/2: cai uma casa decimal por casa de h (1.66e-5, 1.66e-6, 1.66e-7...). Depois domina o arredondamento: f(1000) ≈ 225 kPa tem erro ~ eps·225 ≈ 5e-14, e a subtração f(x+h) − f(x) cancela quase todos os dígitos, então o erro vira ~ 5e-14/h e cresce quando h diminui (6.2e-10 em 1e-5, 2.8e-6 em 1e-8, 1.4e-2 em 1e-12). O mínimo fica perto de h ~ sqrt(eps·|f|/|f''|) ≈ 1e-5, que bate com a tabela. Em h = 1e-14, `1000 + 1e-14 == 1000` dá `True` (1e-14 é menor que meio ulp de 1000, que é ~5.7e-14), então x + h é o próprio x, o numerador é 0 e a aproximação é 0: o erro é a derivada inteira, 0.2134.
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+Testes: `TestRegressaoKahan.test_pulsos_de_um_decimo`, `test_parcelas_menores_que_meio_ulp` e `test_concorda_com_fsum` (os três falhavam). A causa: `t` já é o resultado arredondado de `s + y`. Quando o código calcula `s + y` de novo, o computador faz a mesma conta com o mesmo arredondamento e chega no mesmo `t`, então `t - (s + y)` é `t - t = 0` sempre, e a correção nunca guarda nada. Em `(t - s) - y`, a conta `t - s` é exata e devolve a parte de `y` que de fato entrou na soma; tirando `y`, sobra (com sinal trocado) o pedaço que se perdeu, que é descontado na parcela seguinte. A ordem das operações importa porque em ponto flutuante a soma não é associativa. Os testes de aceitação só somavam 10 parcelas de 0,1 e comparavam com `math.isclose`, que tem tolerância relativa de 1e-9: o ingênuo passa, então o Kahan defeituoso (que é igual ao ingênuo) também passa. Nenhum teste comparava o Kahan com o ingênuo ou exigia o resultado exato.
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+Precisão é o quanto as leituras se espalham entre si; exatidão é o quanto a média fica perto do valor verdadeiro. Para PT102, o desvio é 0.523 kPa na linear e 0.524 kPa na spline: as duas curvas têm quase a mesma inclinação perto de 380 kPa, então espalham o ruído das contagens do mesmo jeito (mesma precisão). Já o viés é −1.841 kPa na linear e −0.012 kPa na spline: a resposta real (um seno) é côncava, e a reta entre dois pontos da tabela fica abaixo dela, então a linear subestima toda leitura nessa região. A média das 595 leituras válidas reduz o erro aleatório (o erro padrão fica ~0.524/√595 ≈ 0.02 kPa), mas o viés é sistemático: todas as leituras são convertidas pela mesma curva errada e erram para o mesmo lado, então a média herda o erro inteiro.
