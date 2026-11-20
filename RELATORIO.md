@@ -130,3 +130,18 @@ A bissecção não olha para a forma de g, só para o sinal: cada iteração cor
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
 Testes: `TestRegressaoNewton.test_colebrook_re_1e4_em_poucas_iteracoes` (10 iterações em vez de no máximo 6), `test_raiz_de_dois_converge_quadraticamente` (32 iterações) e `test_derivada_reavaliada_em_cada_aproximacao` (a df era chamada em 1 ponto só, em 27 iterações). Com a derivada d0 = f'(x0) fixa, o método vira a iteração de ponto fixo x_{k+1} = g(x_k), com g(x) = x − f(x)/d0. Perto da raiz r, e_{k+1} ≈ g'(r)·e_k, com g'(r) = 1 − f'(r)/d0, que só é zero se d0 = f'(r). Como d0 é a derivada do ponto inicial, g'(r) ≠ 0 e a convergência é linear, com taxa |1 − f'(r)/f'(x0)| (em x² − 2 a partir de 1, a taxa é |1 − 2√2/2| ≈ 0.41, por isso 32 iterações). O Newton de verdade recalcula a derivada e consegue g'(r) = 0, que é o que dá a ordem 2. Os testes de aceitação só conferiam que o método convergia e que a raiz estava certa; como a versão linear também converge para a raiz certa, só que mais devagar, eles passavam. Nenhum teste conferia o número de iterações nem a ordem.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+As ordens 2 e 4 valem para integrandos suaves: o erro de cada subintervalo é O(h³) no trapézio e O(h⁵) no Simpson, e somando os n = 24/h subintervalos sobram O(h²) e O(h⁴). O custo de uma vez é potência × tarifa, e a tarifa salta às 18 h e às 21 h. Com n = 30, 50, 70, 90 e 110, h = 24/n, e 18 h só seria nó se n fosse múltiplo de 4 (nenhum desses é: todos dão resto 2), então os saltos caem no meio de subintervalos. Nesses dois subintervalos a regra "espalha" o salto, com erro proporcional a (salto)·h, e como são sempre dois, o erro total fica O(h): ordem ~1 (deu 1.00 no trapézio e 0.65 no Simpson, que oscila conforme onde o salto cai). Integrando por faixa, cada integral é de uma função suave (a tarifa é constante dentro dela) e os limites 18 e 21 viram extremos, então voltam as ordens 2.00 e 4.00 (erro 6.3e-4 e 8.1e-8 em n = 110).
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+Testes: `TestRegressaoTrapezioTabela.test_reta_em_malha_irregular` (dava 9.5 em vez de 16.5), `test_constante_com_leitura_perdida` (0.75 em vez de 1), `test_registro_do_dia_com_vazao_constante` (1100 em vez de 1200) e `test_primeiro_passo_maior_que_os_outros` (3.5 em vez de 2). Causa: `integrar_tabela` usava `h = x[1] - x[0]` para todos os trapézios, supondo leituras a cada 15 min. No meu registro, 8 das 97 leituras se perderam e há 8 intervalos de 30 min; cada um entrava como se fosse de 15 min, perdendo cerca de 8/96 ≈ 8% da área (o volume deu 3577.7 m³, 7.98% abaixo de 3888.0). A correção usa `np.diff(x)`, a largura de cada trapézio. Os testes de aceitação só chamavam `integrar_tabela` com malhas uniformes (`linspace` e passo de 1,5 h), onde o passo fixo é o passo certo: o mesmo motivo de "em dias sem falhas, as contas batem". O Simpson composto ajusta uma parábola a cada par de subintervalos iguais, e a fórmula 1-4-2-4-...-1 só vale com passo constante e número par de subintervalos; o registro mistura passos de 15 e 30 min (e a ponta tem 12 pontos, número par), por isso `integrar_tabela` do Simpson recusa a tabela com `ValueError`.
