@@ -5,7 +5,10 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
+import numpy as np
+
 from elevatoria.dados import ler_log, por_tag
+from elevatoria.serie import SerieTemporal
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -18,6 +21,36 @@ class TestPorTagExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+
+class TestRegressaoMediaMovel(unittest.TestCase):
+    """Issue #4: media_movel devolvia n - janela valores em vez de n - janela + 1."""
+
+    def test_quantidade_de_valores(self):
+        """600 pontos com janela 30 dão 571 médias, como diz a docstring."""
+        s = SerieTemporal.de_lista(np.arange(600.0))
+        self.assertEqual(len(s.media_movel(30)), 571)
+
+    def test_janela_igual_ao_tamanho(self):
+        """Com janela == len(s), sai um único valor: a média da série inteira."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 9.0])
+        mm = s.media_movel(3)
+        self.assertEqual(len(mm), 1)
+        self.assertAlmostEqual(float(mm[0]), 5.0)
+
+    def test_primeira_media_usa_os_primeiros_pontos(self):
+        """O valor 0 é a média de s[0:janela], incluindo o primeiro ponto."""
+        s = SerieTemporal.de_lista([10.0, 20.0, 30.0, 40.0])
+        mm = s.media_movel(2)
+        self.assertEqual(len(mm), 3)
+        self.assertTrue(np.allclose(mm, [15.0, 25.0, 35.0]))
+
+    def test_janela_um_devolve_a_propria_serie(self):
+        """Janela 1 é a identidade: mesmos valores, mesmo tamanho."""
+        s = SerieTemporal.de_lista([3.0, -1.0, 7.5])
+        mm = s.media_movel(1)
+        self.assertEqual(len(mm), len(s))
+        self.assertTrue(np.allclose(mm, s))
 
 
 class TestContratoLerLog(unittest.TestCase):
