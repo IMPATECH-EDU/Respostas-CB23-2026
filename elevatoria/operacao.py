@@ -50,17 +50,19 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
 
-    if a >= b: raise ValueError("Erro devido a (a) maior igual que (b)")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    inicio, fim = bomba.dominio
+    if a < inicio or b > fim:
+        raise ValueError(f"[{a}, {b}] sai do domínio da bomba [{inicio}, {fim}]")
 
-    if a < bomba.dominio[0] or b > bomba.dominio[1]: raise ValueError("Pontos fora do dominio")
-
-    def f(x):
-        return bomba(x) - tubulacao.altura_sistema(x)
+    def f(q: float) -> float:
+        """Altura da bomba menos a altura exigida pelo sistema, na vazão `q`."""
+        return bomba(q) - tubulacao.altura_sistema(q)
 
     resultado = resolvedor.encontrar(f, a, b)
-
-    if not resultado.convergiu: raise ValueError("Nao convergiu")
-
+    if not resultado.convergiu:
+        raise ValueError(f"o resolvedor não convergiu em {resultado.iteracoes} iterações")
     return PontoOperacao(vazao=resultado.raiz, altura=bomba(resultado.raiz), resultado=resultado)
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
