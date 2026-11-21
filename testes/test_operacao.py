@@ -8,6 +8,7 @@ import unittest
 
 from elevatoria.raizes import Bisseccao
 from elevatoria.operacao import ordem_convergencia
+from elevatoria.raizes import Newton
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -37,6 +38,32 @@ class TestOrdemConvergenciaContrato(unittest.TestCase):
         ordem = ordem_convergencia(historico, raiz=0.0)
 
         self.assertAlmostEqual(ordem, 2.0)
+
+
+class TestNewtonRegressao(unittest.TestCase):
+    def test_converge_com_derivada_fornecida_em_seis_iteracoes(self):
+        """Encontra a raiz de x² − 2 em até seis passos com derivada fornecida."""
+        metodo = Newton(
+            tol=1e-12,
+            max_iter=6,
+            df=lambda x: 2 * x,
+        )
+
+        resultado = metodo.encontrar(lambda x: x * x - 2, 1.0, 2.0)
+
+        self.assertTrue(resultado.convergiu)
+        self.assertAlmostEqual(resultado.raiz, 2 ** 0.5, delta=1e-10)
+
+    def test_converge_com_derivada_numerica_em_seis_iteracoes(self):
+        """Encontra a raiz de x² − 2 em até seis passos com derivada numérica."""
+        metodo = Newton(tol=1e-12, max_iter=6)
+
+        resultado = metodo.encontrar(lambda x: x * x - 2, 1.0, 2.0)
+
+        self.assertTrue(resultado.convergiu)
+        self.assertAlmostEqual(resultado.raiz, 2 ** 0.5, delta=1e-10)
+
+        
 
 if __name__ == "__main__":
     unittest.main()
