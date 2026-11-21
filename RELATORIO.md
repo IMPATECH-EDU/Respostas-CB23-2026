@@ -72,3 +72,53 @@ O resultado que mais surpreendeu foi `s[0]` e `s.sum()` retornarem `np.float64` 
 - **Sintoma e regressão:** Para uma série de $n$ pontos e janela $k$, `media_movel` devolvia $n - k$ valores em vez de $n - k + 1$ (ex.: 570 para $n=600, k=30$), descartando a primeira janela; coberto pelo teste `TestMediaMovel.test_media_movel_simples`.
 - **Causa e correção:** O código original fazia `acumulada[janela:] - acumulada[:-janela]` diretamente sobre `np.cumsum(self)`, omitindo a diferença `acumulada[janela - 1] - 0` da primeira janela; a correção insere `0.0` no início da soma acumulada (`np.insert(np.cumsum(self), 0, 0.0)`), alinhando os índices.
 - **Lacuna nos testes:** Os testes de aceitação verificavam apenas propriedades gerais (como tipo de retorno ou valores internos) sem checar o comprimento exato $n - k + 1$ nem casos de borda como $k = n$ (que antes devolvia série vazia), caso coberto pelo meu teste `TestMediaMovel.test_media_movel_janela_total`.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+```text
+Python 3.13.15 | NumPy 2.5.2 | SciPy 1.18.0 | fornecido 4.0 | matrícula 3544
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+De $h = 1$ até $h = 10^{-5}$, o erro cai linearmente com $h$ (de $1{,}658\times 10^{-5}$ até o mínimo de $6{,}224\times 10^{-10}$) porque domina o erro de truncamento $O(h)$ da série de Taylor na diferença adiante. Para $h < 10^{-5}$, domina o erro de arredondamento (cancelamento catastrófico em $f(x+h) - f(x)$ dividido por $h$ cada vez menor), fazendo o erro subir até $3{,}550\times 10^{-1}$ em $h = 10^{-13}$. Em $h = 10^{-14}$, $c + h = 1000 + 10^{-14}$ arredonda para o próprio $1000$ em float64 (pois o épsilon da máquina nessa escala é $\approx 1{,}14\times 10^{-13}$), fazendo $(f(c+h) - f(c))/h = 0$ e tornando o erro $|0 - f'(c)| = 0{,}2134$ igual à própria derivada.   
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+
+De $h = 1$ até $h = 10^{-5}$, o erro cai linearmente com $h$ (de $1{,}658\times 10^{-5}$ até o mínimo de $6{,}224\times 10^{-10}$) porque domina o erro de truncamento $O(h)$ da série de Taylor na diferença adiante. Para $h < 10^{-5}$, domina o erro de arredondamento (cancelamento catastrófico em $f(x+h) - f(x)$ dividido por $h$ cada vez menor), fazendo o erro subir até $3{,}550\times 10^{-1}$ em $h = 10^{-13}$. Em $h = 10^{-14}$, $c + h = 1000 + 10^{-14}$ arredonda para o próprio $1000$ em float64 (pois o épsilon da máquina nessa escala é $\approx 1{,}14\times 10^{-13}$), fazendo $(f(c+h) - f(c))/h = 0$ e tornando o erro $|0 - f'(c)| = 0{,}2134$ igual à própria derivada.   
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+
+Para PT102, as curvas linear e spline apresentam praticamente a mesma precisão (dispersão interna das leituras em torno da própria média), com desvios padrão amostrais de $0{,}545\text{ kPa}$ e $0{,}546\text{ kPa}$. Porém, diferem na exatidão (proximidade em relação ao valor real de referência): a spline tem viés de apenas $-0{,}027\text{ kPa}$ (média $380{,}0\text{ kPa}$), enquanto a linear tem viés sistemático de $-1{,}857\text{ kPa}$ (média $378{,}1\text{ kPa}$). Aumentar o número de leituras ($n \approx 600$) reduz apenas o erro padrão aleatório ($\sigma/\sqrt{n}$), mas não elimina um erro sistemático do modelo (aproximação linear por partes de uma curva não linear).
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+Na Etapa 2(a), a bissecção parte sempre do mesmo intervalo inicial $[2, 15]$ e para quando $(b - a)/2^k < \text{tol} = 10^{-12}$, exigindo $\lceil \log_2(13 / 10^{-12}) \rceil = 44$ iterações independentemente do número de Reynolds (pois a largura depende apenas de $a$, $b$ e $\text{tol}$, não da função)[cite: 21, 29]. Na Etapa 2(b), para $\text{Re} = 10^4$, os erros de Newton caem como $2{,}9 \to 5{,}0\times 10^{-2} \to 2{,}3\times 10^{-5} \to 5{,}0\times 10^{-12}$, o que caracteriza **ordem de convergência 2** ($e_{k+1} \approx C\,e_k^2$, dobrando o número de casas decimais corretas a cada passo)[cite: 29]. O Newton falha enquanto a bissecção converge quando há derivada nula ($f'(x_k) = 0$) ou quando o chute inicial está longe da raiz e a tangente lança a próxima aproximação para fora do domínio (por exemplo, $x \le 0$ no logaritmo de Colebrook)[cite: 21, 27].
+
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+Testes de regressão criados em `testes/test_operacao.py`: `test_newton_colebrook_poucas_iteracoes` e `test_newton_convergencia_quadratica_polinomio`. Calcular `derivada = self._derivada(f, x)` apenas uma vez fora do laço transforma o método de Newton no método das cordas (inclinação fixa $f'(x_0)$), cuja taxa de redução do erro é constante ($e_{k+1} \approx |1 - f'(r)/f'(x_0)|\,e_k$), degradando a convergência de quadrática ($p = 2$) para **linear** ($p = 1$)[cite: 18, 27]. Os testes de aceitação iniciais não pegaram o defeito porque verificavam apenas se o resultado final convergido (`res.raiz` e `res.convergiu`) estava dentro da tolerância, sem limitar o número máximo de iterações nem medir a ordem de convergência $p$[cite: 17].
