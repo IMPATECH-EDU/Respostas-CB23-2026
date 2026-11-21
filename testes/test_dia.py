@@ -6,7 +6,7 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import numpy as np
 import unittest 
-
+from elevatoria.dia import ajustar_polinomio
 from elevatoria.integracao import Simpson, Trapezio
 
 
@@ -38,7 +38,27 @@ class TestTrapezioRegressao(unittest.TestCase):
         resultado = Trapezio().integrar_tabela(x, y)
 
         self.assertAlmostEqual(resultado, 4.5)
-        
+
+
+class TestAjustarPolinomioContrato(unittest.TestCase):
+    def test_rejeita_grau_negativo(self):
+        """Rejeita um grau negativo mesmo com pontos suficientes."""
+        x = np.array([0.0, 1.0, 2.0])
+        y = np.array([1.0, 3.0, 5.0])
+
+        with self.assertRaises(ValueError):
+            ajustar_polinomio(x, y, -1)
+
+    def test_rejeita_entradas_bidimensionais(self):
+        """Rejeita x ou y bidimensional, mesmo com tamanhos iguais."""
+        vetor = np.array([0.0, 1.0, 2.0])
+        matriz = vetor.reshape(3, 1)
+
+        for x, y in ((matriz, vetor), (vetor, matriz)):
+            with self.subTest(x_shape=x.shape, y_shape=y.shape):
+                with self.assertRaises(ValueError):
+                    ajustar_polinomio(x, y, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
