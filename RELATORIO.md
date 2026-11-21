@@ -123,6 +123,8 @@ Os testes `test_converge_com_derivada_fornecida_em_seis_iteracoes` e `test_conve
 de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
 Por quê? -->
 
+Ao integrar o custo do dia inteiro, os saltos da tarifa reduzem a regularidade da função e prejudicam a convergência. Observei ordem 1,00 no trapézio e 0,65 no Simpson. Ao integrar cada faixa separadamente, a tarifa fica constante em cada intervalo, recuperando as ordens 2,00 e 4,00. Para n = 110, os erros por faixa foram aproximadamente 6,3 × 10⁻⁴ e 8,1 × 10⁻⁸, respectivamente.
+
 ### R14 — Issue #11
 
 <!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
