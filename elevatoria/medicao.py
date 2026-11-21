@@ -63,8 +63,36 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
 
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica não pode ser negativa; recebi {u_sistematica}")
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError(f"a tag {tag} tem {len(contagens)} leitura(s); são necessárias pelo menos 2")
+    pressoes = curva(contagens)
+    
+    mediana = np.median(pressoes)
+    mad = stats.median_abs_deviation(pressoes, scale="normal")
+    if mad == 0:
+        raise ValueError(f"A MAD deu zero, as leituras não variam e o z robusto não pode ser calculado; {tag}")
+    z = (pressoes - mediana) / mad
+    espurias = [i for i in range(len(z)) if abs(z[i]) > limiar]
+    validas = pressoes[np.abs(z) <= limiar]
+    if len(validas) < 2:
+        raise ValueError(f"O número de leituras válidas é menor do que o mínimo exigido ; {tag}")
+
+    media = np.mean(validas)
+    desvio = np.std(validas, ddof=1)
+    erro_padrao = stats.sem(validas)
+    u = np.sqrt(erro_padrao ** 2 + u_sistematica ** 2)   
+    
+    return Medicao(
+        tag=tag,
+        medida=Medida(media, u),
+        desvio=desvio,
+        n_validas=len(validas),
+        espurias=espurias,
+    )
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
                        u_sistematica: float = 1.5) -> Medida:
@@ -75,4 +103,6 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    p_succao = medir(registros, "PT101", curva, u_sistematica=u_sistematica).medida
+    p_recalque = medir(registros, "PT102", curva, u_sistematica=u_sistematica).medida
+    return (p_recalque - p_succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)

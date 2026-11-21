@@ -49,7 +49,20 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"O intervalo deve ter a < b; recebi [{a}, {b}]")
+    inicio, fim = bomba.dominio
+    if a < inicio or b > fim:
+        raise ValueError(f"[{a}, {b}] saiu do domínio da bomba [{inicio}, {fim}]")
+
+    def f(q: float) -> float:
+        """Diferença entre a altura da bomba e a do sistema na vazão q."""
+        return bomba(q) - tubulacao.altura_sistema(q)
+
+    resultado = resolvedor.encontrar(f, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"o resolvedor não convergiu como deveria em {resultado.iteracoes} iterações")
+    return PontoOperacao(vazao=resultado.raiz, altura=bomba(resultado.raiz), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -64,6 +77,12 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
     quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
 
-    Levanta `ValueError` se houver menos de 3 erros acima do piso.
+    Se houver menos de 3 erros acima do piso teremos `ValueError`.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    limite = piso * max(1.0, abs(raiz))
+    erros = [abs(x - raiz) for x in historico]
+    erros = [e for e in erros if e > limite]
+    if len(erros) < 3:
+        raise ValueError(f"só {len(erros)} erro(s) acima do piso; são necessários pelo menos 3")
+    e0, e1, e2 = erros[-3:]
+    return math.log(e2 / e1) / math.log(e1 / e0)
