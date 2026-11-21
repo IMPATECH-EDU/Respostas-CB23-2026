@@ -32,7 +32,7 @@ LINHA = re.compile(
     ^
     (?P<data>[0-9]{4}-[0-9]{2}-[0-9]{2})\s+
     (?P<hora>[0-9]{2}:[0-9]{2}:[0-9]{2})\s+
-    (?P<nivel>[A-Z]+)\s+
+    (?P<nivel>INFO|AVISO|ALARME|ERRO)\s+
     (?P<tag>[A-Z]{1,2}[0-9]{1,3})\s+
     (?P<resto>.+)
     $
