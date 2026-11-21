@@ -13,6 +13,7 @@ Funções auxiliares privadas (`_nome`) são permitidas.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -63,7 +64,45 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    
+    if u_sistematica < 0:
+        raise ValueError("A incerteza sistemática não pode ser negativa.")
+
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError(f"A tag {tag} precisa de pelo menos 2 leituras.")
+
+    x = curva(contagens)
+
+    mediana = np.median(x)
+    mad = stats.median_abs_deviation(x, scale="normal")
+    
+    if mad == 0:
+        raise ValueError("A MAD é zero; impossível calcular o Z-score.")
+
+    z = (x - mediana) / mad
+    espurias_mask = np.abs(z) > limiar
+    espurias = np.where(espurias_mask)[0].tolist()
+
+    validas = x[~espurias_mask]
+    n_validas = len(validas)
+
+    if n_validas < 2:
+        raise ValueError("Restaram menos de 2 leituras válidas após o descarte de espúrias.")
+
+    media = np.mean(validas)
+    desvio = np.std(validas, ddof=1)
+    erro_padrao = stats.sem(validas, ddof=1)
+
+    u = math.hypot(erro_padrao, u_sistematica)
+
+    return Medicao(
+        tag=tag,
+        medida=Medida(float(media), float(u)),
+        desvio=float(desvio),
+        n_validas=n_validas,
+        espurias=espurias
+    )
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +114,11 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    
+    m_pt101 = medir(registros, "PT101", curva, u_sistematica)
+    m_pt102 = medir(registros, "PT102", curva, u_sistematica)
+    
+    p_pt101 = m_pt101.medida
+    p_pt102 = m_pt102.medida
+
+    return (p_pt102 - p_pt101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
