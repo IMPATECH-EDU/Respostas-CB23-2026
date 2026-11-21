@@ -96,3 +96,22 @@ Os testes `test_soma_um_milhao_de_decimos` e `test_recupera_duas_parcelas_pequen
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 Para PT102, as curvas linear e spline tiveram desvios próximos, de 0,540 e 0,541 kPa, indicando precisão semelhante. Porém, os viéses foram −1,823 e 0,006 kPa, respectivamente, mostrando maior exatidão da spline em relação à pressão de referência de 380 kPa. A média de quase 600 leituras reduz a incerteza aleatória da média, mas o erro sistemático da curva linear permanece.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+A bissecção levou 44 iterações porque usa sempre o intervalo [2, 15] e tolerância 10⁻¹²: após 44 divisões, a largura 13/2⁴⁴ fica abaixo da tolerância. O Newton levou 5, 4 e 3 iterações, com ordens estimadas de 2,00, 1,98 e 2,00. Ordem 2 significa que, perto da raiz, o próximo erro é aproximadamente proporcional ao quadrado do atual. Por exemplo, para Re = 10⁴, os erros passaram de 5,0 × 10⁻² para 2,3 × 10⁻⁵ e depois 5,0 × 10⁻¹². Para f(x) = x³ − 1 em [−2, 2], Newton começa em zero e falha por derivada nula, enquanto a bissecção converge.
+
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+```
+
+Os testes `test_converge_com_derivada_fornecida_em_seis_iteracoes` e `test_converge_com_derivada_numerica_em_seis_iteracoes` reproduziram a lentidão. A derivada era calculada apenas no ponto inicial, fazendo o método usar uma inclinação fixa e ter convergência geralmente linear. Mover esse cálculo para dentro do laço atualiza a derivada a cada aproximação e recupera a convergência quadrática perto de raízes simples. Os testes de aceitação passavam porque o método ainda encontrava a raiz, sem detectar a perda de velocidade.
