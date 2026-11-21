@@ -63,8 +63,40 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError("u_sistematica deve ser maior ou igual a zero")
 
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError(f"a tag {tag} deve ter pelo menos duas leituras")
+
+    pressoes = np.asarray(curva(contagens), dtype=float)
+    mediana = np.median(pressoes)
+    mad = stats.median_abs_deviation(pressoes, scale="normal")
+
+    if mad == 0:
+        raise ValueError(f"a tag {tag} tem MAD igual a zero")
+
+    z = (pressoes - mediana) / mad
+    mascara_espurias = np.abs(z) > limiar
+    espurias = np.flatnonzero(mascara_espurias).tolist()
+    validas = pressoes[~mascara_espurias]
+
+    if len(validas) < 2:
+        raise ValueError(f"a tag {tag} tem menos de duas leituras válidas")
+
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))
+    incerteza = float(np.hypot(erro_padrao, u_sistematica))
+
+    return Medicao(
+        tag=tag,
+        medida=Medida(media, incerteza),
+        desvio=desvio,
+        n_validas=len(validas),
+        espurias=espurias,
+    )
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
                        u_sistematica: float = 1.5) -> Medida:
@@ -75,4 +107,12 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(
+        registros, "PT101", curva, u_sistematica=u_sistematica
+    )
+    recalque = medir(
+        registros, "PT102", curva, u_sistematica=u_sistematica
+    )
+
+    diferenca_pressao = recalque.medida - succao.medida
+    return diferenca_pressao * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)
