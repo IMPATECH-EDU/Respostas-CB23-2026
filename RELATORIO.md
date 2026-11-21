@@ -112,6 +112,19 @@ A bissecção levou 44 iterações porque usa sempre o intervalo [2, 15] e toler
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
-```
 
 Os testes `test_converge_com_derivada_fornecida_em_seis_iteracoes` e `test_converge_com_derivada_numerica_em_seis_iteracoes` reproduziram a lentidão. A derivada era calculada apenas no ponto inicial, fazendo o método usar uma inclinação fixa e ter convergência geralmente linear. Mover esse cálculo para dentro do laço atualiza a derivada a cada aproximação e recupera a convergência quadrática perto de raízes simples. Os testes de aceitação passavam porque o método ainda encontrava a raiz, sem detectar a perda de velocidade.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+Os testes test_constante_em_malha_irregular e test_reta_em_malha_irregular reproduziram o defeito. O trapézio usava o primeiro espaçamento para todos os intervalos, mesmo quando faltavam leituras. Corrigi o cálculo para usar cada largura obtida com np.diff(x). Os testes de aceitação não detectaram o problema porque usavam malhas uniformes. A implementação de Simpson exige espaçamento uniforme, condição que o registro do dia com falhas não atende.
