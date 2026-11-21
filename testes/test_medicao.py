@@ -6,7 +6,9 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 """
 import unittest
 from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
-
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import ler_log
+from elevatoria.medicao import medir
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
     """Exemplo do formato. `AcumuladorIngenuo` é código existente da base."""
@@ -34,6 +36,34 @@ class TestKahanRegressao(unittest.TestCase):
             acumulador.adicionar(parcela)
 
         self.assertAlmostEqual(acumulador.total, 2.0, delta=1e-12)
+
+
+class TestMedirContrato(unittest.TestCase):
+    def test_rejeita_incerteza_sistematica_negativa(self):
+        """Rejeita uma incerteza sistemática menor que zero."""
+        curva = CurvaCalibracao(
+            [0.0, 20.0, 40.0], [0.0, 20.0, 40.0], "linear"
+        )
+        registros, _ = ler_log(
+            "2026-10-05 08:00:00 INFO PT101 contagens=10\n"
+            "2026-10-05 08:00:06 INFO PT101 contagens=12"
+        )
+
+        with self.assertRaises(ValueError):
+            medir(registros, "PT101", curva, u_sistematica=-1.0)
+
+    def test_propaga_erro_de_contagem_fora_do_dominio(self):
+        """Propaga ValueError da curva para uma contagem fora do domínio."""
+        curva = CurvaCalibracao(
+            [0.0, 20.0, 40.0], [0.0, 20.0, 40.0], "linear"
+        )
+        registros, _ = ler_log(
+            "2026-10-05 08:00:00 INFO PT101 contagens=10\n"
+            "2026-10-05 08:00:06 INFO PT101 contagens=50"
+        )
+
+        with self.assertRaises(ValueError):
+            medir(registros, "PT101", curva)
 
 if __name__ == "__main__":
     unittest.main()
