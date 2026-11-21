@@ -49,7 +49,25 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+
+    # Realizamos a verificação se os argumentos passados não geram algum erro que o contrato da docstring prevê
+    if a>=b or (bomba.dominio[0]>a or bomba.dominio[1]<b):
+      raise ValueError("um dos critérios do contrato não foram atendidos")
+
+    # Função para calcularnmos a diferença das alturas da bomba e do sistema
+    def f(Q: float) -> float:
+        """Diferença entre a altura da bomba e a altura do sistema, em L/s."""
+        return bomba(Q) - tubulacao.altura_sistema(Q)
+
+    result = resolvedor.encontrar(f, a, b)
+    
+    # Realizamos a verificação se houve convergência no resultado ou não
+    if result.convergiu is False:
+      raise ValueError("o resultado não convergiu")
+    
+    Q=result.raiz
+
+    return PontoOperacao(vazao=Q, altura=bomba(Q), resultado= result)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +84,18 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    # Criamos a lista dos erros para cada um dos pontos que temos em 'historico'
+    erros=[abs(i - raiz) for i in historico]
+
+    # Agora realizamos a filtragem dos erros que estão fora
+    filtrados=list(filter(lambda x: x>(piso * max(1, abs(raiz))), erros))
+
+    # Agora vemos se a lista filtrados possui no mínimo 3 elementos
+    if len(filtrados)<3:
+      raise ValueError("menos de 3 erros estão acima do piso")
+    
+    # Agora, vamos pegar os três ultimos elementos dos erros que já estão filtrados
+    e=filtrados[-3:]
+
+    # Por fim, retornamos o valor de p conforme a fórmula da docstring
+    return math.log(e[2]/e[1])/math.log(e[1]/e[0])
