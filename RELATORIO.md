@@ -122,3 +122,20 @@ Na Etapa 2(a), a bissecção parte sempre do mesmo intervalo inicial $[2, 15]$ e
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
 
 Testes de regressão criados em `testes/test_operacao.py`: `test_newton_colebrook_poucas_iteracoes` e `test_newton_convergencia_quadratica_polinomio`. Calcular `derivada = self._derivada(f, x)` apenas uma vez fora do laço transforma o método de Newton no método das cordas (inclinação fixa $f'(x_0)$), cuja taxa de redução do erro é constante ($e_{k+1} \approx |1 - f'(r)/f'(x_0)|\,e_k$), degradando a convergência de quadrática ($p = 2$) para **linear** ($p = 1$)[cite: 18, 27]. Os testes de aceitação iniciais não pegaram o defeito porque verificavam apenas se o resultado final convergido (`res.raiz` e `res.convergiu`) estava dentro da tolerância, sem limitar o número máximo de iterações nem medir a ordem de convergência $p$[cite: 17].
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+As ordens teóricas 2 (trapézio) e 4 (Simpson) exigem que o integrando seja suave (classes $C^2$ e $C^4$) em todo o intervalo de integração. Ao integrar o custo do dia de uma só vez, os saltos descontínuos da tarifa às 18 h e 21 h violam a suavidade da função, degradando o erro global para $O(h)$ (ordem observada $1{,}00$ no trapézio e $0{,}65$ no Simpson)[cite: 30]. Quando se integra faixa por faixa, a tarifa é constante dentro de cada subintervalo, a função volta a ser suave e recuperam-se as ordens teóricas ($2{,}00$, com erro $6{,}3 \times 10^{-4}$, e $4{,}00$, com erro $8{,}1 \times 10^{-8}$ em $n=110$)[cite: 30].
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+
+Testes de regressão adicionados em `testes/test_dia.py`: `test_trapezio_malha_irregular_funcao_linear` e `test_trapezio_registro_scada_com_falhas_funcao_constante`. O defeito estava em `Trapezio.integrar_tabela` (`elevatoria/integracao.py`), que assumia passo uniforme `h = x[1] - x[0]` em vez de somar `0.5 * (y[:-1] + y[1:]) * np.diff(x)`. Os testes de aceitação originais não detetaram o bug porque usavam apenas malhas uniformes (`np.linspace` e `np.arange`)[cite: 26, 28]. A regra de Simpson não serve para o registo do dia porque as 8 falhas do SCADA tornam os intervalos irregulares (15, 30 e 45 min), violando a exigência de malha igualmente espaçada[cite: 14, 21, 30].
