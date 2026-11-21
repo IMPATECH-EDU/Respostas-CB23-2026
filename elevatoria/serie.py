@@ -25,11 +25,12 @@ class SerieTemporal(np.ndarray):
         return arr.view(cls)
 
     def media_movel(self, janela: int) -> SerieTemporal:
-        
+        """Média móvel simples sobre `janela` pontos consecutivos (`n - janela + 1` valores)."""
         if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
         acumulada = np.insert(np.cumsum(self), 0, 0.0)
-        return SerieTemporal.de_lista(((acumulada[janela:] - acumulada[:-janela]) / janela).tolist())
+        return ((acumulada[janela:] - acumulada[:-janela]) / janela).view(SerieTemporal)
+
 
     def variacao(self) -> SerieTemporal:
         """Diferenças entre pontos consecutivos (`n - 1` valores)."""
@@ -50,12 +51,9 @@ class SerieTemporal(np.ndarray):
         return (self - self.mean()) / desvio
 
     def reamostrar(self, k: int) -> SerieTemporal:
-    
+        """Médias de blocos consecutivos de `k` pontos, descartando a sobra no fim."""
         if k < 1 or k > len(self):
             raise ValueError(f"k deve estar entre 1 e {len(self)}; recebi {k}")
-    
-        blocos = int(len(self) // k)
-        elementos = blocos * int(k)
-        array = np.asarray(self)[:elementos]
-
-        return SerieTemporal.de_lista(array.reshape(blocos, int(k)).mean(axis=1).tolist())
+        blocos = len(self) // k
+        array = np.asarray(self)[:blocos * k]
+        return array.reshape(blocos, k).mean(axis=1).view(SerieTemporal)
