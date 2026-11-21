@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — Arthur Adriano Jacometi Barbosa (3544)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -53,3 +53,7 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 ### R7 — Issue #4
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
+
+- **Sintoma e regressão:** Para uma série de $n$ pontos e janela $k$, `media_movel` devolvia $n - k$ valores em vez de $n - k + 1$ (ex.: 570 para $n=600, k=30$), descartando a primeira janela; coberto pelo teste `TestMediaMovel.test_media_movel_simples`.
+- **Causa e correção:** O código original fazia `acumulada[janela:] - acumulada[:-janela]` diretamente sobre `np.cumsum(self)`, omitindo a diferença `acumulada[janela - 1] - 0` da primeira janela; a correção insere `0.0` no início da soma acumulada (`np.insert(np.cumsum(self), 0, 0.0)`), alinhando os índices.
+- **Lacuna nos testes:** Os testes de aceitação verificavam apenas propriedades gerais (como tipo de retorno ou valores internos) sem checar o comprimento exato $n - k + 1$ nem casos de borda como $k = n$ (que antes devolvia série vazia), caso coberto pelo meu teste `TestMediaMovel.test_media_movel_janela_total`.
