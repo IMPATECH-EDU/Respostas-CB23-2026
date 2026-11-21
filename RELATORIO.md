@@ -95,3 +95,4 @@ Os testes `test_soma_um_milhao_de_decimos` e `test_recupera_duas_parcelas_pequen
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+Para PT102, as curvas linear e spline tiveram desvios próximos, de 0,540 e 0,541 kPa, indicando precisão semelhante. Porém, os viéses foram −1,823 e 0,006 kPa, respectivamente, mostrando maior exatidão da spline em relação à pressão de referência de 380 kPa. A média de quase 600 leituras reduz a incerteza aleatória da média, mas o erro sistemático da curva linear permanece.
