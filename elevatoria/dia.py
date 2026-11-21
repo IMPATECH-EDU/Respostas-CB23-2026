@@ -84,4 +84,25 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t = np.asarray(t, dtype=float)
+    vazao = np.asarray(vazao, dtype=float)
+    if t.size != vazao.size:
+        raise ValueError(f"t e vazao devem ter o mesmo tamanho; recebi {t.size} e {vazao.size}")
+    limites = {inicio for inicio, _, _ in FAIXAS_TARIFARIAS} | {fim for _, fim, _ in FAIXAS_TARIFARIAS}
+    for limite in sorted(limites):
+        if not np.any(np.isclose(t, limite)):
+            raise ValueError(f"o limite de faixa {limite} h não está entre os instantes de t")
+
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+    custos = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        dentro = (t >= inicio) & (t <= fim)
+        custos.append(tarifa * integrador.integrar_tabela(t[dentro], potencia[dentro]))
+
+    return ResumoDia(volume_m3=volume, energia_kwh=energia,
+                     custo_reais=sum(custos), custo_por_faixa=tuple(custos))
