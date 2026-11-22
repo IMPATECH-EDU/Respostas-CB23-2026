@@ -193,8 +193,8 @@ def converter_vetorizado(contagens: np.ndarray) -> np.ndarray:
 def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     lista = contagens.tolist()
     return {
-        "laço": cronometrar(converter_laco, lista, repeticoes=k),
-        "compreensão": cronometrar(converter_compreensao, lista, repeticoes=k),
-        "map+lambda": cronometrar(converter_map, lista, repeticoes=k),
-        "vetorizado": cronometrar(converter_vetorizado, contagens, repeticoes=k)
+        "laço": cronometrar(converter_laco, lista, k=k),
+        "compreensão": cronometrar(converter_compreensao, lista, k=k),
+        "map+lambda": cronometrar(converter_map, lista, k=k),
+        "vetorizado": cronometrar(converter_vetorizado, contagens, k=k)
     }
