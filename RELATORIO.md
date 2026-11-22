@@ -7,10 +7,13 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
+Ambiente conda (base), e não venv.
+
 ```
-<!-- COLE AQUI a saída de `which python` no SEU computador -->
+$ which python
+/home/manoel/miniconda3/bin/python
 === Etapa 0: ambiente ===
-<!-- COLE AQUI a linha "Python ... | NumPy ... | fornecido 4.0" da SUA execução -->
+Python 3.14.6 | NumPy 2.5.4 | fornecido 4.0
 ```
 
 ### R1 — Expressões regulares
@@ -46,15 +49,15 @@ curva. A `tabela_calibracao` (9 pontos dessa curva) é o que o Marco 2 usa para 
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+Previsões registradas no commit: `ffa4ca3`
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
 | Memória da lista / memória do `uint16` | ~10× | 18,0× (36 000 056 / 2 000 000 bytes) |
-| Tempo do laço / tempo vetorizado | ~50× | ~25× (54,7 ms / 2,2 ms) |
-| Tempo da compreensão / tempo do laço | ~0,8 | ~0,94 (51,3 ms / 54,7 ms) |
+| Tempo do laço / tempo vetorizado | ~50× | ~35× (110,4 ms / 3,1 ms) |
+| Tempo da compreensão / tempo do laço | ~0,8 | ~1,00 (110,7 ms / 110,4 ms) |
 
-A maior diferença foi na aceleração do vetorizado: previ 50× e medi cerca de 25×. A conta
+A maior diferença foi na aceleração do vetorizado: previ 50× e medi cerca de 35×. A conta
 `c * 600 / 4095` faz duas passagens sobre o array e cria arrays temporários de `float64` (8 MB cada),
 e esse custo de memória pesa contra o ganho. A lista também ocupou mais do que previ, 36 bytes por
 elemento: 8 do ponteiro mais 28 de cada objeto `int`. `uint16` vai até 65 535, e 81 900 transborda:
@@ -92,7 +95,7 @@ descoberto é `janela == len(s)`, que devolvia vazio: coberto por `test_janela_d
 
 ```
 === Etapa 0: ambiente ===
-<!-- COLE AQUI a linha "Python ... | NumPy ... | SciPy ... | fornecido 4.0 | matrícula 3524" da SUA execução -->
+Python 3.14.6 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3524
 ```
 
 ### R8 — Derivada numérica
