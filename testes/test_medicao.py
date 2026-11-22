@@ -6,8 +6,21 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 """
 import math
 import unittest
+from datetime import datetime, timedelta
 
 from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import Registro
+from elevatoria.medicao import medir
+
+IDENTIDADE = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
+
+
+def _registros(tag: str, contagens: list[float]) -> list[Registro]:
+    """Registros de leitura da `tag`, um a cada 6 s, com as contagens dadas."""
+    t0 = datetime(2026, 10, 5, 8, 0, 0)
+    return [Registro(t0 + timedelta(seconds=6 * i), "INFO", tag, {"contagens": float(c)})
+            for i, c in enumerate(contagens)]
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -43,6 +56,35 @@ class TestRegressaoKahan(unittest.TestCase):
         acc = AcumuladorKahan()
         acc.adicionar_todos([1e16, 1.0, 1.0])
         self.assertTrue(math.isclose(acc.total, 1e16 + 2, rel_tol=0, abs_tol=0.5))
+
+
+class TestContratoMedir(unittest.TestCase):
+    """Regras da docstring de medir que os testes de aceitação não verificam."""
+
+    NORMAIS = [10, 11, 9, 10, 12, 11, 10, 9]
+
+    def test_u_sistematica_negativa_levanta_value_error(self):
+        """u_sistematica < 0 levanta ValueError."""
+        with self.assertRaises(ValueError):
+            medir(_registros("PT101", self.NORMAIS), "PT101", IDENTIDADE, u_sistematica=-1.0)
+
+    def test_mad_zero_levanta_value_error(self):
+        """Leituras todas iguais têm MAD zero, e o z robusto não é definido: ValueError."""
+        with self.assertRaises(ValueError):
+            medir(_registros("PT101", [10] * 8), "PT101", IDENTIDADE)
+
+    def test_espurias_em_ordem_crescente_de_posicao(self):
+        """Duas espúrias, no começo e no meio, voltam como posições na série: [0, 4]."""
+        contagens = [900] + self.NORMAIS[:3] + [800] + self.NORMAIS[3:]
+        m = medir(_registros("PT101", contagens), "PT101", IDENTIDADE)
+        self.assertEqual(m.espurias, [0, 4])
+        self.assertEqual(m.n_validas, 8)
+
+    def test_contagem_fora_do_dominio_da_curva_propaga_value_error(self):
+        """Uma contagem fora do domínio da curva: o ValueError da curva chega a quem chamou."""
+        curva = CurvaCalibracao([0.0, 50.0, 100.0], [0.0, 50.0, 100.0], "linear")
+        with self.assertRaises(ValueError):
+            medir(_registros("PT101", self.NORMAIS + [500]), "PT101", curva)
 
 
 if __name__ == "__main__":
