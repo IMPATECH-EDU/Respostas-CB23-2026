@@ -49,7 +49,21 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    inicio, fim = bomba.dominio
+    if a < inicio or b > fim:
+        raise ValueError(f"o intervalo [{a}, {b}] sai do domínio da bomba [{inicio}, {fim}]")
+
+    def f(q: float) -> float:
+        """Altura que sobra: a da bomba menos a exigida pelo sistema, na vazão `q`."""
+        return bomba(q) - tubulacao.altura_sistema(q)
+
+    resultado = resolvedor.encontrar(f, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"o resolvedor não convergiu em {resultado.iteracoes} iterações")
+    vazao = resultado.raiz
+    return PontoOperacao(vazao=vazao, altura=bomba(vazao), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -64,6 +78,15 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
     quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
 
-    Levanta `ValueError` se houver menos de 3 erros acima do piso.
+    Levanta `ValueError` se houver menos de 3 erros acima do piso, ou se dois desses erros
+    consecutivos forem iguais (a fórmula dividiria por log(1) = 0).
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    limite = piso * max(1.0, abs(raiz))
+    erros = [abs(x - raiz) for x in historico]
+    acima = [e for e in erros if e > limite]
+    if len(acima) < 3:
+        raise ValueError(f"são precisos 3 erros acima de {limite:.1e}; há {len(acima)}")
+    e0, e1, e2 = acima[-3:]
+    if e1 == e0:
+        raise ValueError("dois erros consecutivos iguais: a ordem não pode ser estimada")
+    return math.log(e2 / e1) / math.log(e1 / e0)
