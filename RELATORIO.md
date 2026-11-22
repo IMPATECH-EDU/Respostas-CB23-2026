@@ -151,3 +151,32 @@ linear e −0,001 kPa na spline. Isso é exatidão, a distância até o valor ve
 liga os pontos da tabela com retas, e como a resposta (um seno) é côncava, a reta fica sempre
 abaixo. Com 595 leituras válidas, a média reduz o erro aleatório para cerca de
 0,51/√595 ≈ 0,02 kPa. Mas o viés da curva é o mesmo em toda leitura, e nenhuma média o tira.
+
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção gasta sempre 44 iterações porque esse número só depende do intervalo e da
+tolerância, e não da função. Começando em [2, 15] (largura 13) e dividindo ao meio até a
+largura ficar menor que 1e-12, são necessárias log2(13/1e-12) ≈ 43,6 → 44 iterações, para
+qualquer Reynolds. Ordem 2 quer dizer que cada erro é da ordem do quadrado do anterior. Em
+Re = 1e4, os erros do Newton foram 5,0e-02 → 2,3e-05 → 5,0e-12: os dígitos certos passam de 1–2
+para 4–5 e depois para 11, quase dobrando a cada passo, e a ordem estimada deu 2,00. O Newton
+falha onde a derivada se anula ou fica quase zero perto do chute (f "achatada"), ou quando
+começa longe da raiz e diverge, como `atan(x)` a partir de x0 = 2. A bissecção só precisa da
+troca de sinal em [a, b] e sempre converge.
+
+### R12 — Issue #9
+
+**Testes de regressão:** a classe `TestRegressaoNewton`, com `test_raiz_de_dois_em_poucas_iteracoes`,
+`test_derivada_exata_tambem_e_reavaliada`, `test_colebrook_do_relato` e
+`test_erro_cai_quadraticamente`. Os quatro falhavam antes da correção.
+**Causa:** com a derivada fixa no ponto inicial, a conta vira `x_{k+1} = x_k − f(x_k)/f'(x0)`, o
+método da corda. Perto da raiz, `e_{k+1} ≈ (1 − f'(r)/f'(x0))·e_k`: o erro cai sempre pelo mesmo
+fator, e isso é convergência linear. Em Re = 1e4, os erros caíam cerca de 26 vezes por passo
+(5,0e-02, 1,9e-03, 7,6e-05...), em 10 iterações e com ordem estimada de 0,99. Depois da
+correção, foram 5 iterações, com ordem 2,00.
+**Por que os testes de aceitação não pegaram:** eles só conferem se a raiz está certa e se o
+método convergiu, nunca o número de iterações ou a ordem. Com `max_iter = 100`, a versão lenta
+ainda chega à tolerância e dá o resultado certo.
