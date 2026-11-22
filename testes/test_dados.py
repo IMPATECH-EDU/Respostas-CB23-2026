@@ -5,7 +5,9 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import criar_conversores, ler_log, por_tag
+import numpy as np
+
+from elevatoria.dados import criar_conversores, ler_log, medir_memoria, por_tag
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -51,6 +53,17 @@ class TestConversoresContrato(unittest.TestCase):
         self.assertAlmostEqual(conv["PT101"](100.0), 15.0)
         self.assertAlmostEqual(conv["PT102"](100.0), 30.0)
         self.assertAlmostEqual(conv["FT201"](100.0), 10.0)
+
+
+class TestMemoriaETempoContrato(unittest.TestCase):
+    """Validacoes extras de entrada para medir_memoria."""
+
+    def test_medir_memoria_rejeita_float_e_lista(self):
+        """Entradas que nao sejam ndarray 1D de inteiros levantam ValueError."""
+        with self.assertRaises(ValueError):
+            medir_memoria(np.array([1.0, 2.0, 3.0]))
+        with self.assertRaises(ValueError):
+            medir_memoria([1, 2, 3])  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
