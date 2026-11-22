@@ -102,8 +102,8 @@ Python 3.14.6 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3507
 
 ### R8 — Derivada numérica
 
-De h = 1 até h = 1e-5 o erro cai 10 vezes a cada passo (1,7e-5 → 6,2e-10): domina o erro de
-truncamento da diferença adiante, que é proporcional a h. Abaixo disso, o erro volta a crescer
+De h = 1 até h = 1e-4 o erro cai 10 vezes a cada passo (1,7e-5 → 1,7e-9), com mínimo em 1e-5
+(6,2e-10): domina o truncamento da diferença adiante, proporcional a h. Abaixo disso, ele cresce
 (1e-8: 6,2e-8; 1e-12: 1,4e-2): domina o arredondamento, porque `f(x+h) − f(x)` subtrai dois
 números quase iguais, perdendo dígitos (≈ ε·|f|/h). Em h = 1e-14, `1000 + 1e-14 == 1000` é
 verdadeiro (1e-14 é menor que meio ulp de 1000, ≈ 1,1e-13), então `f(x+h) − f(x) = 0`, a
