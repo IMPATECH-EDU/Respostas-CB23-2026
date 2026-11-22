@@ -49,7 +49,23 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    q_min, q_max = bomba.dominio
+    if a < q_min or b > q_max:
+        raise ValueError(f"[{a}, {b}] sai do domínio da bomba [{q_min}, {q_max}] L/s")
+
+    def desequilibrio(q: float) -> float:
+        """Altura que sobra (> 0) ou falta (< 0) à bomba para vencer o sistema na vazão q."""
+        return float(bomba(q)) - tubulacao.altura_sistema(q)
+
+    # Um ValueError do resolvedor (sem troca de sinal, derivada nula...) sobe sem tratamento.
+    resultado = resolvedor.encontrar(desequilibrio, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"{type(resolvedor).__name__} não convergiu em "
+                         f"{resultado.iteracoes} iterações")
+    vazao = float(resultado.raiz)
+    return PontoOperacao(vazao=vazao, altura=float(bomba(vazao)), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +82,13 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    limite = piso * max(1.0, abs(raiz))
+    acima_do_piso = [abs(x - raiz) for x in historico if abs(x - raiz) > limite]
+    if len(acima_do_piso) < 3:
+        raise ValueError(f"são necessários 3 erros acima de {limite:.1e}; "
+                         f"há {len(acima_do_piso)}")
+    e_antes, e_meio, e_depois = acima_do_piso[-3:]
+    if e_meio == e_antes:
+        # log(e_meio / e_antes) seria zero: a sequência não está convergindo.
+        raise ValueError("dois erros consecutivos iguais: a ordem não está definida")
+    return math.log(e_depois / e_meio) / math.log(e_meio / e_antes)
