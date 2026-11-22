@@ -23,13 +23,38 @@ from fornecido.cronometro import cronometrar
 # Issue #1: leitor do log
 # ---------------------------------------------------------------------------------------
 
+#: Trecho de regex de uma tag (1 ou 2 maiúsculas e 1 a 3 dígitos), usado em `LINHA` e em
+#: `valida_tag` para que as duas regras nunca divirjam.
+_TAG = r"[A-Z]{1,2}[0-9]{1,3}"
+
 #: Padrão de uma linha válida do log, compilado com `re.compile(..., re.VERBOSE)` e com um
 #: comentário em cada parte. Grupos nomeados: `data` (AAAA-MM-DD), `hora` (HH:MM:SS),
 #: `nivel` (INFO, WARN ou ALARME), `tag` (1 ou 2 letras maiúsculas seguidas de 1 a 3
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+LINHA: re.Pattern = re.compile(
+    rf"""
+    (?P<data> [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}} )  # data AAAA-MM-DD (validada depois)
+    [ ]+                                          # separador: um ou mais espaços
+    (?P<hora> [0-9]{{2}}:[0-9]{{2}}:[0-9]{{2}} )  # hora HH:MM:SS (validada depois)
+    [ ]+
+    (?P<nivel> INFO | WARN | ALARME )             # só os três níveis conhecidos
+    [ ]+
+    (?P<tag> {_TAG} )                             # tag do instrumento, ex.: PT102, B1
+    [ ]+
+    (?P<resto> \S.* )                             # o resto começa por um não espaço
+    """,
+    re.VERBOSE,
+)
+
+#: Padrão de uma tag isolada, aplicado com `fullmatch` em `valida_tag`.
+_PADRAO_TAG: re.Pattern = re.compile(_TAG)
+
+#: Um par `chave=valor` dentro do grupo `resto` de `LINHA`.
+_PAR: re.Pattern = re.compile(r"(\w+)=(\S+)")
+
+_FORMATO_INSTANTE = "%Y-%m-%d %H:%M:%S"
 
 
 @dataclass(frozen=True)
@@ -48,7 +73,7 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    return _PADRAO_TAG.fullmatch(s) is not None
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -69,8 +94,41 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+    registros: list[Registro] = []
+    invalidas: list[str] = []
+    for linha in texto.splitlines():
+        if not linha.strip():
+            continue
+        try:
+            registros.append(_registro_da_linha(linha))
+        except ValueError:
+            invalidas.append(linha)
+    return registros, invalidas
 
+def _numero_ou_texto(bruto: str) -> float | str:
+    """Converte `bruto` em `float` quando possível; caso contrário, devolve-o intacto."""
+    try:
+        return float(bruto)
+    except ValueError:
+        return bruto
+
+
+def _registro_da_linha(linha: str) -> Registro:
+    """Interpreta uma linha não vazia do log.
+
+    Levanta `ValueError` se a linha não casar com `LINHA`, se a data ou a hora forem
+    impossíveis, ou se o `resto` não tiver nenhum par chave=valor.
+    """
+    casamento = LINHA.fullmatch(linha)
+    if casamento is None:
+        raise ValueError(f"linha fora do formato do log: {linha!r}")
+    # strptime levanta ValueError para datas e horas impossíveis (mês 13, 25:00:00...).
+    instante = datetime.strptime(f"{casamento['data']} {casamento['hora']}", _FORMATO_INSTANTE)
+    pares = _PAR.findall(casamento["resto"])
+    if not pares:
+        raise ValueError(f"linha sem pares chave=valor: {linha!r}")
+    valores = {chave: _numero_ou_texto(bruto) for chave, bruto in pares}
+    return Registro(instante, casamento["nivel"], casamento["tag"], valores)
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
     """Registros da `tag`, na ordem original."""
@@ -83,7 +141,8 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
     de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    tags_presentes = {r.tag for r in registros}
+    return {tag: sum(1 for r in registros if r.tag == tag) for tag in sorted(tags_presentes)}
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
@@ -91,8 +150,15 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
 
     Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
+
+    Levanta `ValueError` se algum valor de `chave` não for numérico (por exemplo,
+    `serie(registros, "B1", "evento")`).
     """
-    raise NotImplementedError("issue #1: serie")
+    brutos = [r.valores[chave] for r in por_tag(registros, tag) if chave in r.valores]
+    nao_numericos = [v for v in brutos if isinstance(v, str)]
+    if nao_numericos:
+        raise ValueError(f"a chave {chave!r} de {tag} não é numérica: {nao_numericos[0]!r}")
+    return SerieTemporal.de_lista([float(v) for v in brutos])
 
 
 # ---------------------------------------------------------------------------------------
