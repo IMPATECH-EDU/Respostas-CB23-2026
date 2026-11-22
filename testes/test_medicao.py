@@ -6,8 +6,22 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 """
 import math
 import unittest
+from datetime import datetime, timedelta
 
 from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import Registro
+from elevatoria.medicao import medir
+
+IDENTIDADE = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
+NORMAIS = [10, 11, 9, 10, 12, 11, 10, 9]
+
+
+def _registros(tag: str, contagens: list) -> list:
+    """Registros de leitura da `tag`, um a cada 6 s, com as contagens dadas."""
+    t0 = datetime(2026, 10, 5, 8, 0, 0)
+    return [Registro(t0 + timedelta(seconds=6 * i), "INFO", tag, {"contagens": float(c)})
+            for i, c in enumerate(contagens)]
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -40,6 +54,39 @@ class TestRegressaoKahan(unittest.TestCase):
         for acumulador in (kahan, ingenuo):
             acumulador.adicionar_todos([0.1] * 100_000)
         self.assertLess(abs(kahan.total - 10_000.0), abs(ingenuo.total - 10_000.0) / 1000)
+
+
+class TestContratoMedir(unittest.TestCase):
+    """Issue #6: regras do contrato de medir que os testes de aceitação não verificam."""
+
+    def test_u_sistematica_negativa(self):
+        """u_sistematica < 0 levanta ValueError."""
+        with self.assertRaises(ValueError):
+            medir(_registros("PT101", NORMAIS), "PT101", IDENTIDADE, u_sistematica=-0.1)
+
+    def test_mad_zero(self):
+        """Leituras todas iguais têm MAD zero, e medir levanta ValueError em vez de dividir por zero."""
+        with self.assertRaises(ValueError):
+            medir(_registros("PT101", [10] * 8), "PT101", IDENTIDADE)
+
+    def test_indices_na_serie_da_tag(self):
+        """Os índices das espúrias contam só as leituras da tag, e não a posição no log."""
+        regs = []
+        recalque = [10, 11, 9, 500, 12, 11, 10, 9, 10]
+        for a, b in zip(_registros("PT101", NORMAIS + [10]), _registros("PT102", recalque)):
+            regs += [a, b]
+        self.assertEqual(medir(regs, "PT102", IDENTIDADE).espurias, [3])
+
+    def test_erro_da_curva_chega_a_quem_chamou(self):
+        """Uma contagem fora do domínio da curva faz o ValueError da curva subir até quem chamou."""
+        with self.assertRaisesRegex(ValueError, "domínio"):
+            medir(_registros("PT101", NORMAIS + [5000]), "PT101", IDENTIDADE)
+
+    def test_limiar_menor_descarta_mais(self):
+        """Com limiar menor, uma leitura moderadamente afastada também é descartada."""
+        regs = _registros("PT101", NORMAIS + [15])
+        self.assertEqual(medir(regs, "PT101", IDENTIDADE).espurias, [])
+        self.assertEqual(medir(regs, "PT101", IDENTIDADE, limiar=3.0).espurias, [8])
 
 
 if __name__ == "__main__":
