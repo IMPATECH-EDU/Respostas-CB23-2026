@@ -127,6 +127,39 @@ class TestMemoriaExtras(unittest.TestCase):
         for entrada in [np.array([1.0, 2.0]), [1, 2, 3]]:
             with self.subTest(entrada=entrada), self.assertRaises(ValueError):
                 medir_memoria(entrada)
+# ---------------------------------------------------------------------------------------
+# Issue #4: regressão de media_movel (escritos antes da correção; falham no código original)
+# ---------------------------------------------------------------------------------------
+class TestRegressaoMediaMovel(unittest.TestCase):
+    """Issue #4: media_movel deve devolver n - janela + 1 valores, começando no índice 0."""
+
+    def test_tamanho_n_menos_janela_mais_um(self):
+        """600 pontos com janela 30 dão 571 médias (o caso relatado na issue)."""
+        s = SerieTemporal.de_lista(np.arange(600.0))
+        self.assertEqual(len(s.media_movel(30)), 571)
+
+    def test_primeiro_valor_e_media_da_primeira_janela(self):
+        """O valor 0 do resultado é a média de s[0:janela], e não de s[1:janela+1]."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 9.0, 1.0])
+        mm = s.media_movel(2)
+        self.assertAlmostEqual(float(mm[0]), 3.0)
+        self.assertEqual(len(mm), 3)
+        self.assertTrue(np.allclose(mm, [3.0, 6.5, 5.0]))
+
+    def test_janela_igual_ao_tamanho_da_serie(self):
+        """Com janela == len(s), sai um único valor: a média da série inteira."""
+        s = SerieTemporal.de_lista([3.0, 5.0, 10.0])
+        mm = s.media_movel(3)
+        self.assertEqual(len(mm), 1)
+        self.assertAlmostEqual(float(mm[0]), 6.0)
+
+    def test_janela_unitaria_devolve_a_propria_serie(self):
+        """Com janela 1, cada média é o próprio ponto: o resultado é igual à série."""
+        s = SerieTemporal.de_lista([7.0, -1.0, 0.5, 2.0])
+        mm = s.media_movel(1)
+        self.assertIsInstance(mm, SerieTemporal)
+        self.assertEqual(len(mm), len(s))
+        self.assertTrue(np.allclose(mm, s))
 
 if __name__ == "__main__":
     unittest.main()
