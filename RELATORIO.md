@@ -31,9 +31,9 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | | |
-| Tempo do laço / tempo vetorizado | | |
-| Tempo da compreensão / tempo do laço | | |
+| Memória da lista / memória do `uint16` | ≈ 18 (cada item da lista custa um ponteiro de 8 B mais um objeto `int` de ~28 B, contra 2 B no `uint16`) | |
+| Tempo do laço / tempo vetorizado | ≈ 50 (o NumPy faz a conta em C, sem criar um objeto Python por elemento) | |
+| Tempo da compreensão / tempo do laço | ≈ 0,7 (a compreensão evita a busca e a chamada de `append` a cada iteração) | |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
@@ -41,13 +41,12 @@ Previsões registradas no commit: <!-- cole o hash curto do commit de previsões
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` | `SerieTemporal` | |
+| `s[1:]` | `SerieTemporal` | |
+| `s * 2` | `SerieTemporal` | |
+| `s.sum()` | `float64` | |
+| `s[0]` | `float64` | |
 
-<!-- Explique o resultado que mais surpreendeu você. -->
 
 ### R7 — Issue #4
 
