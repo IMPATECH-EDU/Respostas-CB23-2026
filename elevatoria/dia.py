@@ -17,6 +17,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from numpy.polynomial import polynomial as P
+from scipy.linalg import solve_triangular
 
 from elevatoria.integracao import Integrador
 from fornecido.energia import FAIXAS_TARIFARIAS, potencia_eletrica
@@ -41,7 +43,24 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if grau < 0:
+        raise ValueError(f"o grau não pode ser negativo; recebi {grau}")
+    n_coef = grau + 1
+    if x.size < n_coef:
+        raise ValueError(f"{x.size} ponto(s) não bastam para {n_coef} coeficientes")
+    if np.unique(x).size < n_coef:
+        raise ValueError(f"são necessários {n_coef} valores distintos de x")
+
+    # Mínimos quadrados por QR: A = QR, com Q de colunas ortonormais, transforma
+    # min ||A·c - y|| no sistema triangular R·c = Qᵀ·y. Evita montar AᵀA (as equações
+    # normais), que eleva ao quadrado o número de condição da matriz de Vandermonde.
+    vandermonde = np.vander(x, n_coef, increasing=True)
+    q, r = np.linalg.qr(vandermonde)
+    return solve_triangular(r, q.T @ y)
 
 
 @dataclass(frozen=True)
@@ -76,4 +95,32 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t = np.asarray(t, dtype=float)
+    vazao = np.asarray(vazao, dtype=float)
+    if t.shape != vazao.shape:
+        raise ValueError(f"t e vazao têm tamanhos diferentes: {t.shape} e {vazao.shape}")
+    limites = sorted({inicio for inicio, _, _ in FAIXAS_TARIFARIAS}
+                     | {fim for _, fim, _ in FAIXAS_TARIFARIAS})
+    ausentes = [lim for lim in limites if not np.any(t == lim)]
+    if ausentes:
+        raise ValueError(f"os limites de faixa {ausentes} h não estão entre os instantes de t")
+
+    altura = P.polyval(vazao, coef_altura)
+    rendimento = P.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)   # L/s × h = 3,6 m³
+    energia = integrador.integrar_tabela(t, potencia)
+    # A tarifa é descontínua nos limites: cada faixa é integrada só com os seus instantes, e o
+    # instante do limite entra nas duas faixas vizinhas (início ≤ t ≤ fim).
+    custos = tuple(preco * _integral_na_faixa(integrador, t, potencia, inicio, fim)
+                   for inicio, fim, preco in FAIXAS_TARIFARIAS)
+    return ResumoDia(volume_m3=float(volume), energia_kwh=float(energia),
+                     custo_reais=float(sum(custos)), custo_por_faixa=custos)
+
+
+def _integral_na_faixa(integrador: Integrador, t: np.ndarray, y: np.ndarray,
+                       inicio: float, fim: float) -> float:
+    """Integral de `y` só com os instantes `inicio ≤ t ≤ fim`."""
+    na_faixa = (t >= inicio) & (t <= fim)
+    return float(integrador.integrar_tabela(t[na_faixa], y[na_faixa]))
