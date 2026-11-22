@@ -180,3 +180,30 @@ correção, foram 5 iterações, com ordem 2,00.
 **Por que os testes de aceitação não pegaram:** eles só conferem se a raiz está certa e se o
 método convergiu, nunca o número de iterações ou a ordem. Com `max_iter = 100`, a versão lenta
 ainda chega à tolerância e dá o resultado certo.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+O trapézio e o Simpson só têm ordens 2 e 4 quando a função é suave em cada subintervalo: o erro
+deles depende das derivadas f'' e f''''. O custo `potência × tarifa` dá um salto às 18 h e às
+21 h, quando a tarifa triplica e depois volta. Integrando o dia de uma vez com n subintervalos
+iguais, o salto cai no meio de um subintervalo, e só esse pedaço já erra algo proporcional a
+h × (tamanho do salto). Esse erro de ordem 1 domina: a ordem observada foi 1,00 no trapézio e
+0,65 no Simpson. Integrando cada faixa separadamente, os saltos ficam nas pontas, cada
+integrando é suave, e voltam as ordens 2,00 e 4,00 (erros de 6,3e-04 e 8,1e-08 em n = 110).
+
+### R14 — Issue #11
+
+**Testes de regressão:** a classe `TestRegressaoTrapezioTabela`, com `test_reta_em_malha_irregular`,
+`test_leitura_perdida_no_registro` e `test_igual_ao_trapezoid_do_numpy`. Os três falhavam antes da
+correção.
+**Causa:** `integrar_tabela` usava `h = x[1] − x[0]` (15 min) para todos os trapézios. Nas 8
+leituras perdidas, o intervalo real era de 30 min, mas entrava com 15: metade da área sumia.
+O volume deu 3571,4 m³ contra 3888,0 m³ de conferência (8,14% abaixo). Com a largura de cada
+intervalo (`np.diff(x)`), deu 3872,2 m³ (0,41%).
+**Por que os testes de aceitação não pegaram:** todos usam malhas uniformes (`linspace` e
+`arange`), em que `x[1] − x[0]` é igual a qualquer outra largura.
+**Por que não usar Simpson:** a regra exige pontos igualmente espaçados (e um número ímpar
+deles), e o registro tem passos de 15 e 30 min. Por isso, na Etapa 2(a), o Simpson se recusa a
+integrar.
