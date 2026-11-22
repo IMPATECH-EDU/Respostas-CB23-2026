@@ -53,4 +53,4 @@ O resultado que mais surpreende é `s.sum()` resultar em uma `SerieTemporal` em 
 
 ### R7 — Issue #4
 
-**Sintoma**: A média móvel retornava um ponto a menos (Erro "off-by-one"), com `n=570` ao invés de `571`. **Teste**: Faltava um caso cobrindo janelas extremas (como `test_tamanho_media_movel`). **Causa**: Fatiar matrizes de `cumsum` descartava a primeiríssima janela temporal. **Correção**: Inserir um `0` artificial no início da matriz via `np.insert()` antes da soma cumulativa. Os testes de aceitação originais usavam blocos onde essa falta não era fatal, camuflando o desvio.
+**Sintoma**: A média móvel retornava um ponto menos (Erro "off-by-one"), com `n=570` ao invés de `571`. **Teste**: Faltava um caso cobrindo janelas extremas (como `test_tamanho_media_movel`). **Causa**: Fatiar matrizes de `cumsum` descartava a primeiríssima janela temporal. **Correção**: Inserir um `0` artificial no início da matriz via `np.insert()` antes da soma cumulativa. Os testes de aceitação originais usavam blocos onde essa falta não era fatal, camuflando o desvio.

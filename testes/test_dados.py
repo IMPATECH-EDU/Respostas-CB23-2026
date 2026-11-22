@@ -12,7 +12,7 @@ from elevatoria.serie import SerieTemporal
 
 class TestDadosESerie(unittest.TestCase):
 
-    # --- Testes da Issue #4 (media_movel) ---
+    # --- Testes da Issue #4 (media_movel)
     
     def test_tamanho_media_movel(self):
         """Verifica se a média móvel retorna o tamanho matemático correto (N - k + 1)."""
