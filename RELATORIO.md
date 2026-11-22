@@ -85,3 +85,39 @@ própria classe, e não um número. É por isso que `amplitude()` e o `marco1.py
 em 0 precisaria de `c[−1] = 0`, que não existe. **Correção:** pôr um zero na frente da soma acumulada.
 Os testes de aceitação só conferiam o tipo e os erros, nunca o tamanho nem os valores. Outro caso
 descoberto é `janela == len(s)`, que devolvia vazio: coberto por `test_janela_do_tamanho_da_serie`.
+
+## Marco 2
+
+### Ambiente
+
+```
+=== Etapa 0: ambiente ===
+<!-- COLE AQUI a linha "Python ... | NumPy ... | SciPy ... | fornecido 4.0 | matrícula 3524" da SUA execução -->
+```
+
+### R8 — Derivada numérica
+
+De h = 1 a h = 1e-5, o erro cai 10× a cada década (de 1,7e-5 a 6,2e-10). Esse é o **erro de
+truncamento** da diferença adiante, ≈ h·|f''|/2, proporcional a h. Abaixo de 1e-5, domina o **erro de
+arredondamento**: f(1000) ≈ 224,6 kPa tem erro de cerca de 3e-14 no último bit, e a diferença dividida
+por h amplifica esse erro como ε·|f|/h. Em h = 1e-10, o erro já é 3e-4. Em h = 1e-14, a soma
+`1000 + 1e-14` dá exatamente 1000 (o espaçamento entre floats perto de 1000 é 1,1e-13). Então
+f(x+h) − f(x) = 0, a estimativa é 0 e o erro é a própria derivada, 0,2134 kPa/contagem.
+
+### R9 — Issue #7
+
+Testes: `test_um_milhao_de_decimos`, `test_parcelas_menores_que_o_ulp` e `test_melhor_que_o_ingenuo`
+(`TestRegressaoKahan`). Causa: `t` já é `fl(s + y)`, e calcular `s + y` de novo dá o **mesmo** número
+arredondado. Por isso `t − (s + y)` é sempre 0, e a correção nunca é aplicada. Em `(t − s) − y`, a
+subtração `t − s` é exata e recupera a parte de `y` que de fato entrou na soma. Menos `y`, sobra o que
+se perdeu, que é descontado da próxima parcela. O teste de aceitação soma só 10 × 0,1 e compara com
+`isclose`, que tolera 1e-9 de erro relativo: o ingênuo também passa, e o defeito não aparece.
+
+### R10 — Precisão × exatidão
+
+Na Etapa 3(b), PT102 tem desvio de 0,539 kPa pela linear e de 0,541 pela spline: a **precisão**
+(dispersão das leituras repetidas) é a mesma. A **exatidão** (proximidade do valor verdadeiro) é
+diferente: viés de −1,785 kPa na linear e de 0,045 na spline. Com ~595 leituras, o erro padrão cai para
+0,54/√595 ≈ 0,02 kPa, mas isso só reduz o erro **aleatório**. O viés da linear é sistemático: entre dois
+pontos da tabela, a reta fica abaixo da curva côncava do transmissor, e isso vale igual para todas as
+leituras. Fazer a média de leituras com o mesmo viés não o elimina.
