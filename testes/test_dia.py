@@ -8,7 +8,7 @@ import unittest
 
 import numpy as np
 
-from elevatoria.dia import dia_de_operacao
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 from elevatoria.integracao import Simpson, Trapezio
 
 
@@ -50,6 +50,17 @@ class TestDiaDeOperacao(unittest.TestCase):
             resumo.custo_por_faixa,
             [potencia * 18.0 * 0.50, potencia * 3.0 * 1.50, potencia * 3.0 * 0.50],
         )
+
+class TestAjustarPolinomio(unittest.TestCase):
+    def test_ajustar_polinomio_com_ruido(self):
+        """Recupera aproximadamente os coeficientes crescentes do polinômio com dados ruidosos."""
+        x = np.arange(5.0)
+        ruido = np.array([0.05, -0.05, 0.1, -0.1, 0.0])
+        y = 1.0 + 2.0 * x + 0.5 * x**2 + ruido
+
+        coeficientes = ajustar_polinomio(x, y, 2)
+
+        np.testing.assert_allclose(coeficientes, [1.0, 2.0, 0.5], atol=0.1)
 
 
 if __name__ == "__main__":
