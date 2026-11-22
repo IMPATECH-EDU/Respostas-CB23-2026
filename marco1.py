@@ -20,11 +20,6 @@ from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medi
 MATRICULA = 3522  # matrícula do aluno
 
 
-def _todo(item: str):
-    """Marca um trecho ainda não feito; apague as chamadas a _todo ao completar o script."""
-    raise NotImplementedError(f"marco1.py: complete o item {item}")
-
-
 def etapa0() -> None:
     """Etapa 0 — Ambiente: versões e uma verificação rápida do NumPy."""
     print("=== Etapa 0: ambiente ===")
@@ -163,20 +158,28 @@ def etapa4(registros: list) -> None:
     s = serie(registros, "PT102", "contagens")
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
+    print(f"(a) PT102 contagens — média: {s.mean():.2f} | desvio: {s.std(ddof=1):.2f} | "
+          f"amplitude: {s.amplitude():.1f}")
     assert len(s) == 600 and s.amplitude() > 300
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
+    print(f"(b) média móvel (30): len={len(mm)}, min={mm.min():.2f}, max={mm.max():.2f} | "
+          f"série: min={s.min():.2f}, max={s.max():.2f}")
     assert len(mm) == 571
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
+    print(f"(c) por minuto: len={len(por_minuto)}, média={por_minuto.mean():.2f}")
     assert len(por_minuto) == 60
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    expressoes = [("s + s", s + s), ("s[1:]", s[1:]), ("s * 2", s * 2),
+                  ("s.sum()", s.sum()), ("s[0]", s[0])]
+    tipos = " | ".join(f"{nome}: {type(valor).__name__}" for nome, valor in expressoes)
+    print(f"(d) tipos — {tipos}")
 
 
 def main(matricula: int = MATRICULA) -> None:

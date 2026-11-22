@@ -92,5 +92,26 @@ class TestMediaMovelRegressao(unittest.TestCase):
         self.assertTrue(np.allclose(res, [1.0, 4.0, 9.0, 16.0, 25.0]))
 
 
+class TestReamostrarExtra(unittest.TestCase):
+    """Cobertura adicional para reamostrar, incluindo descarte da sobra final."""
+
+    def test_reamostrar_descarta_sobra_no_fim(self):
+        """Reamostrar descarta os pontos finais incompletos sem modificar a serie original."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 100.0])
+        res = s.reamostrar(3)
+        self.assertIsInstance(res, SerieTemporal)
+        self.assertEqual(len(res), 2)
+        self.assertTrue(np.allclose(res, [2.0, 5.0]))
+        self.assertEqual(len(s), 7)
+
+    def test_reamostrar_bloco_unico_e_tipo(self):
+        """Reamostrar com k igual ao comprimento devolve SerieTemporal de tamanho 1."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0, 8.0, 10.0])
+        res = s.reamostrar(len(s))
+        self.assertIsInstance(res, SerieTemporal)
+        self.assertEqual(len(res), 1)
+        self.assertAlmostEqual(float(res[0]), 6.0)
+
+
 if __name__ == "__main__":
     unittest.main()
