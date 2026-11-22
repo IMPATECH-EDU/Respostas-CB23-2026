@@ -159,7 +159,6 @@ situação em que o Newton falha e a bissecção não. -->
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
-
 ```
 
 ## 7. Entrega
@@ -190,7 +189,7 @@ Resolve as issues #8 e #9 do enunciado.
 - [ ] `python marco3.py` roda sem exceções.
 - [ ] O código novo tem docstrings e anotações de tipo, e `elevatoria/` não tem `print`.
 - [ ] Os testes de regressão da #9 falhavam antes da correção.
-- [ ] O `RELATORIO.md` tem a seção "Marco 3", com as respostas R11 a R13.
+- [ ] O `RELATORIO.md` tem a seção "Marco 3", com as respostas R11 e R12.
 - [ ] Todo o código foi executado, testado e lido por você, inclusive o gerado com ajuda de IA.
 
 ## 8. Material complementar (opcional)
