@@ -121,3 +121,24 @@ diferente: viés de −1,785 kPa na linear e de 0,045 na spline. Com ~595 leitur
 0,54/√595 ≈ 0,02 kPa, mas isso só reduz o erro **aleatório**. O viés da linear é sistemático: entre dois
 pontos da tabela, a reta fica abaixo da curva côncava do transmissor, e isso vale igual para todas as
 leituras. Fazer a média de leituras com o mesmo viés não o elimina.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção só usa o sinal de g, e não o seu valor: a cada iteração, o intervalo [2, 15] cai à
+metade, até ficar menor que 1e-12. Isso exige 13/2ᵏ < 1e-12, ou seja, k > log₂(1,3e13) ≈ 43,6, e
+portanto 44 iterações para qualquer Reynolds. Ordem 2 quer dizer e_{k+1} ≈ C·e_k². Em Re = 1e4, os
+erros 5,0e-2 → 2,3e-5 → 5,0e-12 mostram os dígitos corretos indo de ~1 para ~5 e para ~11: eles
+dobram a cada passo, e a ordem estimada é 2,00. O Newton falha, e a bissecção não, quando a tangente
+leva para longe. Exemplo: `atan(x)` em [−2, 5], começando em 1,5: o Newton salta para x ≈ 3,9e6 e para com a derivada
+nula. Como há troca de sinal no intervalo, a bissecção converge para 0.
+
+### R12 — Issue #9
+
+Testes: `test_colebrook_re_1e4_em_poucas_iteracoes`, `test_raiz_de_2_converge_rapido` e
+`test_derivada_avaliada_a_cada_iteracao` (`TestRegressaoNewton`). Com a derivada d₀ fixa no ponto
+inicial, a iteração vira x_{k+1} = g(x_k) = x_k − f(x_k)/d₀, com g'(r) = 1 − f'(r)/d₀ ≠ 0. Isso dá
+convergência linear, com taxa |g'(r)|. Antes da correção, os erros em Re = 1e4 caíam ~26× por passo
+(5,0e-2, 1,9e-3, 7,6e-5, …), e eram 10 iterações. Os testes de aceitação só conferiam que o Newton
+converge para a raiz certa, e o resultado continuava certo: o defeito muda a velocidade, não a resposta.
