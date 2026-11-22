@@ -6,7 +6,7 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.integracao import Simpson
+from elevatoria.integracao import Simpson, Trapezio
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -17,8 +17,20 @@ class TestSimpsonExemplo(unittest.TestCase):
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestTrapezioRegressao(unittest.TestCase):
+    """Testes de regressao da issue #11 escritos antes da correcao de Trapezio.integrar_tabela."""
+
+    def test_trapezio_tabela_malha_irregular_constante(self):
+        """Trapezio em malha nao uniforme integra funcao constante usando largura de cada intervalo."""
+        x = [0.0, 0.25, 1.0, 2.0]
+        y = [4.0, 4.0, 4.0, 4.0]
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 8.0)
+
+    def test_trapezio_tabela_malha_irregular_linear(self):
+        """Trapezio integra exatamente funcao afim em pontos com espacamentos distintos."""
+        x = [0.0, 0.5, 2.0, 4.0]
+        y = [1.0, 2.0, 5.0, 9.0]
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 20.0)
 
 
 if __name__ == "__main__":
