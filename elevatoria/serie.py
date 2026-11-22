@@ -63,4 +63,9 @@ class SerieTemporal(np.ndarray):
         completam um bloco são descartados. Usa `reshape`, sem laços. Levanta `ValueError`
         se `k < 1` ou `k > len(self)`.
         """
-        raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")
+        if k < 1 or k > len(self):
+            raise ValueError(f"k deve estar entre 1 e {len(self)}; recebi {k}")
+        n_blocos = len(self) // k
+        # Cada linha da matriz é um bloco; a sobra do fim fica fora da fatia.
+        blocos = np.asarray(self)[: n_blocos * k].reshape(n_blocos, k)
+        return blocos.mean(axis=1).view(type(self))

@@ -19,11 +19,6 @@ from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medi
 
 MATRICULA = 3514  # troque pelo seu número de matrícula
 
-
-def _todo(item: str):
-    """Marca um trecho ainda não feito; apague as chamadas a _todo ao completar o script."""
-    raise NotImplementedError(f"marco1.py: complete o item {item}")
-
 def _tabela(cabecalho: list, linhas: list) -> None:
     """Imprime uma tabela de texto simples, com as colunas alinhadas pela maior célula."""
     celulas = [[str(c) for c in cabecalho]] + [[str(c) for c in linha] for linha in linhas]
@@ -203,16 +198,6 @@ def etapa4(registros: list) -> None:
     print("(d) tipos:")
     _tabela(["expressão", "tipo"],
             [[texto_expr, type(valor).__name__] for texto_expr, valor in expressoes.items()])
-            
-def main(matricula: int = MATRICULA) -> None:
-    """Executa as etapas do Marco 1 para a matrícula dada."""
-    etapa0()
-    texto, verdade = gerar_log(matricula)
-    registros = etapa1(texto, verdade)
-    etapa2(texto, registros, verdade)
-    etapa3()
-    etapa4(registros)
-    print("\nMarco 1: todos os assert passaram.")
 
 
 if __name__ == "__main__":

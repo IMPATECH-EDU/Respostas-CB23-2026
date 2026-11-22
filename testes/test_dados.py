@@ -160,6 +160,35 @@ class TestRegressaoMediaMovel(unittest.TestCase):
         self.assertIsInstance(mm, SerieTemporal)
         self.assertEqual(len(mm), len(s))
         self.assertTrue(np.allclose(mm, s))
+# ---------------------------------------------------------------------------------------
+# Issue #5: reamostrar
+# ---------------------------------------------------------------------------------------
+class TestReamostrarSobra(unittest.TestCase):
+    """Issue #5: médias por bloco, com atenção aos pontos que sobram no fim."""
+
+    def test_sobra_no_fim_e_descartada(self):
+        """Com 8 pontos e k=3, os 2 últimos (que não fecham um bloco) não entram na média."""
+        s = SerieTemporal.de_lista([1, 2, 3, 10, 20, 30, 1000, 2000])
+        r = s.reamostrar(3)
+        self.assertEqual(len(r), 2)
+        self.assertTrue(np.allclose(r, [2.0, 20.0]))
+
+    def test_k_igual_ao_tamanho_da_um_bloco(self):
+        """Com k == len(s), há um único bloco, e a média dele é a média da série."""
+        s = SerieTemporal.de_lista([4.0, 8.0, 0.0, 12.0])
+        r = s.reamostrar(4)
+        self.assertEqual(len(r), 1)
+        self.assertAlmostEqual(float(r[0]), 6.0)
+
+    def test_nao_modifica_a_serie_e_mantem_o_tipo(self):
+        """reamostrar devolve uma SerieTemporal 1D e deixa a série original intacta."""
+        s = SerieTemporal.de_lista([5.0, 1.0, 3.0, 3.0, 9.0])
+        antes = np.array(s)
+        r = s.reamostrar(2)
+        self.assertIsInstance(r, SerieTemporal)
+        self.assertEqual(r.ndim, 1)
+        self.assertTrue(np.array_equal(s, antes))
+        self.assertEqual(len(s), 5)
 
 if __name__ == "__main__":
     unittest.main()
