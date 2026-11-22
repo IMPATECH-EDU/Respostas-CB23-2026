@@ -54,7 +54,7 @@ conversões: se ela cria-se uma conversão e a aplicasse em seguida ainda daria 
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+Previsões registradas no commit: <!R5: e2a60c2, R6: 90fc0f5>
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
