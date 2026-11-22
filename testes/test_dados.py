@@ -81,5 +81,26 @@ class TestContratoLerLog(unittest.TestCase):
         self.assertEqual(invalidas, ruins)
 
 
+class TestReamostrar(unittest.TestCase):
+    """Issue #5: médias de blocos consecutivos de k pontos."""
+
+    def test_sobra_no_fim_e_descartada(self):
+        """Com 7 pontos e k = 3, o ponto que sobra no fim é descartado: 2 blocos."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 100.0])
+        self.assertTrue(np.allclose(s.reamostrar(3), [2.0, 5.0]))
+
+    def test_k_igual_a_um_devolve_a_propria_serie(self):
+        """Com k = 1, cada bloco tem um ponto e o resultado é igual à série."""
+        s = SerieTemporal.de_lista([3.0, 1.0, 4.0])
+        self.assertTrue(np.allclose(s.reamostrar(1), s))
+
+    def test_reamostrar_nao_modifica_a_serie(self):
+        """reamostrar não altera self e devolve uma SerieTemporal."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0])
+        r = s.reamostrar(2)
+        self.assertIsInstance(r, SerieTemporal)
+        self.assertTrue(np.allclose(s, [1.0, 2.0, 3.0, 4.0]))
+
+
 if __name__ == "__main__":
     unittest.main()
