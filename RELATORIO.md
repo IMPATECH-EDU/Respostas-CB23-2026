@@ -79,3 +79,13 @@ Os testes de regressão são `test_kahan_um_milhao_de_decimos` e `test_kahan_pre
 ### R10 — Precisão × exatidão
 
 Em `PT102` (Etapa 3b), as curvas linear e spline têm desvios quase idênticos (`0.552` e `0.554 kPa`), ou seja, a mesma precisão (baixa dispersão entre leituras). Já a exatidão é muito diferente: o viés frente aos `380.00 kPa` reais é `-1.836 kPa` na linear contra `-0.006 kPa` na spline. A média de quase 600 leituras atenua apenas o ruído aleatório (`σ/√n`), mas não consegue corrigir o erro sistemático introduzido pela aproximação linear sobre a curva senoidal.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção gasta sempre 44 iterações porque `Colebrook` fixa `[a, b] = [2, 15]` e `tol = 1e-12`, exigindo `ceil(log2(13 / 1e-12)) = 44` cortes independentemente de `Re`. Nos erros do Newton para `Re = 1e4` (`2.9`, `5.0e-02`, `2.3e-05`, `5.0e-12`), a ordem 2 indica `e_{k+1} ∝ e_k²`: o número de casas decimais corretas aproximadamente dobra a cada passo. Se a função tiver derivada nula no ponto médio ou o passo tangente escapar do domínio/oscilar, o Newton falha, enquanto a bissecção segue garantida pela troca de sinal.
+
+### R12 — Issue #9
+
+Os testes de regressão são `test_newton_colebrook_converge_em_poucas_iteracoes` e `test_newton_reavalia_derivada_em_pontos_distintos`. Avaliar `f'(x_0)` uma única vez fixa a inclinação e transforma o processo em ponto fixo `x_{k+1} = x_k - f(x_k)/f'(x_0)`, cujo fator assintótico `|1 - f'(r)/f'(x_0)| ≠ 0` deixa a convergência linear (levando 10 passos para `Re = 1e4` em vez de 5). A aceitação não pegou o bug porque conferia só `convergiu` e a raiz final, sem verificar iterações nem ordem.
