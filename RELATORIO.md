@@ -58,3 +58,24 @@ O resultado mais surpreendente foi `s.sum()` retornar `SerieTemporal` (um array 
 ### R7 — Issue #4
 
 O sintoma era `media_movel(30)` sobre 600 pontos devolver 570 valores em vez de 571. Os testes de regressão são `test_media_movel_tamanho_e_primeira_janela`, `test_media_movel_janela_igual_ao_comprimento` e `test_media_movel_janela_unitaria`. A causa era `acumulada[janela:] - acumulada[:-janela]` omitir `S_0 = 0`, descartando a 1ª janela; corrigi prefixando `0.0` em `acumulada`. A aceitação não pegou porque verificou só tipo e exceções, sem checar comprimento nem valores; outro caso omitido foi `ler_log` com linhas vazias ou datas impossíveis, coberto em `TestLerLogContrato`.
+
+## Marco 2
+
+### Ambiente
+
+```text
+=== Etapa 0: ambiente ===
+Python 3.14.5 | NumPy 2.5.2 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3522
+```
+
+### R8 — Derivada numérica
+
+De `h = 1` até `h = 1e-5` (erro cai de `1.658e-05` para o mínimo `6.224e-10`), domina o erro de truncamento `O(h)` da diferença adiante. Para `h < 1e-5`, o erro volta a crescer até `2.134e-01` pelo erro de arredondamento e cancelamento catastrófico em `(f(x + h) - f(x)) / h`, que escala com `O(ε / h)`. Em `h = 1e-14`, `1000.0 + 1e-14 == 1000.0` em `float64` (abaixo da resolução em torno de `1000`), zerando o numerador e tornando o erro exatamente igual à própria derivada (`0.213432888873`).
+
+### R9 — Issue #7
+
+Os testes de regressão são `test_kahan_um_milhao_de_decimos` e `test_kahan_preserva_parcelas_pequenas_apos_numero_grande`. Como `t` já é o resultado arredondado de `self._soma + y`, calcular `t - (self._soma + y)` subtrai dois floats idênticos e devolve sempre `0.0`. Já `(t - self._soma) - y` isola a parcela que realmente alterou `self._soma` e recupera os bits descartados. Os testes de aceitação não detectaram a falha porque somavam apenas 10 parcelas de `0.1` com `math.isclose` (`rel_tol=1e-9`).
+
+### R10 — Precisão × exatidão
+
+Em `PT102` (Etapa 3b), as curvas linear e spline têm desvios quase idênticos (`0.552` e `0.554 kPa`), ou seja, a mesma precisão (baixa dispersão entre leituras). Já a exatidão é muito diferente: o viés frente aos `380.00 kPa` reais é `-1.836 kPa` na linear contra `-0.006 kPa` na spline. A média de quase 600 leituras atenua apenas o ruído aleatório (`σ/√n`), mas não consegue corrigir o erro sistemático introduzido pela aproximação linear sobre a curva senoidal.
