@@ -5,7 +5,10 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
+import numpy as np
+
 from elevatoria.dados import ler_log, por_tag
+from elevatoria.serie import SerieTemporal
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -18,6 +21,27 @@ class TestPorTagExemplo(unittest.TestCase):
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+
+
+class TestRegressaoMediaMovel(unittest.TestCase):
+    """Issue #4: media_movel devolvia um valor a menos (n - janela em vez de n - janela + 1)."""
+
+    def setUp(self):
+        self.s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0, 5.0])
+
+    def test_media_movel_tem_n_menos_janela_mais_um_valores(self):
+        """Com 5 pontos e janela 2, a média móvel tem 4 valores, como diz a docstring."""
+        self.assertEqual(len(self.s.media_movel(2)), 4)
+
+    def test_media_movel_inclui_a_primeira_janela(self):
+        """O primeiro valor é a média de self[0:janela]: (1 + 2) / 2 = 1,5."""
+        self.assertTrue(np.allclose(self.s.media_movel(2), [1.5, 2.5, 3.5, 4.5]))
+
+    def test_media_movel_janela_igual_ao_tamanho(self):
+        """Com janela igual ao tamanho da série, sobra um único valor: a média de tudo."""
+        resultado = self.s.media_movel(5)
+        self.assertEqual(len(resultado), 1)
+        self.assertAlmostEqual(float(resultado[0]), 3.0)
 
 
 class TestContratoLerLog(unittest.TestCase):
