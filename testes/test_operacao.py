@@ -7,10 +7,21 @@ ser que a igualdade exata seja justamente o que você quer testar.
 import math
 import unittest
 
+import numpy as np
+
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
 from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import fator_atrito_colebrook
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
 
 RUGOSIDADE_RELATIVA = 0.15e-3 / 0.20
+VAZOES = np.arange(0.0, 101.0, 10.0)
+BOMBA = CurvaCalibracao(VAZOES, 50.0 - 0.004 * VAZOES ** 2, "spline")
+
+
+def _tubulacao() -> Tubulacao:
+    """A adutora da estação, com o Newton resolvendo Colebrook."""
+    return Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Newton(tol=1e-12))
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -48,6 +59,45 @@ class TestRegressaoNewton(unittest.TestCase):
         resultado = Newton(tol=1e-12, df=df).encontrar(lambda x: x * x - 2.0, 0.0, 2.0)
         self.assertEqual(len(pontos), resultado.iteracoes)
         self.assertEqual(pontos, list(resultado.historico[:-1]))
+
+
+class TestContratoPontoOperacao(unittest.TestCase):
+    """Issue #8: regras do contrato de ponto_operacao que os testes de aceitação não verificam."""
+
+    def test_intervalo_invertido(self):
+        """a >= b levanta ValueError antes de chamar o resolvedor."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(BOMBA, _tubulacao(), Bisseccao(), a=90.0, b=40.0)
+
+    def test_intervalo_fora_do_dominio_da_bomba(self):
+        """Um intervalo que sai do domínio do ensaio (0 a 100 L/s) levanta ValueError."""
+        with self.assertRaisesRegex(ValueError, "domínio"):
+            ponto_operacao(BOMBA, _tubulacao(), Bisseccao(), a=10.0, b=120.0)
+
+    def test_resolvedor_que_nao_converge(self):
+        """Se o resolvedor para em max_iter sem convergir, ponto_operacao levanta ValueError."""
+        with self.assertRaisesRegex(ValueError, "convergiu"):
+            ponto_operacao(BOMBA, _tubulacao(), Bisseccao(tol=1e-10, max_iter=3))
+
+
+class TestContratoOrdemConvergencia(unittest.TestCase):
+    """Issue #8: regras do contrato de ordem_convergencia que os testes de aceitação não verificam."""
+
+    def test_piso_relativo_a_raiz(self):
+        """O piso é relativo a |raiz|: com raiz 1e6, um erro de 1e-9 fica abaixo dele e é ignorado."""
+        raiz = 1e6
+        historico = [raiz + 0.5 ** k for k in range(1, 6)] + [raiz + 1e-9]
+        self.assertAlmostEqual(ordem_convergencia(historico, raiz), 1.0, delta=1e-6)
+
+    def test_usa_os_tres_ultimos_acima_do_piso(self):
+        """Erros 1e-1, 1e-2, 1e-6 dão p = log(1e-4)/log(1e-1) = 4, ignorando os erros iniciais."""
+        historico = [3.0, 2.0, 1.1, 1.01, 1.000001, 1.0]
+        self.assertAlmostEqual(ordem_convergencia(historico, 1.0), 4.0, delta=1e-6)
+
+    def test_erros_consecutivos_iguais(self):
+        """Dois erros consecutivos iguais levantam ValueError, e não ZeroDivisionError."""
+        with self.assertRaises(ValueError):
+            ordem_convergencia([1.5, 0.5, 1.5, 1.25], 1.0)
 
 
 if __name__ == "__main__":
