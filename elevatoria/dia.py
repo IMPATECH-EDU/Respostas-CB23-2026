@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.linalg import solve_triangular
 
 from elevatoria.integracao import Integrador
 from fornecido.energia import FAIXAS_TARIFARIAS, potencia_eletrica
@@ -41,7 +42,25 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x_arr = np.asarray(x, dtype=float)
+    y_arr = np.asarray(y, dtype=float)
+    if x_arr.ndim != 1 or y_arr.ndim != 1 or x_arr.size != y_arr.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if isinstance(grau, bool) or not isinstance(grau, (int, np.integer)) or grau < 0:
+        raise ValueError(f"grau deve ser um inteiro nao negativo; recebi {grau!r}")
+    n_coef = int(grau) + 1
+    if x_arr.size < n_coef:
+        raise ValueError(f"sao necessarios ao menos {n_coef} pontos; recebi {x_arr.size}")
+
+    # Escalona colunas da Vandermonde antes da fatoracao QR para melhorar condicionamento.
+    vandermonde = np.vander(x_arr, n_coef, increasing=True)
+    normas = np.linalg.norm(vandermonde, axis=0)
+    escalas = np.where(normas > 0.0, normas, 1.0)
+    q, r = np.linalg.qr(vandermonde / escalas, mode="reduced")
+    if np.any(np.abs(np.diag(r)) <= 1e-14):
+        raise ValueError("pontos insuficientemente distintos para ajustar o polinomio")
+    coef_escalonados = solve_triangular(r, q.T @ y_arr, lower=False)
+    return coef_escalonados / escalas
 
 
 @dataclass(frozen=True)
@@ -76,4 +95,33 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t_arr = np.asarray(t, dtype=float)
+    q_arr = np.asarray(vazao, dtype=float)
+    if t_arr.ndim != 1 or q_arr.ndim != 1 or t_arr.size != q_arr.size:
+        raise ValueError("t e vazao devem ser vetores 1D do mesmo tamanho")
+
+    limites = sorted({inicio for inicio, _, _ in FAIXAS_TARIFARIAS} | {fim for _, fim, _ in FAIXAS_TARIFARIAS})
+    for limite in limites:
+        if not np.any(np.isclose(t_arr, limite, rtol=0.0, atol=1e-9)):
+            raise ValueError(f"limite de faixa tarifaria {limite:g} h ausente em t")
+
+    altura = np.polynomial.polynomial.polyval(q_arr, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(q_arr, coef_rendimento)
+    potencia = potencia_eletrica(q_arr, altura, rendimento)
+
+    volume_m3 = 3.6 * integrador.integrar_tabela(t_arr, q_arr)
+    energia_kwh = integrador.integrar_tabela(t_arr, potencia)
+
+    # Integra por faixa para nao atravessar a descontinuidade da tarifa.
+    custos = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        mascara = (t_arr >= inicio - 1e-9) & (t_arr <= fim + 1e-9)
+        custos.append(tarifa * integrador.integrar_tabela(t_arr[mascara], potencia[mascara]))
+
+    custo_por_faixa = tuple(custos)
+    return ResumoDia(
+        volume_m3=volume_m3,
+        energia_kwh=energia_kwh,
+        custo_reais=float(sum(custo_por_faixa)),
+        custo_por_faixa=custo_por_faixa,
+    )
