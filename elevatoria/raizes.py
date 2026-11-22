@@ -115,6 +115,7 @@ class Newton(MetodoRaiz):
         return (f(x + self._h) - f(x - self._h)) / (2.0 * self._h)
 
     def encontrar(self, f: Funcao, a: float, b: float) -> ResultadoRaiz:
+        """Uma raiz de `f` pelo método de Newton, começando no ponto médio de `[a, b]`."""
         x = 0.5 * (a + b)
         historico = [x]
         for k in range(1, self.max_iter + 1):
