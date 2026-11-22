@@ -5,7 +5,7 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import ler_log, por_tag
+from elevatoria.dados import criar_conversores, ler_log, por_tag
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -39,6 +39,18 @@ class TestLerLogContrato(unittest.TestCase):
         registros, invalidas = ler_log(linha_sem_par)
         self.assertEqual(registros, [])
         self.assertEqual(invalidas, [linha_sem_par])
+
+
+class TestConversoresContrato(unittest.TestCase):
+    """Testes adicionais de criar_conversores para entrada vazia e isolamento de lambdas."""
+
+    def test_conversores_dicionario_vazio_e_multiplos_fatores(self):
+        """Dicionario vazio devolve vazio e fatores distintos nao sofrem late binding."""
+        self.assertEqual(criar_conversores({}), {})
+        conv = criar_conversores({"PT101": 0.15, "PT102": 0.30, "FT201": 0.10})
+        self.assertAlmostEqual(conv["PT101"](100.0), 15.0)
+        self.assertAlmostEqual(conv["PT102"](100.0), 30.0)
+        self.assertAlmostEqual(conv["FT201"](100.0), 10.0)
 
 
 if __name__ == "__main__":
