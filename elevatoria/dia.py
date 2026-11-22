@@ -96,10 +96,13 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
 
     energia = integrador.integrar_tabela(t, potencia)
 
-    custo_por_faixa = tuple(
-        tarifa * integrador.integrar_tabela(t, potencia * ((t >= inicio) & (t <= fim)))
-        for inicio, fim, tarifa in FAIXAS_TARIFARIAS
-    )
+    custos = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        dentro_da_faixa = (t >= inicio) & (t <= fim)
+        custos.append(
+            tarifa * integrador.integrar_tabela(t[dentro_da_faixa], potencia[dentro_da_faixa])
+        )
+    custo_por_faixa = tuple(custos)
 
     custo_total = sum(custo_por_faixa)
 

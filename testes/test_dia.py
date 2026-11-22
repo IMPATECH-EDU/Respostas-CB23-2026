@@ -6,6 +6,9 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
+import numpy as np
+
+from elevatoria.dia import dia_de_operacao
 from elevatoria.integracao import Simpson, Trapezio
 
 
@@ -24,14 +27,30 @@ class TestTrapezio(unittest.TestCase):
     """Testes de regressão da issue #11."""
 
     def test_regressao_trapezio(self):
-        """O erro do Trapezio é maior do que deveria ser"""
-        self.assertAlmostEqual(Trapezio().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.75)
+        """A regra composta usa os dois subintervalos iguais para integrar x²."""
+        self.assertAlmostEqual(Trapezio().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 10.125)
 
     def test_regressao_trapezio_tabela(self):
-        """Só pra verificar se o erro do Trapezio com tabela também é maior do que deveria ser"""
-        x = [0.0, 1.5, 3.0]
+        """A integração tabulada usa a largura própria de cada intervalo não uniforme."""
+        x = [0.0, 1.0, 3.0]
         y = [xi ** 2 for xi in x]
-        self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 9.75)
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 10.5)
+
+
+class TestDiaDeOperacao(unittest.TestCase):
+    def test_custo_por_faixa_em_malha_irregular(self):
+        """Cada custo considera apenas os pontos dentro da respectiva faixa tarifária."""
+        t = np.array([0.0, 4.0, 9.0, 15.0, 18.0, 19.5, 21.0, 24.0])
+        vazao = np.full(t.size, 50.0)
+        potencia = 998.0 * 9.81 * 0.050 * 40.0 / (1000.0 * 0.8)
+
+        resumo = dia_de_operacao(t, vazao, np.array([40.0]), np.array([0.8]), Trapezio())
+
+        np.testing.assert_allclose(
+            resumo.custo_por_faixa,
+            [potencia * 18.0 * 0.50, potencia * 3.0 * 1.50, potencia * 3.0 * 0.50],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
