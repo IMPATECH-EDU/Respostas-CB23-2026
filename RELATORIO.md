@@ -184,7 +184,7 @@ tervalos; o registro tem intervalos de 15 e 30 min, eaimplementaçãorecusacomVa
 <!-- Exigida pela política de IA do plano de ensino de CB23. O enunciado do projeto autoriza
 IA para ajudar a escrever o código. Revise e complete antes de marcar o PR como pronto. -->
 
-**Onde usei.** Usei o Gemini como ajuda no desenvolvimento, principalmente no código do Marcos 1 e 2:
+**Onde usei.** Usei o Gemini e Claude como ajuda no desenvolvimento, principalmente no código do Marcos 1 e 2:
 
 - `elevatoria/dados.py` (issues #1): a IA partiu do meu rascunho de `LINHA`, `ler_log`,
   `contagem_por_tag`, `serie` e `criar_conversores`, corrigiu `valida_tag` e `serie
