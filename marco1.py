@@ -200,5 +200,15 @@ def etapa4(registros: list) -> None:
             [[texto_expr, type(valor).__name__] for texto_expr, valor in expressoes.items()])
 
 
+def main(matricula: int = MATRICULA) -> None:
+    """Executa as etapas do Marco 1 para a matrícula dada."""
+    etapa0()
+    texto, verdade = gerar_log(matricula)
+    registros = etapa1(texto, verdade)
+    etapa2(texto, registros, verdade)
+    etapa3()
+    etapa4(registros)
+    print("\nMarco 1: todos os assert passaram.")
+
 if __name__ == "__main__":
     main()
