@@ -154,3 +154,24 @@ Os testes de aceitação não pegaram o erro na convergência pois não verifica
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+Na integração de uma vez, algumas subdivisões atravessaram os saltos de tarifa em 18h e 21h. Mas nessas regiões as hipóteses de suavidade não são válidas e o erro dos intervalos que cruzam os saltos domina, degradando a ordem. Separando a integral nas faixas, os saltos viram limites dos intervalos e, dentro de cada faixa, a tarifa é constante e a potência é suave; assim, reaparecem as ordens teóricas 2 (trapézio) e 4 (Simpson).
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+### R14 — Issue #11
+
+`test_regressao_trapezio`: passou sem problemas
+`test_regressao_trapezio_tabela`: estava considerando intervalos constantes no cálculo, quando deveria estar considerando intervalos de tamanhos diferentes. Foi alterada a conta e agora está retornando o valor esperado.
+
+Nos testes de regressão já implementados, apenas é considerada a função $f(x) = 3x + 1$, que retorna o valor exato quando integrada pelo método do trapézio por ser uma função afim. Deste modo, o tamanho do intervalo não afeta a conta. Em `test_regressao_trapezio_tabela`, utilizamos uma função de grau maior $f(x) = x²$. Aqui o trapézio retorna valores diferentes do esperado quando considera intervalos regulares no lugar de diferentes.
+
+A regra de Simpson não é muito adequada para o registro do dia pois os dados podem conter ruídos (e várias vezes têm), e isso implica que o polinômio que aproxima os dados seja de grau maior do que a regra de Simpson pode calcular com precisão (até grau 3).
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
