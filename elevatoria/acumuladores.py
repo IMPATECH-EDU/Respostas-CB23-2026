@@ -65,7 +65,10 @@ class AcumuladorKahan(Acumulador):
         """Acrescenta `x` à soma, compensando o arredondamento."""
         y = float(x) - self._correcao
         t = self._soma + y
-        self._correcao = t - (self._soma + y)   # o que se perdeu ao arredondar soma + y
+        # O que se perdeu ao arredondar soma + y. A ordem dos parênteses importa: (t - soma)
+        # recupera a parte de y que entrou em t, e subtrair y deixa só o erro. Escrito como
+        # t - (soma + y), o float repete o mesmo arredondamento e dá sempre 0 (issue #7).
+        self._correcao = (t - self._soma) - y
         self._soma = t
 
     @property
