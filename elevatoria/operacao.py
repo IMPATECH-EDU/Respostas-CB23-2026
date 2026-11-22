@@ -8,9 +8,7 @@ Este módulo junta peças que já existem na base:
 - `Bisseccao` e `Newton` (de `elevatoria/raizes.py`, escritos por um colega): os métodos de
   raiz, que devolvem um `ResultadoRaiz`.
 
-As funções marcadas com `NotImplementedError` são a issue #8; as docstrings descrevem o
-contrato. Não mude nomes nem assinaturas públicas: o `marco3.py` e os testes dependem deles.
-Funções auxiliares privadas (`_nome`) são permitidas.
+A vazão encontrada e o histórico do resolvedor permitem conferir a convergência.
 """
 from __future__ import annotations
 
@@ -47,9 +45,26 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     Levanta `ValueError` se `a >= b`, se `[a, b]` não estiver dentro do domínio da bomba
     (`bomba.dominio`) ou se o resolvedor não convergir (`resultado.convergiu` falso). Um
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
-    tratado: ele chega a quem chamou `ponto_operacao`.
+    tratado: ele chega a quem chamou `ponto_operacao`. Uma raiz fora de [a, b] também é rejeitada
+    com `ValueError`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError("o intervalo de vazões deve ter a < b")
+    minimo, maximo = bomba.dominio
+    if a < minimo or b > maximo:
+        raise ValueError(f"[{a}, {b}] fora do domínio da bomba [{minimo}, {maximo}]")
+
+    def diferenca_de_altura(q: float) -> float:
+        """Devolve a altura fornecida menos a exigida quando a vazão é q."""
+        return bomba(q) - tubulacao.altura_sistema(q)
+
+    resultado = resolvedor.encontrar(diferenca_de_altura, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"o método não convergiu após {resultado.iteracoes} iterações")
+    q = resultado.raiz
+    if not a <= q <= b:
+        raise ValueError(f"a vazão encontrada ({q}) está fora de [{a}, {b}]")
+    return PontoOperacao(q, bomba(q), resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -64,6 +79,16 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
     quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
 
-    Levanta `ValueError` se houver menos de 3 erros acima do piso.
+    Levanta `ValueError` para piso negativo, menos de 3 erros acima dele ou denominador nulo.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    if piso < 0:
+        raise ValueError("o piso do erro deve ser não negativo")
+    limite = piso * max(1.0, abs(raiz))
+    erros = (abs(x - raiz) for x in historico)
+    utilizaveis = [erro for erro in erros if erro > limite]
+    if len(utilizaveis) < 3:
+        raise ValueError("a estimativa exige três erros acima do piso")
+    anterior, atual, proximo = map(math.log, utilizaveis[-3:])
+    if atual == anterior:
+        raise ValueError("erros consecutivos iguais não definem a ordem")
+    return (proximo - atual) / (atual - anterior)
