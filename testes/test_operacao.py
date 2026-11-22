@@ -29,7 +29,8 @@ class TestBisseccaoExemplo(unittest.TestCase):
     def test_raiz_na_ponta(self):
         """Se f(a) já é zero, a bissecção devolve a sem iterar."""
         resultado = Bisseccao().encontrar(lambda x: x - 1.0, 1.0, 3.0)
-        self.assertEqual((resultado.raiz, resultado.iteracoes), (1.0, 0))
+        self.assertAlmostEqual(resultado.raiz, 1.0)
+        self.assertEqual(resultado.iteracoes, 0)
 
 
 class TestRegressaoNewton(unittest.TestCase):

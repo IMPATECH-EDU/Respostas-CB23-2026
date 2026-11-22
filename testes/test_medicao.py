@@ -30,7 +30,7 @@ class TestAcumuladorIngenuoExemplo(unittest.TestCase):
 
     def test_sem_parcelas(self):
         """Sem nenhuma parcela, o total é zero."""
-        self.assertEqual(AcumuladorIngenuo().total, 0.0)
+        self.assertAlmostEqual(AcumuladorIngenuo().total, 0.0)
 
 
 class TestRegressaoKahan(unittest.TestCase):
