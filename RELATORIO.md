@@ -106,3 +106,48 @@ Faltava a soma vazia no início.
 o tamanho nem os valores. **Outro caso não coberto:** `janela == len(s)`. O código antigo
 devolvia um array vazio, sem erro nenhum. Esse caso é coberto por
 `test_janela_igual_ao_tamanho_da_serie`.
+
+
+## Marco 2
+
+### Ambiente
+
+```text
+$ python marco2.py
+=== Etapa 0: ambiente ===
+Python 3.14.2 | NumPy 2.5.5 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3514
+```
+
+### R8 — Derivada numérica
+
+De h = 1 até h = 1e-5, o erro cai 10 vezes a cada passo (de 1,658e-05 para 6,224e-10). Nessa
+faixa domina o erro de truncamento da diferença adiante, que é proporcional a h (≈ h/2 · |f''|).
+Depois de 1e-5, o erro volta a crescer (1,4e-05 em h = 1e-9 e 1,4e-02 em h = 1e-12): domina o
+arredondamento. `f(x+h)` e `f(x)` ficam quase iguais, a subtração cancela os dígitos certos, e o
+erro que sobra, de ordem ε·|f|, é dividido por um h cada vez menor. Em h = 1e-14,
+`1000 + 1e-14 == 1000` dá `True`: o espaço entre floats perto de 1000 é ~1e-13. Então `x + h` é o
+próprio `x`, o numerador dá 0, e o erro é a derivada inteira (0,2134 kPa/contagem).
+
+### R9 — Issue #7
+
+**Testes de regressão:** `test_dez_parcelas_de_um_decimo_dao_exatamente_um`,
+`test_parcelas_pequenas_nao_somem` e `test_um_milhao_de_pulsos`, da classe `TestRegressaoKahan`.
+Os três falhavam antes da correção.
+**Causa:** `t` já é o valor arredondado de `soma + y`. Calcular `soma + y` de novo dá exatamente
+o mesmo float, então `t - (soma + y)` é sempre 0, e o Kahan virava a soma ingênua. Na ordem
+`(t - soma) - y`, a subtração `t - soma` é exata e mostra quanto de `y` entrou de fato na soma;
+tirando `y`, sobra o pedaço perdido. Depois da correção, a Etapa 2 dá `100000.0`, com erro 0,
+contra 1,333e-06 L do ingênuo.
+**Por que os testes de aceitação não pegaram:** eles somam só 10 × 0,1 e comparam com
+`math.isclose`, e 0.9999999999999999 é "próximo" de 1.0. Nenhum teste compara o Kahan com o
+valor exato ou com o ingênuo.
+
+### R10 — Precisão × exatidão
+
+Para PT102, as duas curvas dão quase o mesmo desvio: 0,508 kPa na linear e 0,510 kPa na
+spline. A precisão (a dispersão entre leituras) é a mesma, porque perto de 1788 contagens as
+duas curvas têm praticamente a mesma inclinação. Já o viés é bem diferente: −1,831 kPa na
+linear e −0,001 kPa na spline. Isso é exatidão, a distância até o valor verdadeiro. A linear
+liga os pontos da tabela com retas, e como a resposta (um seno) é côncava, a reta fica sempre
+abaixo. Com 595 leituras válidas, a média reduz o erro aleatório para cerca de
+0,51/√595 ≈ 0,02 kPa. Mas o viés da curva é o mesmo em toda leitura, e nenhuma média o tira.
