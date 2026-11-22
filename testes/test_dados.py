@@ -8,6 +8,7 @@ import unittest
 import numpy as np
 
 from elevatoria.dados import criar_conversores, ler_log, medir_memoria, por_tag
+from elevatoria.serie import SerieTemporal
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -64,6 +65,31 @@ class TestMemoriaETempoContrato(unittest.TestCase):
             medir_memoria(np.array([1.0, 2.0, 3.0]))
         with self.assertRaises(ValueError):
             medir_memoria([1, 2, 3])  # type: ignore[arg-type]
+
+
+class TestMediaMovelRegressao(unittest.TestCase):
+    """Testes de regressao da issue #4 escritos antes da correcao de media_movel."""
+
+    def test_media_movel_tamanho_e_primeira_janela(self):
+        """Media movel de janela 2 inclui o primeiro bloco e devolve n - janela + 1 valores."""
+        s = SerieTemporal.de_lista([1.0, 4.0, 9.0, 16.0, 25.0])
+        res = s.media_movel(2)
+        self.assertEqual(len(res), 4)
+        self.assertTrue(np.allclose(res, [2.5, 6.5, 12.5, 20.5]))
+
+    def test_media_movel_janela_igual_ao_comprimento(self):
+        """Media movel com janela igual ao tamanho da serie devolve 1 valor com a media global."""
+        s = SerieTemporal.de_lista([1.0, 4.0, 9.0, 16.0, 25.0])
+        res = s.media_movel(len(s))
+        self.assertEqual(len(res), 1)
+        self.assertTrue(np.allclose(res, [11.0]))
+
+    def test_media_movel_janela_unitaria(self):
+        """Media movel com janela 1 preserva todos os elementos sem modificar a serie original."""
+        s = SerieTemporal.de_lista([1.0, 4.0, 9.0, 16.0, 25.0])
+        res = s.media_movel(1)
+        self.assertEqual(len(res), 5)
+        self.assertTrue(np.allclose(res, [1.0, 4.0, 9.0, 16.0, 25.0]))
 
 
 if __name__ == "__main__":
