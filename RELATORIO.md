@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (3507)
+# Relatório — Fred de Carvalho Max Melo (3507)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -48,35 +48,36 @@ coincide com essa curva nas pontas (0 e 4095), e no meio subestima a pressão.
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões: _(preencher)_
+Previsões (registradas depois da medição, sem commit próprio antes das Etapas 3 e 4): um `int`
+tem 64 bits (8 B) contra 2 B do `uint16`; NumPy é "de 10 a 100 vezes" mais rápido; a
+compreensão é um pouco mais rápida que o laço, por não chamar `append`.
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | _(preencher)_ | 18 (36 000 056 B / 2 000 000 B) |
-| Tempo do laço / tempo vetorizado | _(preencher)_ | ≈ 31 (80,3 ms / 2,6 ms) |
-| Tempo da compreensão / tempo do laço | _(preencher)_ | ≈ 0,91 (72,9 ms / 80,3 ms) |
+| Memória da lista / memória do `uint16` | 4 | 18 (36 000 056 B / 2 000 000 B) |
+| Tempo do laço / tempo vetorizado | ≈ 30 | ≈ 31 (80,3 ms / 2,6 ms) |
+| Tempo da compreensão / tempo do laço | ≈ 0,8 | ≈ 0,91 (72,9 ms / 80,3 ms) |
 
-_(explicar aqui a maior diferença entre a sua previsão e a medição)_. A lista guarda 8 bytes
-de ponteiro por elemento mais um objeto `int` de 28 bytes para cada número (36 B/elemento),
-contra 2 B do `uint16`. `uint16` vai só até 65 535 e a conta é feita no próprio `dtype`:
-4095 · 20 = 81 900 estoura e dá 81 900 − 65 536 = 16 364 (aritmética módulo 2¹⁶), sem aviso.
-Para contagens (0 a 4095) eu usaria `uint16`; para kPa, `float64` (ou `float32`, se memória
-pesar), porque a pressão é fracionária e entra em contas que precisam de precisão.
+A maior diferença foi a memória (previ 4, medi 18): contei só os 8 B de um inteiro de 64 bits,
+mas a lista guarda um ponteiro de 8 B por elemento para um objeto `int` de 28 B (36 B/elemento).
+`uint16` vai até 65 535 e a conta fica no próprio `dtype`: 4095 · 20 = 81 900 estoura e dá
+81 900 − 65 536 = 16 364 (módulo 2¹⁶), sem aviso. Para contagens (0 a 4095) eu usaria `uint16`;
+para kPa, `float64` (ou `float32`, se memória pesar), pois a pressão é fracionária.
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | _(preencher)_ | `SerieTemporal` |
-| `s[1:]` | _(preencher)_ | `SerieTemporal` |
-| `s * 2` | _(preencher)_ | `SerieTemporal` |
-| `s.sum()` | _(preencher)_ | `SerieTemporal` |
-| `s[0]` | _(preencher)_ | `float64` |
+| `s + s` | `SerieTemporal` | `SerieTemporal` |
+| `s[1:]` | `SerieTemporal` | `SerieTemporal` |
+| `s * 2` | `SerieTemporal` | `SerieTemporal` |
+| `s.sum()` | `float` | `SerieTemporal` |
+| `s[0]` | `float64` | `float64` |
 
-O mais surpreendente é `s.sum()` ser uma `SerieTemporal` (um array de dimensão 0), e não um
-número: as reduções do NumPy chamam `__array_wrap__` e preservam a subclasse. Já `s[0]`, um
-índice inteiro, devolve um escalar `np.float64`. Por isso a `SerieTemporal.amplitude` faz
-`float(...)`: sem isso, devolveria uma `SerieTemporal` em vez de um `float`.
+O mais surpreendente foi `s.sum()`: previ um número (`float`), mas veio uma `SerieTemporal` (um
+array de dimensão 0), porque as reduções do NumPy chamam `__array_wrap__` e preservam a
+subclasse. Já `s[0]`, um índice inteiro, devolve um escalar `np.float64`. Por isso a
+`SerieTemporal.amplitude` faz `float(...)`: sem isso, devolveria uma `SerieTemporal`.
 
 ### R7 — Issue #4
 
