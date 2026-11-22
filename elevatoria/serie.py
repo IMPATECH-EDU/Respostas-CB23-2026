@@ -32,7 +32,9 @@ class SerieTemporal(np.ndarray):
         """
         if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
-        acumulada = np.cumsum(self)
+        # Um zero na frente: acumulada[i] é a soma de self[:i], e acumulada[janela] - acumulada[0]
+        # é a soma da primeira janela (sem ele, a primeira janela se perdia).
+        acumulada = np.concatenate(([0.0], np.cumsum(self))).view(type(self))
         return (acumulada[janela:] - acumulada[:-janela]) / janela
 
     def variacao(self) -> SerieTemporal:
