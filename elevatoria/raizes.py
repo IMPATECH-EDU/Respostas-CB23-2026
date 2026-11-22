@@ -115,13 +115,14 @@ class Newton(MetodoRaiz):
         return (f(x + self._h) - f(x - self._h)) / (2.0 * self._h)
 
     def encontrar(self, f: Funcao, a: float, b: float) -> ResultadoRaiz:
-        """Uma raiz de `f` pelo método de Newton, começando no ponto médio de `[a, b]`."""
         x = 0.5 * (a + b)
         historico = [x]
-        # Cada derivada numérica custa duas avaliações de f, e f pode ser cara (na Tubulacao,
-        # cada avaliação resolve Colebrook). Por isso a derivada é calculada uma vez só.
-        derivada = self._derivada(f, x)
         for k in range(1, self.max_iter + 1):
+            # A derivada é recalculada no ponto atual a cada iteração. Calculada uma vez só, no
+            # ponto inicial, o método vira uma iteração de corda, com convergência só linear
+            # (issue #9). Custa duas avaliações de f a mais por iteração, mas são bem menos
+            # iterações.
+            derivada = self._derivada(f, x)
             if derivada == 0:
                 raise ValueError(f"derivada nula em x = {x}: o método de Newton não pode continuar")
             x_novo = x - f(x) / derivada
