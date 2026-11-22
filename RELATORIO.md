@@ -89,3 +89,13 @@ A bissecção gasta sempre 44 iterações porque `Colebrook` fixa `[a, b] = [2, 
 ### R12 — Issue #9
 
 Os testes de regressão são `test_newton_colebrook_converge_em_poucas_iteracoes` e `test_newton_reavalia_derivada_em_pontos_distintos`. Avaliar `f'(x_0)` uma única vez fixa a inclinação e transforma o processo em ponto fixo `x_{k+1} = x_k - f(x_k)/f'(x_0)`, cujo fator assintótico `|1 - f'(r)/f'(x_0)| ≠ 0` deixa a convergência linear (levando 10 passos para `Re = 1e4` em vez de 5). A aceitação não pegou o bug porque conferia só `convergiu` e a raiz final, sem verificar iterações nem ordem.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+As ordens teóricas 2 (trapézio) e 4 (Simpson) exigem integrandos suaves (`C²` e `C⁴`). Na Etapa 1(b), integrar o custo de 0 a 24 h de uma vez atravessa os degraus da tarifa às 18 h e 21 h: o subintervalo que cruza cada salto produz erro `O(h)`, derrubando a ordem observada para `1.00` no trapézio e `0.65` no Simpson. Ao separar por faixa tarifária, a tarifa é constante e o integrando volta a ser suave em cada subdomínio, restaurando as ordens `2.00` e `4.00`.
+
+### R14 — Issue #11
+
+Os testes de regressão são `test_trapezio_tabela_malha_irregular_constante` e `test_trapezio_tabela_malha_irregular_linear`. A causa era `Trapezio.integrar_tabela` usar apenas `h = x[1] - x[0]` (15 min) em toda a tabela, subestimando intervalos de 30 min e 45 min causados pelas 8 falhas de comunicação; corrigi somando áreas com larguras `np.diff(x)`. A aceitação não notou porque usou somente malha uniforme (`np.linspace`). Já a regra de Simpson não serve para o registro do dia por exigir espaçamento uniforme e número ímpar de pontos.
