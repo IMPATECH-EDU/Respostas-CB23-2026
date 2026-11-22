@@ -105,7 +105,28 @@ class TestContagemESerieExtras(unittest.TestCase):
         with self.assertRaises(ValueError):
             serie(registros, "B1", "evento")
         self.assertTrue(np.allclose(serie(registros, "B1", "corrente"), [47.5]))
+# ---------------------------------------------------------------------------------------
+# Issue #2: conversores por tag
+# ---------------------------------------------------------------------------------------
+class TestConversoresExtras(unittest.TestCase):
+    """Issue #2: criar_conversores sem late binding."""
 
+    def test_conversores_independentes_da_ordem(self):
+        """Cada conversor usa o fator da sua tag, inclusive o primeiro do dicionário."""
+        conv = criar_conversores({"PT101": 600 / 4095, "FT201": 0.1})
+        self.assertTrue(math.isclose(conv["PT101"](4095), 600.0))
+        self.assertTrue(math.isclose(conv["FT201"](4095), 409.5))
+# ---------------------------------------------------------------------------------------
+# Issue #3: memória e tempo
+# ---------------------------------------------------------------------------------------
+class TestMemoriaExtras(unittest.TestCase):
+    """Issue #3: validação da entrada de medir_memoria."""
+
+    def test_memoria_rejeita_floats_e_listas(self):
+        """medir_memoria levanta ValueError para ndarray de float e para list."""
+        for entrada in [np.array([1.0, 2.0]), [1, 2, 3]]:
+            with self.subTest(entrada=entrada), self.assertRaises(ValueError):
+                medir_memoria(entrada)
 
 if __name__ == "__main__":
     unittest.main()
