@@ -29,7 +29,32 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+LINHA: re.Pattern[str] = re.compile(
+    r"""
+    (?P<data>[0-9]{4}-[0-9]{2}-[0-9]{2})   # data no formato AAAA-MM-DD
+    \s+                                    # separador entre data e hora
+    (?P<hora>[0-9]{2}:[0-9]{2}:[0-9]{2})   # horario no formato HH:MM:SS
+    \s+                                    # separador entre hora e nivel
+    (?P<nivel>INFO|WARN|ALARME)            # nivel de severidade do registro
+    \s+                                    # separador entre nivel e tag
+    (?P<tag>[A-Z]{1,2}[0-9]{1,3})          # tag: 1 ou 2 maiusculas e 1 a 3 digitos
+    \s+                                    # separador antes dos campos extras
+    (?P<resto>\S.*)                        # corpo da linha iniciando sem espaco
+    """,
+    re.VERBOSE,
+)
+
+# Padroes auxiliares reutilizados na validacao de tags e extracao de pares.
+_TAG = re.compile(r"[A-Z]{1,2}[0-9]{1,3}")
+_PAR = re.compile(r"(\w+)=(\S+)")
+
+
+def _converter_valor(bruto: str) -> float | str:
+    """Converte `bruto` para `float` quando possivel; caso contrario mantem `str`."""
+    try:
+        return float(bruto)
+    except ValueError:
+        return bruto
 
 
 @dataclass(frozen=True)
@@ -48,7 +73,7 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    return _TAG.fullmatch(s) is not None
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -69,7 +94,37 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+    registros: list[Registro] = []
+    invalidas: list[str] = []
+
+    for linha in texto.splitlines():
+        if not linha.strip():
+            continue
+        casamento = LINHA.fullmatch(linha)
+        if casamento is None:
+            invalidas.append(linha)
+            continue
+
+        # Valida data e hora antes de montar o registro para capturar datas impossiveis.
+        try:
+            instante = datetime.strptime(
+                f"{casamento['data']} {casamento['hora']}", "%Y-%m-%d %H:%M:%S"
+            )
+        except ValueError:
+            invalidas.append(linha)
+            continue
+
+        pares = _PAR.findall(casamento["resto"])
+        if not pares:
+            invalidas.append(linha)
+            continue
+
+        valores = {chave: _converter_valor(valor) for chave, valor in pares}
+        registros.append(
+            Registro(instante=instante, nivel=casamento["nivel"], tag=casamento["tag"], valores=valores)
+        )
+
+    return registros, invalidas
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
@@ -83,7 +138,8 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
     de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    tags = {r.tag for r in registros}
+    return {tag: len(por_tag(registros, tag)) for tag in tags}
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
@@ -92,7 +148,8 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
     """
-    raise NotImplementedError("issue #1: serie")
+    valores = [float(r.valores[chave]) for r in por_tag(registros, tag) if chave in r.valores]
+    return SerieTemporal.de_lista(valores)
 
 
 # ---------------------------------------------------------------------------------------

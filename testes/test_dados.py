@@ -5,7 +5,7 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import por_tag
+from elevatoria.dados import ler_log, por_tag
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -16,8 +16,29 @@ class TestPorTagExemplo(unittest.TestCase):
         self.assertEqual(por_tag([], "PT101"), [])
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #4 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestLerLogContrato(unittest.TestCase):
+    """Cobertura das regras de contrato de ler_log fora dos testes de aceitacao."""
+
+    def test_ignora_linhas_vazias_e_espacos(self):
+        """Linhas vazias ou so com espacos sao ignoradas sem contar como invalidas."""
+        texto = "\n   \n2026-10-05 08:00:00 INFO PT101 contagens=130\n\t \n"
+        registros, invalidas = ler_log(texto)
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(invalidas, [])
+
+    def test_rejeita_data_ou_hora_impossivel(self):
+        """Data ou hora impossivel (como mes 13) vai para invalidas sem modificacao."""
+        linha_ruim = "2026-13-05 08:00:00 INFO PT101 contagens=130"
+        registros, invalidas = ler_log(linha_ruim + "\n")
+        self.assertEqual(registros, [])
+        self.assertEqual(invalidas, [linha_ruim])
+
+    def test_rejeita_resto_sem_pares_chave_valor(self):
+        """Linha sem nenhum par chave=valor no resto e descartada como invalida."""
+        linha_sem_par = "2026-10-05 08:00:00 WARN B1 comunicacao_instavel"
+        registros, invalidas = ler_log(linha_sem_par)
+        self.assertEqual(registros, [])
+        self.assertEqual(invalidas, [linha_sem_par])
 
 
 if __name__ == "__main__":
