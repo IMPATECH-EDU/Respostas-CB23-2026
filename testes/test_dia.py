@@ -6,7 +6,9 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.integracao import Simpson
+import numpy as np
+
+from elevatoria.integracao import Simpson, Trapezio
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -17,8 +19,28 @@ class TestSimpsonExemplo(unittest.TestCase):
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+# ---------------------------------------------------------------------------------------
+# Issue #11: regressão do trapézio em tabela (escritos antes da correção; falham no original)
+# ---------------------------------------------------------------------------------------
+class TestRegressaoTrapezioTabela(unittest.TestCase):
+    """Issue #11: integrar_tabela deve usar a largura de cada intervalo, não só a primeira."""
+
+    def test_reta_em_malha_irregular(self):
+        """O trapézio é exato para uma reta, mesmo com intervalos de larguras diferentes."""
+        x = np.array([0.0, 1.0, 3.0, 3.5, 6.0])
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, 2.0 * x + 1.0), 42.0)
+
+    def test_leitura_perdida_no_registro(self):
+        """Vazão de 1 L/s com uma leitura perdida (passos de 15 e 30 min) integra 1 L/s·h."""
+        t = np.array([0.0, 0.25, 0.75, 1.0])     # falta a leitura de 0,5 h
+        self.assertAlmostEqual(Trapezio().integrar_tabela(t, np.ones(t.size)), 1.0)
+
+    def test_igual_ao_trapezoid_do_numpy(self):
+        """Numa malha irregular aleatória, o resultado coincide com np.trapezoid."""
+        rng = np.random.default_rng(11)
+        x = np.cumsum(rng.uniform(0.1, 1.0, 40))
+        y = np.sin(x) + 0.1 * x
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), float(np.trapezoid(y, x)))
 
 
 if __name__ == "__main__":
