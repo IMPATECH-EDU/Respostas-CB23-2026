@@ -6,8 +6,12 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
+import numpy as np
+
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
 from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import fator_atrito_colebrook
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -40,6 +44,36 @@ class TestNewtonRegressao(unittest.TestCase):
         self.assertTrue(resultado.convergiu)
         self.assertGreater(len(set(pontos)), 1)
         self.assertLessEqual(resultado.iteracoes, 6)
+
+
+class TestOperacaoContrato(unittest.TestCase):
+    """Testes de contrato para ponto_operacao e ordem_convergencia nao cobertos pela aceitacao."""
+
+    def setUp(self):
+        vazoes = np.arange(0.0, 101.0, 10.0)
+        self.bomba = CurvaCalibracao(vazoes, 50.0 - 0.004 * vazoes ** 2, "spline")
+        self.tubulacao = Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Bisseccao(tol=1e-12))
+
+    def test_ponto_operacao_rejeita_intervalo_invalido_ou_fora_do_dominio(self):
+        """Intervalo invertido ou fora de bomba.dominio levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(self.bomba, self.tubulacao, Bisseccao(), a=60.0, b=60.0)
+        with self.assertRaises(ValueError):
+            ponto_operacao(self.bomba, self.tubulacao, Bisseccao(), a=10.0, b=110.0)
+
+    def test_ponto_operacao_levanta_erro_se_nao_convergir(self):
+        """Levanta ValueError quando o resolvedor encerra sem convergir."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(self.bomba, self.tubulacao, Bisseccao(tol=1e-12, max_iter=1))
+
+    def test_ordem_convergencia_respeita_piso_relativo_a_raiz(self):
+        """Descarta erros abaixo de piso * max(1, |raiz|) antes de estimar a ordem."""
+        raiz = 1000.0
+        # Apenas os 3 primeiros erros superam piso * 1000 = 1e-11; os ultimos ficam no ruido.
+        historico = [1001.0, 1000.1, 1000.001, 1000.0 + 1e-12, 1000.0 + 1e-13]
+        self.assertAlmostEqual(ordem_convergencia(historico, raiz, piso=1e-14), 2.0, delta=0.05)
+        with self.assertRaises(ValueError):
+            ordem_convergencia(historico[1:], raiz, piso=1e-14)
 
 
 if __name__ == "__main__":
