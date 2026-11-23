@@ -69,7 +69,7 @@ Previsões registradas no commit: R5: e2a60c2, R6: 90fc0f5
 
 A lista apresenta 36 bytes por número (8 da referência mais 28 do objeto int), enquanto que uint16 2 apenas bytes. O laço interpreta cada
 operação enquanto que o vetorizado aplica de uma vez. Vetorizado mais rápido. A compreenssão e laço interpretam elemento a elemento, possuindo
-então tempo parecido (aproximadamente 1 como previ). Respondendo as perguntas: A maior diferença foi entre o tempo do laço e o vetorizado,
+então tempo parecido (aproximadamente 1 como previ). Respondendo as perguntas: A maior diferença foi entre o tempo do laço e o vetorizado, que é
 compilado, enquanto que o laço passa pelo interpretador do Python a cada elemento. 20 * uint16 dá 16364 por que a contagem dá a volta, ela
 supera o máximo possível que esse tipo pode guardar e inicia do zero novamente (81.900 - 65.536 = 16364). Para guardar as contagens que vão de 0
 a 4095 uint16 basta, mas para a pressão necessita ser um float, pois há casas decimais, e o float32 já basta, sendo mais econômico.
@@ -98,3 +98,54 @@ Para a média móvel de 30 pontos da PT102, temos 570 valores, mas o esperado da
 A soma de cada janela é a diferença entre duas posições do `cumsum`, e na primeira janela faltava o termo 0. A resolução seria por um 0 no
 início da soma acumulada, com `np.concatenate(([0.0], np.cumsum(self)))`. Os testes de aceitação não detectam tal erro porque eles não medem
 o tamanho. Caso a janela seja igual ao tamanho da série, o código devolvia 0 ao invés de devolver 1 valor, a média de toda a série.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+
