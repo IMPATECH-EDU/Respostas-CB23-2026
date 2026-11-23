@@ -28,10 +28,14 @@ Por que é importante saber quais linhas estão sendo descartadas, para poder id
 ### R3 — Late binding
 
 <!-- Por que errados["PT102"](4095) dá 409,5 e por que a sua criar_conversores não tem o problema. -->
+Porque a lambda guarda só o nome da variável k, e não o seu valor. Ela só procura o valor de k quando é chamada, e nesse momento a compreensão já terminou com o último valor, k = 0.1 (o fator do FT201). Por isso 4095 * 0.1 = 409.5.
+A minha criar_conversores usa o argumento padrão f=escalas[tag], que é calculado no momento em que a lambda é criada, então cada lambda guarda o fator da sua própria tag.
 
 ### R4 — Escala nominal
 
 <!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
+Hipótese: o transmissor de pressão não é linear. Em fornecido/simulador.py, a função p_real mostra que a resposta verdadeira é p = 600 * sen(pi/2 * c/4095), mas a escala nominal supõe uma reta (p = c * 600/4095).
+Para 380 kPa o A/D lê cerca de 1788 contagens, que a reta converte em cerca de 262 kPa. A tabela_calibracao existe para corrigir essa diferença.
 
 ### R5 — Previsão × medição (Etapa 3)
 
