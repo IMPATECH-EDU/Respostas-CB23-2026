@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 from elevatoria.dia import ajustar_polinomio
-from elevatoria.integracao import Simpson
+from elevatoria.integracao import Simpson, Trapezio
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -41,4 +41,26 @@ class TestValidacaoAjustarPolinomio(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             ajustar_polinomio(x, y, 1)
+
+
+class TestIntegracaoTrapezioMalhaIrregular(unittest.TestCase):
+    """Verifica se o trapézio integra corretamente tabelas com espaçamento irregular."""
+
+    def test_integral_de_funcao_linear_em_malha_irregular(self):
+        """Verifica a integral de uma função linear em intervalos de larguras diferentes."""
+        x = np.array([0.0, 1.0, 3.0])
+        y = 2.0 * x + 1.0
+
+        resultado = Trapezio().integrar_tabela(x, y)
+
+        self.assertAlmostEqual(resultado, 12.0)
+
+    def test_integral_de_funcao_quadratica_em_malha_irregular(self):
+        """Verifica se cada trapézio utiliza a largura do seu próprio intervalo."""
+        x = np.array([0.0, 0.5, 2.0, 4.0])
+        y = x ** 2
+
+        resultado = Trapezio().integrar_tabela(x, y)
+
+        self.assertAlmostEqual(resultado, 23.25)
 
