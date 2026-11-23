@@ -146,7 +146,7 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     """`SerieTemporal` com o valor de `chave` dos registros da `tag` que têm essa chave.
 
-    Os registros da tag sem essa chave (por exemplo, os alarmwes de PT102, que não têm
+    Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
     """
     da_tag = por_tag(registros, tag)                                    # Só os registros da tag
