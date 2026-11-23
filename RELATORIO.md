@@ -38,7 +38,7 @@ Em `fornecido/simulador.py`, `gerar_log` usa `c_real` para gerar as contagens. A
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit `77cdd3b`.
+Previsões registradas no commit `7f031a1`.
 
 | Grandeza | Previsão | Medido |
 | --- | ---: | ---: |
