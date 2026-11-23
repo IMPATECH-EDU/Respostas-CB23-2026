@@ -54,3 +54,21 @@ O resultado que mais surpreende é `s.sum()` resultar em uma `SerieTemporal` em 
 ### R7 — Issue #4
 
 **Sintoma**: A média móvel retornava um ponto menos (Erro "off-by-one"), com `n=570` ao invés de `571`. **Teste**: Faltava um caso cobrindo janelas extremas (como `test_tamanho_media_movel`). **Causa**: Fatiar matrizes de `cumsum` descartava a primeiríssima janela temporal. **Correção**: Inserir um `0` artificial no início da matriz via `np.insert()` antes da soma cumulativa. Os testes de aceitação originais usavam blocos onde essa falta não era fatal, camuflando o desvio.
+
+## Marco 2
+
+### Ambiente
+
+Python 3.13.7 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3533
+
+### R8 — Derivada numérica
+
+De `h = 1` (erro `1.658e-05`) até `h = 1e-5` (erro mínimo `6.224e-10`), domina o **erro de truncamento** da diferença adiante, que é proporcional a `h` e cai cerca de 10 vezes a cada passo. Abaixo de `1e-5`, domina o **erro de arredondamento** (cancelamento catastrófico em `f(x + h) - f(x)` dividido por um `h` muito pequeno), fazendo o erro crescer até `2.134e-01`. Em `h = 1e-14`, o passo é menor que metade do ULP de `1000.0` em `float64`, então `1000.0 + 1e-14 == 1000.0`; assim, `f(x + h) - f(x)` dá exatamente `0`, a aproximação vale `0` e o erro absoluto é igual à própria derivada exata (`0.213432888873`).
+
+### R9 — Issue #7
+
+Testes de regressão: `test_kahan_um_milhao_de_decimos` e `test_kahan_parcelas_pequenas_apos_grande`. No código original, `t` já era o resultado arredondado de `self._soma + y`; ao calcular `t - (self._soma + y)`, a mesma soma arredondada era subtraída de si mesma, resultando sempre em `0.0` (sem compensação), enquanto `(t - self._soma) - y` primeiro recupera a parte de `y` que efetivamente entrou em `t` e depois obtém o erro perdido. Os testes de aceitação não pegaram o defeito porque somavam apenas 10 parcelas de `0.1` e validavam com `math.isclose(..., 1.0)`, tolerância larga demais para um erro acumulado tão pequeno.
+
+### R10 — Precisão × exatidão
+
+**Precisão** é a repetibilidade (dispersão) das leituras, medida pelo desvio padrão: para `PT102`, as curvas linear (`0.528 kPa`) e spline (`0.529 kPa`) têm praticamente a mesma precisão. **Exatidão** é a proximidade da média ao valor verdadeiro, refletida pelo viés: a spline é muito mais exata (`380.0 ± 1.5 kPa`, viés `0.018 kPa`) do que a linear (`378.2 ± 1.5 kPa`, viés `-1.811 kPa`). A média de 595 leituras válidas reduz apenas o erro aleatório (proporcional a $1/\sqrt{n}$), mas não elimina o erro sistemático de aproximação da interpolação linear, que desloca todas as leituras na mesma direção.
