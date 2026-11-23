@@ -110,3 +110,20 @@ test_raiz_de2_poucas_iteracoes e test_colebrook_re
 Newton usa a tangente no ponto atual para chegar na raiz que, perto dela, é quase igual à inclinação da função e, por isso, o erro vira o quadrado do anterior. Com a derivada fixa, a tangente é a inclinação longe da raiz e, por isso, cada passo diminui o erro com uma proporção física, que é a convergência linear.
 
 Os testes de aceitação não pegam o defeito pois só medem se converge e a raiz está certa. Isso acontece mesmo com a derivada fixa, mas demora mais.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+As ordens 2 e 4 só valem para funções suaves. O custo é a potência x a tarifa, e a tarifa salta às 18h e às 21h, então o custo não é contínuo. 
+No subintervalo que contém o salto, nenhuma reta ou parábola aproxima bem a função, e o erro dele é proporcional a h. Esse erro domina os demais, e por isso a ordem observada cai para cerca de 1: 1,00 no trapézio e 0,65 no Simpson. Integrando cada faixa separadamente, a tarifa é constante dentro de cada uma e a potência é suave, então as ordens teóricas voltam: 2,00 e 4,00.
+
+
+### R14 — Issue #11
+
+Testes de regressão: test_reta_em_malha_irregular, 
+test_constante_com_leitura_perdida e
+test_registro_do_dia_com_falhas. 
+O Trapezio.integrar_tabela usava o primeiro passo, h = x[1] - x[0] (15 min), para todos os intervalos. 
+Quando o SCADA perde leituras, há intervalos de 30 e 45 min, que eram contados como 15, e o volume ficava subestimado: cerca de 3525 m³ contra 3888,0 m³ de conferência. Com h = np.diff(x), cada trapézio usa a própria largura e o volume passou a 3886,1 m³ (erro de 0,05%). Os testes de aceitação só usam malha uniforme, em que o primeiro passo é igual a todos, então o defeito não aparece. O Simpson não serve para o registro do dia porque exige pontos igualmente espaçados, e o registro tem intervalos de 15, 30 e 45 min.
+
