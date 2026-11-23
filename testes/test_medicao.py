@@ -6,7 +6,7 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 """
 import unittest
 
-from elevatoria.acumuladores import AcumuladorIngenuo
+from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -17,8 +17,21 @@ class TestAcumuladorIngenuoExemplo(unittest.TestCase):
         self.assertEqual(AcumuladorIngenuo().total, 0.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #7 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestAcumuladorKahanRegressao(unittest.TestCase):
+    """Testes de regressão para o defeito da issue #7 no AcumuladorKahan."""
+
+    def test_kahan_um_milhao_de_decimos(self):
+        """Soma 1 000 000 de parcelas de 0,1 L sem acumular erro de arredondamento."""
+        acc = AcumuladorKahan()
+        acc.adicionar_todos([0.1] * 1_000_000)
+        self.assertAlmostEqual(acc.total, 100_000.0, places=9)
+
+    def test_kahan_parcelas_pequenas_apos_grande(self):
+        """Compensa parcelas menores que metade do ULP somadas após um número grande."""
+        acc = AcumuladorKahan()
+        acc.adicionar(1e10)
+        acc.adicionar_todos([5e-7] * 10_000)
+        self.assertAlmostEqual(acc.total, 1e10 + 0.005, places=6)
 
 
 if __name__ == "__main__":
