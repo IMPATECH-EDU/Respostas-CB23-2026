@@ -114,3 +114,13 @@ A bissecção realiza sempre 44 iterações porque a quantidade depende da largu
 ### R12 — Issue #9
 
 Testes de regressão: `test_recalcula_derivada_analitica` e `test_convergencia_com_derivada_numerica` (classe `TestRegressaoNewton`). Calcular a derivada apenas uma vez mantém o denominador fixo nas iterações, fazendo o método apresentar convergência linear, em vez de quadrática. Ao recalcular a derivada em cada aproximação, recuperamos a convergência quadrática, na qual o erro aproximadamente se eleva ao quadrado a cada iteração. Os testes de aceitação não detectaram o defeito porque verificavam a precisão do resultado, mas não a quantidade de iterações nem o recálculo da derivada.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+Integrar o custo do dia de uma vez atravessa as mudanças bruscas de tarifa (18 h e 21 h), violando a hipótese de suavidade das regras e reduzindo a ordem observada para aproximadamente 1. Ao integrar cada faixa separadamente, a tarifa fica constante e o integrando é suave em cada intervalo; assim, o trapézio recupera ordem 2 e Simpson, ordem 4.
+
+### R14 — Issue #11
+
+Testes de regressão: `test_integral_de_funcao_linear_em_malha_irregular` e `test_integral_de_funcao_quadratica_em_malha_irregular` (classe `TestIntegracaoTrapezioMalhaIrregular`). O defeito era usar uma única largura entre pontos, embora as falhas do SCADA gerassem uma malha não uniforme. Os testes de aceitação não o detectaram porque não cobria o caso em que o espaçamento é irregular; Simpson não serve porque exige espaçamento uniforme, enquanto o registro do SCADA possui intervalos de 15 ou 30 minutos devido às 8 leituras perdidas.
