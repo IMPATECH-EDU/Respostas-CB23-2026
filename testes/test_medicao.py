@@ -42,7 +42,7 @@ class TestAcumuladorKahan(unittest.TestCase):
 class TestMedir(unittest.TestCase):
     """Testes de regressão da issue #6."""
 
-    def test_medir_espurias(self):
+    def test_medir(self):
         """Testa a função medir."""
 
         curva = CurvaCalibracao([8, 10, 12, 14], [8, 10, 12, 14])
@@ -63,7 +63,7 @@ class TestMedir(unittest.TestCase):
         self.assertAlmostEqual(medicao.medida.valor, 10.5)  # média das válidas
         self.assertEqual(medicao.n_validas, 4)  # número de leituras válidas
 
-    def test_medir_menos_de_duas_validas(self):
+    def test_value_errors(self):
         """Testa a função medir com menos de duas leituras válidas e com u_sistematica negativo."""
 
         curva = CurvaCalibracao([1, 2, 3, 4], [1, 4, 9, 16])
