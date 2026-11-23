@@ -116,4 +116,31 @@ Porém, vemos uma distinção quanto aos viéses. Isso, pois ,sabendo que exatid
 
 Nesse sentido, podemos notar que a média de quase 600 medidas pode reduzir a influência de erros aleatórios, mas ainda assim não eliminia os erros sistemáticos. Para a curva linear, o viés está ligado à aproximação feita durante a calibração. Mas, como esse erro é introduzido sistematicamente pela curva, ele permanece mesmo quando aumentamos a quantidade de medições.
 
-Portanto, os resultados demonstram que ter boa precisão não significa necessariamente ter boa exatidão. 
+Portanto, os resultados demonstram que ter boa precisão não significa necessariamente ter boa exatidão.
+
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+A bissecção gasta 44 iterações independente de qual seja o Reynolds, devido ao fato de que ela reduz o intervalo pela metade a cada iteração que ela executa. Nesse sentido, o número de iterações necessárias depende do tamanho inicial do intervalo e da tolerância dada, não diretamente do Reynolds ou da posição da raiz.
+
+A ordem de convergência 2 quer dizer que, com o método estando suficientemente próximo da raiz, o erro da próxima iteração é aproximadamente proporcional ao quadrado do erro atual. Assim, podemos ver que o com isso o erro cai muito rapidamente, aproximadamente dobrando o número de dígitos corretos a cada iteração.
+
+Seja $f$ um função contínua em $[a, b]$, tal que $f(a)<0$ e $f(b)>0$, ou seja, ela possui uma raiz nesse intervalo. Agora, suponha que a derivada de f é nula para algum $x_0\in [a, b]$ . O método de Newton falha quando a derivada da função dada é nula no chute inicial ($f'(x_0)=0$), já que sendo nula a derivada estaríamos a dividir por 0. No entanto, mesmo sendo nula a derivada dessa função, o método da bissecção não falha, já que ele precisa apenas que a função seja contínua no intervalo e que ela tenha sinais diferentes quando avaliada nos extremos do intervalo, que são as hipóteses do nosso caso hipotético.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+Nome dos testes de regressão: `test_ordem_convergencia_newton` e `test_numero_de_iteracoes`
+
+Notemos que ao calcularmos a derivada apenas no ponto inicial, fazendo com que ela seja fixa nas demais iterações, o método deixa de calcular a inclinação da reta nos próximos valores de $x$ que vão se aproximando da raiz de f, que é o que o método de Newton faz. Com isso, o método de Newton fica alterado durante toda a sua execução e perde a sua ordem de convergência como 2 e passa a ter uma convergência linear.
+
+Os testes de aceitação verificavam principalmente se o método encontrava uma raiz com precisão satisfatória e se cumpria os critérios funcionais esperados, mas não verificavam adequadamente a velocidade de convergência do Newton. Como o método ainda conseguia encontrar a raiz, mesmo com mais iterações, o defeito passava despercebido. Os testes de regressão foram criados justamente para detectar essa deficiência de desempenho e comportamento numérico.
+
+Portanto, vemos que os testes não demonstravam defeito pelo fato deles estarem verificando apenas se o método encontrava uma raiz com precisão satisfatória, mas não verificavam de modo direto a velodidade de convergência.

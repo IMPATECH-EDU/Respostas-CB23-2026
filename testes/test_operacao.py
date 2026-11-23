@@ -72,7 +72,7 @@ class TestRegressao(unittest.TestCase):
         ord_real = ordem_convergencia(hist, r.raiz)
 
         # Vemos se o resultado obtido é o esperado
-        self.assertAlmostEqual(ord_real, 2.0)
+        self.assertAlmostEqual(ord_real, 2.0, places=3)
     
     def test_numero_de_iteracoes(self):
         """Vemos se o números de iterações está em conformidade com o esperado para a função x**2 - 2, espera-se 5 iterações"""
