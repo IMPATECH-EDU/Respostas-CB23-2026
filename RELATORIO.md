@@ -72,26 +72,36 @@ Python 3.13.15 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3475
 
 ### R8 — Derivada numérica
 
-<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
-depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
-é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
-- De $h = 1$ até $10^{-5}$: Domina o erro de truncamento $O(h)$ da série de Taylor, que diminui linearmente com $h$ até atingir o mínimo ($6{,}224 \times 10^{-10}$).
-- Abaixo de $h = 10^{-5}$: Domina o erro de arredondamento $O(\epsilon/h)$, causado pelo cancelamento catastrófico na subtração $f(c+h) - f(c)$ amplificado pela divisão por $h$.
-- Em $h = 10^{-14}$: Como $10^{-14}$ é menor que metade do espaçamento float64 em $1000$ ($\text{ulp}(1000)/2 \approx 5{,}68 \times 10^{-14}$), ocorre absorção: 1000 + 1e-14 == 1000. O numerador resulta em $0$, a derivada estimada dá $0$ e o erro absoluto iguala a própria derivada exata ($0{,}2134\text{ kPa/contagem}$).
+- De $h = 1$ até $10^{-5}$: Domina o erro de truncamento $O(h)$, reduzindo o erro até o mínimo ($6{,}224 \times 10^{-10}$).
+- Abaixo de $h = 10^{-5}$: Domina o erro de arredondamento $O(\epsilon/h)$ devido ao cancelamento catastrófico em $f(c+h) - f(c)$.
+- Em $h = 10^{-14}$: Como $10^{-14} < \text{ulp}(1000)/2$, ocorre absorção (`1000 + 1e-14 == 1000`), zerando o numerador e a derivada estimada; o erro iguala a própria derivada exata ($0{,}2134\text{ kPa/contagem}$).
 
 ### R9 — Issue #7
 
-<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
-t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
-de aceitação não pegaram o defeito. -->
 - Testes: `test_absorcao`, `test_absorcao_2`, `test_medir` e `test_value_errors`.
-- Causa do defeito: A adição em ponto flutuante não é associativa. Como t foi calculado por s + y, a subexpressão (s + y) repete exatamente a mesma operação com o mesmo arredondamento, fazendo t - (s + y) resultar sempre em 0.0 e anulando a compensação. Na forma (t - s) - y, t - s isola apenas a parte de y que sobreviveu ao arredondamento, recuperando o resíduo descartado.
-- Por que os testes de aceitação falharam em detectar: Os testes originais testavam acumular valores a um montante que não estava distante, então não havia necessidade de correção porque não surgia imprecisão por erro de representação.
+- Causa: A soma em ponto flutuante não é associativa; como `t = s + y`, `t - (s + y)` repete o mesmo arredondamento e dá sempre `0.0`, anulando a compensação, enquanto `(t - s) - y` recupera o resíduo descartado.
+- Por que passou nos testes: Os testes originais acumulavam valores de grandeza próxima ao montante (fora do regime de absorção), sem gerar erro de representação relevante.
 
 ### R10 — Precisão × exatidão
 
-<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
-diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
-por que a média de quase 600 leituras não elimina o viés da curva linear. -->
-- Precisão vs. exatidão: A precisão (dispersão medida pelo desvio padrão) é praticamente idêntica nas duas curvas ($\approx 0{,}51\text{ kPa}$), refletindo o ruído aleatório do sensor. Já a exatidão (proximidade do valor real, medida pelo viés) difere bastante: a spline é exata (viés de $-0{,}032\text{ kPa}$), enquanto a linear é precisa, porém inexata (viés de $-1{,}862\text{ kPa}$).
-- Por que a média não elimina o viés: Fazer a média de quase 600 leituras atenua apenas o erro aleatório (proporcional a $1/\sqrt{N}$). O viés da curva linear é um erro sistemático de modelagem — como o transdutor é não linear, a reta subestima a pressão sempre no mesmo sentido, deslocando todas as amostras igualmente.
+- Precisão × exatidão: Ambas têm a mesma precisão (desvio padrão $\approx 0{,}51\text{ kPa}$, ruído aleatório), mas difere a exatidão: a `spline` é exata (viés $-0{,}032\text{ kPa}$) e a `linear` é precisa, porém inexata (viés $-1{,}862\text{ kPa}$).
+- Por que a média não elimina o viés: A média de ~600 leituras atenua apenas o erro aleatório ($1/\sqrt{N}$); o viés é um erro sistemático da aproximação linear sobre um transdutor não linear, deslocando todas as amostras no mesmo sentido.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+- 44 iterações fixas: O custo da bissecção depende apenas do tamanho do intervalo inicial e da tolerância ($k = \lceil \log_2((b - a)/\text{tol}) \rceil$), independendo da função ou de $Re$.
+- Ordem 2: Indica convergência quadrática ($e_{k+1} \approx C e_k^2$), dobrando os dígitos corretos a cada passo (em $Re=10^4$, o erro salta de $5{,}0\text{e-}2 \to 2{,}3\text{e-}5 \to 5{,}0\text{e-}12 \to 8{,}9\text{e-}16$).
+- Falha do Newton: Em regiões quase planas ($f'(x_k) \approx 0$) ou pontos de inflexão, Newton oscila ou projeta chutes para fora do domínio ($f \le 0$), enquanto a bissecção sempre converge havendo troca de sinal.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+- Testes: `test_newton_convergencia_quadratica` e `test_newton_poucas_iteracoes`.
+- Convergência linear: Fixar $f'(x_0)$ reduz o algoritmo ao método das cordas; como $f'(x_0) \neq f'(r)$, o termo de 1ª ordem de Taylor não se anula, fazendo o erro decair linearmente ($e_{k+1} \propto e_k$).
+- Por que não foi detectado: Os testes de aceitação verificavam apenas o valor final da raiz, sem checar `iteracoes` ou `ordem_convergencia`, e o método ainda convergia dentro de `max_iter`.
