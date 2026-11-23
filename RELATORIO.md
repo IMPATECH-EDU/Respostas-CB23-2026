@@ -113,8 +113,13 @@ convergência linear; por que os testes de aceitação não pegaram o defeito. -
 <!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
 de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
 Por quê? -->
+- Por que a ordem cai para ~1 e depois volta a 2 e 4: As ordens teóricas $O(h^2)$ (trapézio) e $O(h^4)$ (Simpson) exigem que a função integrada seja suave ($C^2$ e $C^4$). Ao integrar o dia inteiro de uma vez, os degraus da tarifa às 18 h e 21 h introduzem um erro proporcional à largura $h$ do subintervalo que contém o salto ($O(h)$, ordem $\le 1$), dominando o erro global. Integrando cada faixa tarifária separadamente, a tarifa é constante e o integrando volta a ser suave em cada trecho, restaurando as ordens 2 e 4.
 
 ### R14 — Issue #11
 
 <!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
 aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+- Testes: `test_trapezio_malha_nao_uniforme` e `test_trapezio_vazao_constante_com_falhas`.
+- Causa do defeito: `Trapezio.integrar_tabela` usava `h = x[1] - x[0]` fixo para toda a série em vez de `np.diff(x)`, subestimando a integral sempre que falhas do SCADA criavam intervalos de 30 ou 45 min.
+- Por que passou nos testes: Os testes de aceitação usavam apenas malhas uniformes (`np.linspace` e `np.arange`), onde todos os passos eram iguais.
+- Por que Simpson não serve: A regra de Simpson exige pontos igualmente espaçados (para aplicar os pesos parabólicos $1:4:2:4:1$) e número par de subintervalos, recusando malhas irregulares com `ValueError`.
