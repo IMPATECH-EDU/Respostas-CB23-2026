@@ -50,17 +50,27 @@ conversões: se ela cria-se uma conversão e a aplicasse em seguida ainda daria 
 
 ### R4 — Escala nominal
 
-<!-- Hipótese para a diferença da Etapa 2(f) e onde, no código da base, está a explicação. -->
+A primeira função em fornecido/simulador.py, p_real, retorna
+`600.0 * np.sin(0.5 * np.pi * np.asarray(c, dtype=float) / 4095.0)`, uma função não linear, diferente da modelagem linear nominal,
+com c * 600 / 4095. A escala nominal dá 262,0 kPa, a conferência 300,0 kPa, por que a reta subestimaa pressão devido ao transmissor
+real seguir um seno.
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!R5: e2a60c2, R6: 90fc0f5>
+Previsões registradas no commit: R5: e2a60c2, R6: 90fc0f5
+
+A lista aprensenta 36 bytes por número (8 da referência mais 28 do objeto int), enquanto que uint16 2 apenas bytes.
+O laço interpreta cada operação enquanto que o vetorizado aplica de uma vez. Vetorizado mais rápido.
+A compreessão e laço interpretam elemento a elemento, possuindo então tempo parecido (aproximadamente 1 como previ).
+Respondendo as perguntas: 20 * uint16 dá 16364 por que a contágem dá a volta, ela supera o máximo possível que esse
+tipo pode guardar e inicia do zero novamente (81.900 - 65.535 = 16364). Para guardar as contagens que vão de 0 a 4095
+uint16 basta, mas para a pressão necessita ser um float, pois há casas decimais, e o float32 já basta, sendo mais ecoômico.
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
-| Memória da lista / memória do `uint16` | 4 | |
-| Tempo do laço / tempo vetorizado | 4 | |
-| Tempo da compreensão / tempo do laço | 1 | |
+| Memória da lista / memória do `uint16` | 4 | 18 |
+| Tempo do laço / tempo vetorizado | 4 | 26 |
+| Tempo da compreensão / tempo do laço | 1 | 1,1 |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 
