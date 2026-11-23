@@ -8,6 +8,7 @@ import unittest
 
 import numpy as np
 
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 from elevatoria.integracao import Simpson, Trapezio
 
 
@@ -35,6 +36,26 @@ class TestRegressaoTrapezioTabela(unittest.TestCase):
         t = np.arange(0.0, 24.0 + 1e-9, 0.25)
         t = t[(t <= 10.0) | (t >= 12.0)]
         self.assertAlmostEqual(Trapezio().integrar_tabela(t, np.full(t.size, 10.0)), 240.0)
+
+
+class TestContratoDia(unittest.TestCase):
+    """Regras das docstrings da issue #10 que os testes de aceitação não verificam."""
+
+    def test_grau_negativo_levanta_value_error(self):
+        """grau < 0 levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 2.0, 3.0], -1)
+
+    def test_x_e_y_de_tamanhos_diferentes(self):
+        """x com 3 pontos e y com 2 levantam ValueError."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 2.0], 1)
+
+    def test_limite_de_faixa_ausente_em_t(self):
+        """Sem a leitura das 18 h, a faixa de ponta não tem início: ValueError."""
+        t = np.array([0.0, 6.0, 12.0, 17.5, 19.0, 21.0, 24.0])
+        with self.assertRaises(ValueError):
+            dia_de_operacao(t, np.full(t.size, 50.0), [40.0], [0.8], Trapezio())
 
 
 if __name__ == "__main__":
