@@ -8,6 +8,9 @@ import unittest
 
 from elevatoria.raizes import Bisseccao
 
+from elevatoria.operacao import ponto_operacao, ordem_convergencia
+from elevatoria.calibracao import CurvaCalibracao
+
 
 class TestBisseccaoExemplo(unittest.TestCase):
     """Exemplo do formato. `Bisseccao` é código existente da base."""
@@ -21,6 +24,32 @@ class TestBisseccaoExemplo(unittest.TestCase):
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
+class TestOperacao(unittest.TestCase):
+    """Testes das funções de cálculo do ponto de operação e da ordem de convergência."""
+    
+    def test_ponto_operacao_fora_do_dominio(self):
+        """Rejeita intervalos que ultrapassam o domínio da curva da bomba."""
+        bomba = CurvaCalibracao([0, 10, 20], [50, 40, 30], "linear")
+
+        with self.assertRaises(ValueError):
+            ponto_operacao(bomba, None, None, a=5, b=25)
+
+    def test_ordem_convergencia_piso_proporcional_raiz(self):
+        """Considera a magnitude da raiz ao filtrar erros pequenos."""
+        raiz = 1000.0
+        historico = [
+            1000.1,
+            1000.01,
+            1000.0001,
+            1000.00000001,
+            1000.0000000001
+        ]
+
+        ordem = ordem_convergencia(
+            historico, raiz, piso=1e-8
+        )
+
+        self.assertAlmostEqual(ordem, 2.0, places=5)
 
 if __name__ == "__main__":
     unittest.main()
