@@ -30,12 +30,12 @@ from fornecido.cronometro import cronometrar
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
 LINHA: re.Pattern = re.compile(r"""
-    (?P<data>\d{4}-\d{2}-\d{2}) \s+
-    (?P<hora>\d{2}:\d{2}:\d{2}) \s+
-    (?P<nivel>INFO|WARN|ALARME) \s+
-    (?P<tag>[A-Z]{1,2}\d{1,3}) \s+
-    (?P<resto>\S.*)
-    """,re.VERBOSE)  # type: ignore[assignment]  # TODO issue #1
+    (?P<data>\d{4}-\d{2}-\d{2}) \s+ #Data da ocorrência (AAAA-MM-DD)
+    (?P<hora>\d{2}:\d{2}:\d{2}) \s+ #Hora da ocorrência (HH:MM:SS)
+    (?P<nivel>INFO|WARN|ALARME) \s+ #Nível da ocorrência
+    (?P<tag>[A-Z]{1,2}\d{1,3}) \s+  #Tag da ocorrência
+    (?P<resto>\S.*)                 #Resto
+    """,re.VERBOSE) 
 
 
 @dataclass(frozen=True)
@@ -80,43 +80,38 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     """
     registros = []
     invalidas = []
-    for l in texto.splitlines():
-        linha = l.strip()
-        if linha =="":
+    
+    for linha in texto.splitlines():
+        if not linha.strip():
             continue
-        if LINHA.fullmatch(linha) is None:
+            
+        match = LINHA.fullmatch(linha)
+        if not match:
             invalidas.append(linha)
             continue
-
-        dados = LINHA.fullmatch(linha).groupdict()
-
+            
         try:
-            momento = datetime.strptime(
-                f"{dados["data"]} {dados["hora"]}", "%Y-%m-%d %H:%M:%S"
-            )
+            instante = datetime.strptime(f"{match['data']} {match['hora']}", "%Y-%m-%d %H:%M:%S")
         except ValueError:
             invalidas.append(linha)
             continue
-
-        pares = re.findall(r"(\w+)=(\S+)")
+            
+        pares_brutos = re.findall(r"(\w+)=(\S+)", match["resto"])
+        if not pares_brutos:
+            invalidas.append(linha)
+            continue
+            
         valores = {}
-        for chaves, valor in pares:
+        for chave, valor in pares_brutos:
             try:
-                val = float(valor)
+                valores[chave] = float(valor)
             except ValueError:
-                val = valor
+                valores[chave] = valor
+                
+        registros.append(Registro(instante, match["nivel"], match["tag"], valores))
+    return registros, invalidas
 
-            valores[chaves] = val
 
-
-        registros.append(Registro(
-            instante = momento,
-            nivel = dados["nivel"],
-            tag = dados["tag"],
-            valores = valores
-        ))
-
-    raise NotImplementedError("issue #1: ler_log")
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
@@ -131,8 +126,8 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     de conjunto. Lista vazia devolve `{}`.
     """
     conjunto_tags = {r.tag for r in registros}
-    dict_tag = {tag:sum([r.tag == t for r in registros]) for t in conjunto_tags}
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    return {tag: sum(1 for r in registros if r.tag == tag) for tag in conjunto_tags}
+
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
@@ -146,12 +141,10 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
         if r.tag == tag and chave in r.valores:
             valores.append(r.valores[chave])
 
-    # val = [r.valores[chave] for r in registros if r.tag == tag and chave in r.valores]
 
 
     return SerieTemporal.de_lista(valores)
 
-    raise NotImplementedError("issue #1: serie")
 
 
 # ---------------------------------------------------------------------------------------

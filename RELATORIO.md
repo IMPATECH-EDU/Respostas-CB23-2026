@@ -7,15 +7,19 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### Ambiente
 
-<!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
+ /opt/anaconda3/envs/ambiente_aluno/bin/python
+
+ === Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.3 | fornecido 4.0
 
 ### R1 — Expressões regulares
 
-<!-- Uma string que re.match aceita e re.fullmatch rejeita com o padrão de tag; consequência para valida_tag. -->
+re.match olha se o começo está correto, enquanto que re.fullmatch confirma igualdade total. Logo B10 funciona para re.match pois B10 começa com B1 enquanto que falha para re.fullmatch. valida_tag então aceitaria certas tags erradas.
 
 ### R2 — Linhas inválidas
 
-<!-- Por que ler_log devolve as linhas descartadas; uma situação real em que descartar em silêncio esconderia um problema. -->
+
+Pois possibilita estudar problemas e possivelmente resolver. Descarte em silêncio poderia causar um sensor que manda dados falhos não seja percebido, levando a ineficiência do sistema.
 
 ### R3 — Late binding
 
@@ -27,7 +31,7 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+c62dd26 <!-- cole o hash curto do commit de previsões -->
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
