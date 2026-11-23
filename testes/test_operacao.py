@@ -66,4 +66,6 @@ class TestContratoOperacao(unittest.TestCase):
         historico = [1 + 1e-1, 1 + 1e-2, 1 + 1e-4, 1 + 1e-8, 1 + 1e-16, 1.0]
         self.assertAlmostEqual(ordem_convergencia(historico, 1.0), 2.0, places=6)
 
+
+if __name__ == "__main__":
     unittest.main()
