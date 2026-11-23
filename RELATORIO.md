@@ -8,7 +8,7 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 ### Ambiente
 
 - <b>Saída do which python</b>: /c/Users/josue/OneDrive/Documentos/Projeto Prog 2/Respostas-CB23-2026/.venv/Scripts/python
-- <b>Saída da Etapa 0</b>: Python 3.14.3 | NumPy 2.5.4 | fornecido 1.0
+- <b>Saída da Etapa 0</b>: Python 3.14.3 | NumPy 2.4.4 | fornecido 4.0
 
 ### R1 — Expressões regulares
 
@@ -37,8 +37,8 @@ Previsões registradas no commit: 1934c57
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
 | Memória da lista / memória do `uint16` | 36_000_000 bytes / 2_000_000 bytes = 18 | 36000056 bytes / 2000000 bytes = 18.000028 |
-| Tempo do laço / tempo vetorizado | 200 ms / 20 ms = 10 | 0.093 ms / 0.006 ms = 15.5 |
-| Tempo da compreensão / tempo do laço | 200 ms / 50 ms = 4 | 0.093 ms / 0.082 ms = 1.134 |
+| Tempo do laço / tempo vetorizado | 200 ms / 20 ms = 10 | 171.749 ms / 8.463 ms = 20.3 |
+| Tempo da compreensão / tempo do laço | 200 ms / 50 ms = 4 | 146.316 ms / 171.749 ms = 1.2 |
 
 Como tanto compreensão como o laço `for` iteram em bytecode Python (um elemento de cada vez), a diferença de tempo entre elas não é tão grande quanto previsto, apesar do ganho de desempenho da compreensão por evitar o método `.append()`. O vetorizado, por outro lado, roda em **C compilado**, o que o torna ainda mais rápido do que o previsto. A previsão de memória foi bem acurada. O valor `uint16 * 20` resulta em 16364 devido ao *overflow* modular de 16 bits (81900 mod 65536). Para contagens, usaria `uint16` para economia de memória; para kPa, usaria `float32`, por ser eficiente com ponto flutuante.
 
@@ -46,17 +46,15 @@ Como tanto compreensão como o laço `for` iteram em bytecode Python (um element
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | | |
-| `s[1:]` | | |
-| `s * 2` | | |
-| `s.sum()` | | |
-| `s[0]` | | |
+| `s + s` | SerieTemporal | SerieTemporal |
+| `s[1:]` | SerieTemporal | SerieTemporal |
+| `s * 2` | SerieTemporal | SerieTemporal |
+| `s.sum()` | SerieTemporal | SerieTemporal |
+| `s[0]` | float64 | float64 |
 
-<!-- Explique o resultado que mais surpreendeu você. -->
+A operação que mais surpreendeu foi `s.sum()`, pois nesta subclasse ela manteve o tipo SerieTemporal em vez de devolver apenas um escalar `numpy.float64`; `s[0]` devolveu `float64`.
 
 ### R7 — Issue #4
-
-<!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
 
 - **Sintoma:** A função media_movel devolvia $n - j$ valores ao invés de $n - j + 1$ (por exemplo, 570 ao invés de 571, como no relato); 
 - **Teste de Regressão:** `test_media_movel_janela_2`;

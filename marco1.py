@@ -2,9 +2,8 @@
 
 Execute a partir da pasta do projeto, com o ambiente ativado:  python marco1.py
 
-Este esqueleto já traz a estrutura, os imports e todos os assert. Complete os trechos
-marcados com TODO e acrescente as impressões pedidas no enunciado. Não remova nem
-enfraqueça nenhum assert. O script usa apenas a interface pública dos módulos.
+Este script traz a estrutura, os imports e todos os assert. As etapas usam apenas
+a interface pública dos módulos e não enfraquecem os assert do esqueleto.
 """
 import math
 import re
@@ -18,11 +17,6 @@ from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medi
                               medir_tempos, serie, valida_tag)
 
 MATRICULA = 3540  # troque pelo seu número de matrícula
-
-
-def _todo(item: str):
-    """Marca um trecho ainda não feito; apague as chamadas a _todo ao completar o script."""
-    raise NotImplementedError(f"marco1.py: complete o item {item}")
 
 
 def etapa0() -> None:
@@ -111,8 +105,13 @@ def etapa3() -> None:
     # (a) Memória: imprima uma tabela com estrutura, bytes por elemento, bytes totais e a
     #     razão em relação à lista.
     memoria = medir_memoria(contagens)
-
-    print(f"Memória (bytes): uint16={memoria['uint16']}, list={memoria['list']}, razão={memoria['list']/memoria['uint16']:.1f}")
+    print("Estrutura | bytes/elemento | bytes totais | razão/lista")
+    print(f"list | - | {memoria['list']} | {memoria['list']/memoria['list']:.1f}")
+    array_h = memoria["array('H')"]
+    print(f"array('H') | 2 | {array_h} | {memoria['list']/array_h:.1f}")
+    for dtype in ["uint16", "int32", "int64", "float32", "float64"]:
+        itemsize = np.dtype(dtype).itemsize
+        print(f"{dtype} | {itemsize} | {memoria[dtype]} | {memoria['list']/memoria[dtype]:.1f}")
     assert memoria["uint16"] == 2_000_000
     assert memoria["list"] > 10 * memoria["uint16"]
 
@@ -125,9 +124,12 @@ def etapa3() -> None:
 
     # compreensão: 50 ms
     # aceleração = 4
-    print(f"Tempos (ms): laco={tempos['laco']:.3f}, vetorizado={tempos['vetorizado']:.3f}, compreensao={tempos['compreensao']:.3f}")
+    print("Método | tempo médio (ms) | aceleração")
+    for nome, chave in [("laco", "laço"), ("compreensão", "compreensão"),
+                        ("map+lambda", "map+lambda"), ("vetorizado", "vetorizado")]:
+        print(f"{nome} | {tempos[chave] * 1000:.3f} | {tempos['laço']/tempos[chave]:.1f}")
 
-    assert tempos["laco"] / tempos["vetorizado"] >= 5
+    assert tempos["laço"] / tempos["vetorizado"] >= 5
 
     # (c) Tipos e overflow: imprima os dois resultados.
     misto = np.array([1, 2.5, "a"])
@@ -145,20 +147,32 @@ def etapa4(registros: list) -> None:
     s = serie(registros, "PT102", "contagens")
 
     # (a) Imprima a média, o desvio (ddof=1) e a amplitude.
+    print(f"Média: {s.mean():.3f} | Desvio amostral: {s.std(ddof=1):.3f} | Amplitude: {s.amplitude():.3f}")
     assert len(s) == 600 and s.amplitude() > 300
 
     # (b) Média móvel de 30 pontos: imprima o tamanho e os valores mínimo e máximo, ao lado
     #     dos mínimo e máximo da série.
     mm = s.media_movel(30)
+    print(f"Média móvel: n={len(mm)} | mínimo={mm.min():.3f} | máximo={mm.max():.3f}")
+    print(f"Série original: mínimo={s.min():.3f} | máximo={s.max():.3f}")
     assert len(mm) == 571
 
     # (c) Médias por minuto (10 leituras de 6 s).
     por_minuto = s.reamostrar(10)
+    print(f"Médias por minuto: n={len(por_minuto)}")
     assert len(por_minuto) == 60
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
-    _todo("4(d)")
+    expressoes = {
+        "s + s": s + s,
+        "s[1:]": s[1:],
+        "s * 2": s * 2,
+        "s.sum()": s.sum(),
+        "s[0]": s[0],
+    }
+    for expressao, resultado in expressoes.items():
+        print(f"{expressao}: {type(resultado).__name__}")
 
 
 def main(matricula: int = MATRICULA) -> None:

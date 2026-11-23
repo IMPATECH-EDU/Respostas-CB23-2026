@@ -1,9 +1,8 @@
 """Leitura do log SCADA da estação elevatória e preparação dos dados.
 
 Este módulo é a porta de entrada da aplicação: transforma o texto do log em registros
-estruturados e em séries numéricas. As funções marcadas com `NotImplementedError` são as
-issues abertas do Marco 1; as docstrings descrevem o contrato que cada uma deve cumprir.
-Não mude nomes nem assinaturas públicas: outros módulos e os testes dependem deles.
+estruturados e em séries numéricas. As docstrings descrevem o contrato público das funções
+implementadas no Marco 1.
 """
 from __future__ import annotations
 
@@ -30,11 +29,11 @@ from fornecido.cronometro import cronometrar
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
 LINHA: re.Pattern = re.compile(
-    r"(?P<data>\d{4}-\d{2}-\d{2})\s+"
-    r"(?P<hora>\d{2}:\d{2}:\d{2})\s+"
-    r"(?P<nivel>INFO|ALARME)\s+"
-    r"(?P<tag>[A-Z]{1,2}\d{1,3})\s+"
-    r"(?P<resto>.*)",
+    r"(?P<data>\d{4}-\d{2}-\d{2})\s+"  # data AAAA-MM-DD
+    r"(?P<hora>\d{2}:\d{2}:\d{2})\s+"  # hora HH:MM:SS
+    r"(?P<nivel>INFO|WARN|ALARME)\s+"  # nível do evento
+    r"(?P<tag>[A-Z]{1,2}\d{1,3})\s+"  # tag do instrumento
+    r"(?P<resto>\S.*)",                 # pares chave=valor
     re.VERBOSE
 )
 
@@ -128,7 +127,7 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     return registros, invalidas
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
-    """Registros da `tag`, na ordem original."""
+    """Devolve os registros da `tag`, mantendo a ordem original."""
     return [r for r in registros if r.tag == tag]
 
 
