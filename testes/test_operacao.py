@@ -6,11 +6,9 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.raizes import Bisseccao
-
+from elevatoria.raizes import Bisseccao, Newton
 from elevatoria.operacao import ponto_operacao, ordem_convergencia
 from elevatoria.calibracao import CurvaCalibracao
-
 
 class TestBisseccaoExemplo(unittest.TestCase):
     """Exemplo do formato. `Bisseccao` é código existente da base."""
@@ -24,9 +22,38 @@ class TestBisseccaoExemplo(unittest.TestCase):
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
+class TestRegressaoNewton(unittest.TestCase):
+    """Testes de regressão para a convergência do método de Newton."""
+
+    def test_recalcula_derivada_analitica(self):
+        """Verifica se a derivada analítica é recalculada em cada iteração."""
+        pontos = []
+
+        def derivada(x):
+            pontos.append(x)
+            return 2 * x
+
+        metodo = Newton(tol=1e-12, max_iter=20, df=derivada)
+        resultado = metodo.encontrar(lambda x: x**2 - 2, 1, 2)
+
+        self.assertTrue(resultado.convergiu)
+        self.assertEqual(len(pontos), resultado.iteracoes)
+        self.assertGreater(len(set(pontos)), 1)
+
+    def test_convergencia_com_derivada_numerica(self):
+        """Verifica se a derivada numérica permite convergência quadrática."""
+        metodo = Newton(tol=1e-9, max_iter=6, h=1e-6)
+
+        resultado = metodo.encontrar(
+            lambda x: x**2 - 2,
+            1, 2
+        )
+
+        self.assertTrue(resultado.convergiu)
+
 class TestOperacao(unittest.TestCase):
     """Testes das funções de cálculo do ponto de operação e da ordem de convergência."""
-    
+
     def test_ponto_operacao_fora_do_dominio(self):
         """Rejeita intervalos que ultrapassam o domínio da curva da bomba."""
         bomba = CurvaCalibracao([0, 10, 20], [50, 40, 30], "linear")
