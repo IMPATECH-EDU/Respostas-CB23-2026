@@ -105,3 +105,16 @@ convergência linear; por que os testes de aceitação não pegaram o defeito. -
 - Testes: `test_newton_convergencia_quadratica` e `test_newton_poucas_iteracoes`.
 - Convergência linear: Fixar $f'(x_0)$ reduz o algoritmo ao método das cordas; como $f'(x_0) \neq f'(r)$, o termo de 1ª ordem de Taylor não se anula, fazendo o erro decair linearmente ($e_{k+1} \propto e_k$).
 - Por que não foi detectado: Os testes de aceitação verificavam apenas o valor final da raiz, sem checar `iteracoes` ou `ordem_convergencia`, e o método ainda convergia dentro de `max_iter`.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
