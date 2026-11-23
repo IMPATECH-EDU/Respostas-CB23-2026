@@ -41,7 +41,15 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x_arr = np.asarray(x, dtype=float)
+    y_arr = np.asarray(y, dtype=float)
+    if x_arr.ndim != 1 or y_arr.ndim != 1 or x_arr.size != y_arr.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if grau < 0:
+        raise ValueError(f"grau deve ser não negativo; recebi {grau}")
+    if x_arr.size < grau + 1:
+        raise ValueError(f"são necessários pelo menos {grau + 1} pontos para grau {grau}")
+    return np.asarray(np.polynomial.polynomial.polyfit(x_arr, y_arr, grau), dtype=float)
 
 
 @dataclass(frozen=True)
@@ -76,4 +84,32 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t_arr = np.asarray(t, dtype=float)
+    q_arr = np.asarray(vazao, dtype=float)
+    if t_arr.ndim != 1 or q_arr.ndim != 1 or t_arr.size != q_arr.size:
+        raise ValueError("t e vazao devem ser vetores 1D do mesmo tamanho")
+
+    limites = {inicio for inicio, _, _ in FAIXAS_TARIFARIAS} | {fim for _, fim, _ in FAIXAS_TARIFARIAS}
+    for limite in sorted(limites):
+        if not np.any(np.isclose(t_arr, limite)):
+            raise ValueError(f"o limite de faixa {limite:g} h não está presente em t")
+
+    altura = np.polynomial.polynomial.polyval(q_arr, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(q_arr, coef_rendimento)
+    potencia = potencia_eletrica(q_arr, altura, rendimento)
+
+    volume_m3 = 3.6 * integrador.integrar_tabela(t_arr, q_arr)
+    energia_kwh = integrador.integrar_tabela(t_arr, potencia)
+
+    custos = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        mascara = (t_arr >= inicio) & (t_arr <= fim)
+        custos.append(float(tarifa * integrador.integrar_tabela(t_arr[mascara], potencia[mascara])))
+
+    custo_por_faixa = tuple(custos)
+    return ResumoDia(
+        volume_m3=volume_m3,
+        energia_kwh=energia_kwh,
+        custo_reais=float(sum(custo_por_faixa)),
+        custo_por_faixa=custo_por_faixa,
+    )
