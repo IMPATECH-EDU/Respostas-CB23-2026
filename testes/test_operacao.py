@@ -6,8 +6,20 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
+import numpy as np
+
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ponto_operacao
 from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import fator_atrito_colebrook
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
+
+VAZOES = np.arange(0.0, 101.0, 10.0)
+BOMBA = CurvaCalibracao(VAZOES, 50.0 - 0.004 * VAZOES ** 2, "spline")
+
+
+def _tubulacao() -> Tubulacao:
+    """Cria uma adutora padrão para os testes de ponto_operacao."""
+    return Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Bisseccao(tol=1e-12))
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -33,6 +45,25 @@ class TestNewtonRegressao(unittest.TestCase):
         resultado = Newton(tol=1e-12).encontrar(lambda x: x * x - 2.0, 0.0, 2.0)
         self.assertTrue(resultado.convergiu)
         self.assertLessEqual(resultado.iteracoes, 6)
+
+
+class TestPontoOperacaoContrato(unittest.TestCase):
+    """Casos do contrato de `ponto_operacao` não cobertos pelos testes de aceitação."""
+
+    def test_intervalo_invalido_a_maior_igual_b(self):
+        """Levanta ValueError quando a >= b."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(BOMBA, _tubulacao(), Bisseccao(), a=50.0, b=50.0)
+
+    def test_intervalo_fora_do_dominio_da_bomba(self):
+        """Levanta ValueError quando [a, b] ultrapassa o domínio da curva da bomba."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(BOMBA, _tubulacao(), Bisseccao(), a=10.0, b=120.0)
+
+    def test_resolvedor_nao_converge(self):
+        """Levanta ValueError quando o resolvedor atinge max_iter sem convergir."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(BOMBA, _tubulacao(), Bisseccao(tol=1e-12, max_iter=1))
 
 
 if __name__ == "__main__":

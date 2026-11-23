@@ -72,3 +72,13 @@ Testes de regressão: `test_kahan_um_milhao_de_decimos` e `test_kahan_parcelas_p
 ### R10 — Precisão × exatidão
 
 **Precisão** é a repetibilidade (dispersão) das leituras, medida pelo desvio padrão: para `PT102`, as curvas linear (`0.528 kPa`) e spline (`0.529 kPa`) têm praticamente a mesma precisão. **Exatidão** é a proximidade da média ao valor verdadeiro, refletida pelo viés: a spline é muito mais exata (`380.0 ± 1.5 kPa`, viés `0.018 kPa`) do que a linear (`378.2 ± 1.5 kPa`, viés `-1.811 kPa`). A média de 595 leituras válidas reduz apenas o erro aleatório (proporcional a $1/\sqrt{n}$), mas não elimina o erro sistemático de aproximação da interpolação linear, que desloca todas as leituras na mesma direção.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+Na Etapa 2(a), a bissecção gasta sempre 44 iterações porque o número de passos depende apenas do tamanho do intervalo inicial (`[2, 15]`, largura `13`) e da tolerância (`1e-12`): $\lceil \log_2(13 / 10^{-12}) \rceil = 44$, independentemente da função ou do Reynolds. Ordem de convergência 2 (quadrática) significa que $e_{k+1} \approx C \cdot e_k^2$, ou seja, o número de dígitos corretos dobra a cada iteração — como visto em `Re = 1e4`, onde os erros caem de `5.0e-02` para `2.3e-05` e depois `5.0e-12` (ordem `2.00`). O Newton falha, mas a bissecção não, quando a derivada se anula (`f'(x) = 0`) em algum ponto iterado ou quando o chute inicial está longe da raiz e faz as iterações divergirem ou saírem do domínio, enquanto a bissecção sempre converge havendo troca de sinal em `[a, b]`.
+
+### R12 — Issue #9
+
+Testes de regressão: `test_newton_colebrook_poucas_iteracoes` e `test_newton_convergencia_quadratica_raiz_de_2`. Calcular a derivada apenas uma vez transforma o método de Newton no método da corda ($x_{k+1} = x_k - f(x_k)/f'(x_0)$), cuja função de iteração tem derivada $g'(x^*) = 1 - f'(x^*)/f'(x_0) \neq 0$ na raiz, deixando a convergência apenas linear em vez de quadrática. Os testes de aceitação não pegaram o defeito porque verificavam apenas se `resultado.convergiu` era `True` e se a raiz obtida estava próxima de $\sqrt{2}$, sem checar o número de iterações nem a ordem de convergência.
