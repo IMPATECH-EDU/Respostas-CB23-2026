@@ -82,3 +82,13 @@ Na Etapa 2(a), a bissecção gasta sempre 44 iterações porque o número de pas
 ### R12 — Issue #9
 
 Testes de regressão: `test_newton_colebrook_poucas_iteracoes` e `test_newton_convergencia_quadratica_raiz_de_2`. Calcular a derivada apenas uma vez transforma o método de Newton no método da corda ($x_{k+1} = x_k - f(x_k)/f'(x_0)$), cuja função de iteração tem derivada $g'(x^*) = 1 - f'(x^*)/f'(x_0) \neq 0$ na raiz, deixando a convergência apenas linear em vez de quadrática. Os testes de aceitação não pegaram o defeito porque verificavam apenas se `resultado.convergiu` era `True` e se a raiz obtida estava próxima de $\sqrt{2}$, sem checar o número de iterações nem a ordem de convergência.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+As ordens teóricas 2 (trapézio) e 4 (Simpson) exigem que a função integrada seja suave ($C^2$ e $C^4$) em todo o intervalo. Ao integrar o custo do dia de uma vez, os saltos da tarifa às 18 h e às 21 h (de R$ 0,50 para R$ 1,50 e de volta) criam descontinuidades que introduzem um erro $O(h)$ nos subintervalos que cruzam esses instantes, derrubando a ordem observada para `1.00` no trapézio e `0.65` no Simpson. Integrando cada faixa separadamente, a tarifa é constante e o integrando volta a ser suave em cada subdomínio, recuperando as ordens `2.00` (erro `6.3e-04` em `n = 110`) e `4.00` (erro `8.1e-08`).
+
+### R14 — Issue #11
+
+Testes de regressão: `test_trapezio_constante_malha_nao_uniforme` e `test_trapezio_reta_malha_nao_uniforme`. A causa do defeito era que `Trapezio.integrar_tabela` assumia passo constante `h = x[1] - x[0]`, subestimando os trechos maiores quando há falhas de comunicação (intervalos de 15, 30 e 45 min). Os testes de aceitação não pegaram o defeito porque só testavam `Trapezio().integrar_tabela` em uma malha uniforme (`np.linspace(0.0, 2.0, 9)`). A regra de Simpson não serve para o registro do dia porque exige pontos igualmente espaçados e número ímpar de pontos, o que falha quando o SCADA perde 8 leituras e torna a malha irregular.
