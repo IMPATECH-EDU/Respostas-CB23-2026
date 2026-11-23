@@ -32,16 +32,27 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     O NumPy e o SciPy oferecem mais de um método para resolver esse problema, e a escolha é
     sua. Alguns pontos de partida, para ler na documentação:
 
-    - `np.polynomial.polynomial.polyfit`;
-    - `np.polyfit` (atenção: devolve os coeficientes em ordem **decrescente**);
-    - `np.linalg.lstsq` ou `scipy.linalg.lstsq`, aplicados à matriz
+- `np.polynomial.polynomial.polyfit`;
+- `np.polyfit` (atenção: devolve os coeficientes em ordem **decrescente**);
+- `np.linalg.lstsq` ou `scipy.linalg.lstsq`, aplicados à matriz
       `np.vander(x, grau + 1, increasing=True)`;
-    - a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
+- a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
 
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x_arr = np.asarray(x, dtype=float)
+    y_arr = np.asarray(y, dtype=float)
+    if x_arr.ndim != 1 or y_arr.ndim != 1 or x_arr.size != y_arr.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if isinstance(grau, bool) or not isinstance(grau, (int, np.integer)) or grau < 0:
+        raise ValueError(f"grau deve ser um inteiro não negativo; recebi {grau}")
+    if x_arr.size < grau + 1:
+        raise ValueError("número de pontos insuficiente para o grau solicitado")
+
+    vandermonde = np.vander(x_arr, int(grau) + 1, increasing=True)
+    coeficientes, *_ = np.linalg.lstsq(vandermonde, y_arr, rcond=None)
+    return np.asarray(coeficientes, dtype=float)
 
 
 @dataclass(frozen=True)
@@ -62,12 +73,12 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     coeficientes (em ordem crescente, como os de `ajustar_polinomio`) das curvas da bomba,
     altura (m) e rendimento em função da vazão. Passos:
 
-    1. em cada instante, a altura e o rendimento da bomba, com
+1. em cada instante, a altura e o rendimento da bomba, com
        `np.polynomial.polynomial.polyval(vazao, coeficientes)`, e a potência (kW), com
        `potencia_eletrica` (de `fornecido/energia.py`);
-    2. o volume (m³): `3,6 · ∫ vazão dt` (L/s × h = 3,6 m³);
-    3. a energia (kWh): `∫ potência dt`;
-    4. o custo de cada faixa `(início, fim, tarifa)` de `FAIXAS_TARIFARIAS`: `tarifa · ∫ potência
+2. o volume (m³): `3,6 · ∫ vazão dt` (L/s × h = 3,6 m³);
+3. a energia (kWh): `∫ potência dt`;
+4. o custo de cada faixa `(início, fim, tarifa)` de `FAIXAS_TARIFARIAS`: `tarifa · ∫ potência
        dt`, com a integral feita só com os instantes `início ≤ t ≤ fim`. O custo total é a
        soma das faixas.
 
@@ -76,4 +87,35 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t_arr = np.asarray(t, dtype=float)
+    vazao_arr = np.asarray(vazao, dtype=float)
+    if t_arr.ndim != 1 or vazao_arr.ndim != 1 or t_arr.size != vazao_arr.size:
+        raise ValueError("t e vazao devem ser vetores 1D do mesmo tamanho")
+
+    limites = {inicio for inicio, _, _ in FAIXAS_TARIFARIAS} | {fim for _, fim, _ in FAIXAS_TARIFARIAS}
+    for limite in limites:
+        if not np.any(np.isclose(t_arr, limite, rtol=0.0, atol=1e-9)):
+            raise ValueError(f"limite de faixa tarifária ({limite} h) ausente em t")
+
+    altura = np.polynomial.polynomial.polyval(vazao_arr, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao_arr, coef_rendimento)
+    potencia = potencia_eletrica(vazao_arr, altura, rendimento)
+
+    volume_m3 = 3.6 * integrador.integrar_tabela(t_arr, vazao_arr)
+    energia_kwh = integrador.integrar_tabela(t_arr, potencia)
+
+    custos: list[float] = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        mascara = (t_arr >= inicio - 1e-9) & (t_arr <= fim + 1e-9)
+        energia_faixa = integrador.integrar_tabela(t_arr[mascara], potencia[mascara])
+        custos.append(float(tarifa * energia_faixa))
+
+    custo_por_faixa = tuple(custos)
+    custo_reais = float(sum(custo_por_faixa))
+
+    return ResumoDia(
+        volume_m3=float(volume_m3),
+        energia_kwh=float(energia_kwh),
+        custo_reais=custo_reais,
+        custo_por_faixa=custo_por_faixa,
+    )
