@@ -5,7 +5,9 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
+import numpy as np
 
+from elevatoria.dia import ajustar_polinomio
 from elevatoria.integracao import Simpson
 
 
@@ -21,5 +23,22 @@ class TestSimpsonExemplo(unittest.TestCase):
 # issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
 
-if __name__ == "__main__":
-    unittest.main()
+class TestValidacaoAjustarPolinomio(unittest.TestCase):
+    """Verifica a rejeição de entradas que violam o contrato de ajustar_polinomio."""
+
+    def test_rejeita_grau_negativo(self):
+        """Rejeita graus menores que zero."""
+        x = np.array([1.0, 2.0, 3.0])
+        y = np.array([2.0, 4.0, 6.0])
+
+        with self.assertRaises(ValueError):
+            ajustar_polinomio(x, y, -1)
+
+    def test_rejeita_vetores_nao_unidimensionais(self):
+        """Rejeita x ou y que não sejam vetores unidimensionais."""
+        x = np.array([[1.0, 2.0], [3.0, 4.0]])
+        y = np.array([2.0, 4.0, 6.0, 8.0])
+
+        with self.assertRaises(ValueError):
+            ajustar_polinomio(x, y, 1)
+
