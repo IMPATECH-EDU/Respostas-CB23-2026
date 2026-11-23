@@ -80,4 +80,12 @@ Testes: test_duzentosk_pulsos e test_parcelas_pequenas_nao_somem. A causa é jus
 
 A precisão mede a dispersão dos dados em torno da média (dada pelo desvio padrão), já a exatidão mede o quão próxima essa média está do valor real (obtido pelo viés). Tendo o mesmo desvio padrão, as curvas linear e spline têm a mesma precisão, mas a spline é mais exata por ter um viés menor. A média de 600 leituras reduz só o erro aleatório (o ruído do sinal), diminuindo o erro padrão da média. Ela não elimina o viés da curva linear porque ele representa um erro sistemático estrutural, que vem do uso de uma reta de calibração em um sensor não linear. Nesse caso, calcular a média de 600 pontos apenas faz o resultado convergir com maior precisão para o valor incorreto gerado pelo modelo.
 
+## Marco 3
 
+### R11 — Bissecção × Newton
+
+Na bissecção, o intervalo inicial é dividido ao meio a cada passo, então o número de iterações depende só do tamanho do intervalo e da tolerância, resultando sempre em 44 passos para qualquer Re. A ordem de convergência 2 significa que o erro seguinte é proporcional ao quadrado do anterior, dobrando os dígitos corretos a cada iteração: em Re = 1e+04, o erro cai de 5.0e-02 para 2.3e-05 e depois 5.0e-12 (até o piso de 8.9e-16). O Newton falha se encontrar derivada nula (f'(x) = 0) ou der um salto para fora do domínio (como f <= 0 no logaritmo de Colebrook), enquanto a bissecção sempre converge havendo troca de sinal.
+
+### R12 — Issue 9
+
+Testes de regressão: test_converge_em_poucas_iteracoes, test_erro_cai_mais_que_linearmente e test_derivada_e_calculada_a_cada_iteracao. Calcular a derivada uma única vez fixa uma inclinação constante m = f'(x0) em vez de atualizar a tangente a cada passo; sem o cancelamento do termo de primeira ordem de Taylor, o erro cai por uma razão constante a cada iteração (convergência linear, ordem 1). Os testes de aceitação não pegaram o defeito porque conferiam apenas se a raiz final estava correta dentro do limite máximo de iterações, sem verificar o número de passos gastos ou a ordem de convergência.
