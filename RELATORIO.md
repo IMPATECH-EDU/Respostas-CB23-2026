@@ -78,13 +78,15 @@ uint16 basta, mas para a pressão necessita ser um float, pois há casas decimai
 
 | Expressão | Tipo previsto | Tipo observado |
 | --- | --- | --- |
-| `s + s` | SerieTemporal| |
-| `s[1:]` | ndarray| |
-| `s * 2` | SerieTemporal| |
-| `s.sum()` | float | |
-| `s[0]` | float | |
+| `s + s` | SerieTemporal| SerieTemporal |
+| `s[1:]` | ndarray| SerieTemporal |
+| `s * 2` | SerieTemporal| SerieTemporal |
+| `s.sum()` | float | SerieTemporal |
+| `s[0]` | float | float64 |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
+O resultado mais surpreendente para mim foi s.sum() retornar um SeriaTemporal, e não um número, que deveria é a natureza do
+resultado do .sum()
 
 ### R7 — Issue #4
 
