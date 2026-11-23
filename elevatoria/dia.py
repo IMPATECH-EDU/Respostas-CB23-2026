@@ -41,7 +41,18 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x_s=np.array(x)
+    y_s=np.array(y)
+    if (x_s.ndim != 1 or y_s.ndim != 1) or (x_s.size != y_s.size):
+        raise ValueError("x e y não são vetores 1D de mesmo tamanho")
+    if grau < 0:
+        raise ValueError(f"grau é menos que 0, recebi: {grau}")
+    if len(x_s) < (grau + 1):
+        raise ValueError(f"menos pontos do que o número de coeficientes, recebi: {len(x_s)}")
+    
+    
+    coef = np.polynomial.polynomial.polyfit(x_s, y_s, grau)
+    return coef
 
 
 @dataclass(frozen=True)
@@ -76,4 +87,38 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+
+    # Realizamos os testes de verificaçao dadas na docstring
+    if t.size != vazao.size:
+        raise ValueError(f"t = {t} e vazão = {vazao} possuem tamanhos diferentes")
+
+    limites = (0, 18, 21, 24)
+    for l in limites:
+        if l not in t:
+          raise ValueError("t deve conter os limites tarifários: 0, 18, 21 e 24")
+
+    # Realizamos os passos que a docstring pede
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+
+    # Calculamos o volume e a energia pela fórmula dada na docstring
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+
+    # Calculamos o custo de cada uma das faixas
+    custo_por_faixa = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        mascara = (t >= inicio) & (t <= fim)
+        energia_faixa = integrador.integrar_tabela(t[mascara], potencia[mascara])
+        custo_por_faixa.append(tarifa * energia_faixa)
+
+    # Realizamos a soma do custo total, que na docstring é dado como a soma das faixas
+    custo_reais = sum(custo_por_faixa)
+
+    return ResumoDia(
+        volume_m3=volume,
+        energia_kwh=energia,
+        custo_reais=custo_reais,
+        custo_por_faixa=tuple(custo_por_faixa),
+    )
