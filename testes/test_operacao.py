@@ -6,7 +6,7 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.raizes import Bisseccao
+from elevatoria.raizes import Bisseccao, Newton
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -21,6 +21,32 @@ class TestBisseccaoExemplo(unittest.TestCase):
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #9 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
+class TesteNRegressao(unittest.TestCase):
+    """Regressão da issue #9: o Newton deve recalcular a derivada a cada iteração."""
+
+    def test_converge_em_poucas_iteracoes(self):
+        """Newton para x^3 - 2 em [0, 4] converge em até 8 iterações (com o defeito, 43)."""
+        resultado = Newton().encontrar(lambda x: x**3 - 2.0, 0.0, 4.0)
+        self.assertTrue(resultado.convergiu)
+        self.assertLessEqual(resultado.iteracoes, 8)
+        self.assertAlmostEqual(resultado.raiz, 2.0 ** (1.0 / 3.0), places=8)
+
+    def test_erro_cai_mais_que_linearmente(self):
+        """Na convergência quadrática, a razão entre erros consecutivos encolhe a cada passo."""
+        resultado = Newton().encontrar(lambda x: x * x - 4.0, 0.0, 10.0)
+        erros = [abs(x - 2.0) for x in resultado.historico]
+        self.assertLess(erros[3] / erros[2], 0.1)
+
+    def test_derivada_e_calculada_a_cada_iteracao(self):
+        """A derivada fornecida é chamada uma vez por iteração, e não só no ponto inicial."""
+        chamadas = []
+
+        def df(x):
+            chamadas.append(x)
+            return 2.0 * x
+
+        resultado = Newton(df=df).encontrar(lambda x: x * x - 2.0, 1.0, 2.0)
+        self.assertEqual(len(chamadas), resultado.iteracoes)
 
 if __name__ == "__main__":
     unittest.main()
