@@ -7,7 +7,7 @@ ser que a igualdade exata seja justamente o que você quer testar.
 import unittest
 
 from elevatoria.raizes import Bisseccao, Newton
-
+from elevatoria.operacao import ordem_convergencia
 
 class TestBisseccaoExemplo(unittest.TestCase):
     """Exemplo do formato. `Bisseccao` é código existente da base."""
@@ -47,6 +47,19 @@ class TesteNRegressao(unittest.TestCase):
 
         resultado = Newton(df=df).encontrar(lambda x: x * x - 2.0, 1.0, 2.0)
         self.assertEqual(len(chamadas), resultado.iteracoes)
+
+class TestOrdemConvergencia(unittest.TestCase):
+    """Regras do contrato de ordem_convergencia que os testes de aceitação não verificam."""
+
+    def test_ignora_erros_no_nivel_do_arredondamento(self):
+        """Erros abaixo do piso (aqui, o erro zero final) não entram na estimativa."""
+        p = ordem_convergencia([1.1, 1.01, 1.0001, 1.00000001, 1.0], 1.0)
+        self.assertAlmostEqual(p, 2.0, places=3)
+
+    def test_menos_de_tres_erros_acima_do_piso(self):
+        """Com menos de 3 erros acima do piso, a função levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ordem_convergencia([1.1, 1.01, 1.0], 1.0)
 
 if __name__ == "__main__":
     unittest.main()
