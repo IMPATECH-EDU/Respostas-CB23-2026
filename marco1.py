@@ -39,31 +39,32 @@ def etapa1(texto: str, verdade: dict) -> list:
     print("\n=== Etapa 1: leitura do log ===")
     # (a) Leia o log e imprima o número de registros válidos e de linhas inválidas.
     registros, invalidas = ler_log(texto)
+    print(f"(a) registros válidos: {len(registros)} | linhas inválidas: {len(invalidas)}")
     assert len(invalidas) == verdade["invalidas"]
     assert len(registros) + len(invalidas) == verdade["linhas"]
     assert contagem_por_tag(registros) == verdade["registros_por_tag"]
 
     # (b) Conte os registros por nível com uma compreensão de dicionário.
     
-    por_nivel = {}
-    for registro in registros:
-        if not por_nivel.get(registro.nivel):
-            por_nivel[registro.nivel] = 1
-        else:
-            por_nivel[registro.nivel] += 1
+    por_nivel = {nivel: sum(1 for r in registros if r.nivel == nivel) for nivel in {r.nivel for r in registros}}
         
     assert por_nivel == verdade["por_nivel"]
+    print(f"(b) registros por nível: {por_nivel}")
 
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
     valores = serie(registros, "FT201", "pulsos")
     total = np.sum(valores)
+    print("DEBUG:", len(valores), total, verdade["pulsos_total"])
     assert total == verdade["pulsos_total"]
-
+    volume_l = total * 0.1  # cada pulso x por pulso
+    print(f"(c) pulsos FT201: {total:.0f} | volume bombeado: {volume_l:.1f} L " f"({volume_l / 1000:.2f} m³)")
     # (d) valida_tag.
     for tag in ["PT101", "FT201", "B1"]:
         assert valida_tag(tag), tag
     for tag in ["pt101", "PT", "PT1010", "101PT", "PT101 "]:
         assert not valida_tag(tag), tag
+
+    print("(d) valida_tag: todas as tags conferem")
     return registros
 
 

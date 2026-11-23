@@ -61,7 +61,7 @@ def valida_tag(s: str) -> bool:
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
 
-    return re.fullmatch(r"[A-Z]{1,2}[0-9]{1,3}", s) != None
+    return re.fullmatch(r"[A-Z]{1,2}[0-9]{1,3}", s) is not None
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -164,7 +164,7 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
     """
     # filtra os registros inválidos usando filter e retorna a SerieTemporal
-    _registros = list(map(lambda r : r.valores.get(chave), filter(lambda r : r.tag == tag and r.valores.get(chave), registros)))
+    _registros = list(map(lambda r: r.valores[chave], filter(lambda r: r.tag == tag and chave in r.valores, registros)))
     return SerieTemporal.de_lista(_registros)
 
 
