@@ -69,3 +69,38 @@ O que mais me surpreendeu foi o `s.sum()` ser `SerieTemporal` e não `float64`. 
 - **Correção:** concatenei `[0.0]` antes do `cumsum`, gerando `n + 1` posições e, portanto, `n - janela + 1` médias.
 - **Por que os testes de aceitação não pegaram:** eles só verificavam o tipo e os `ValueError`, não o comprimento nem os valores.
 - **Outro caso não coberto:** o valor da primeira janela. `test_media_movel_valores` cobre isso: espera `[1.5, 2.5, 3.5, 4.5]`, e o código original devolve `[2.5, 3.5, 4.5]`.
+
+## Marco 2
+
+### Ambiente
+
+```
+=== Etapa 0: ambiente ===
+Python 3.13.15 | NumPy 2.5.5 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3489 
+```
+
+### R8 — Derivada numérica
+
+De h = 1 até 1e-5 domina o erro de truncamento da diferença finita, proporcional a h: o erro cai 10x a cada passo (1,66e-5 em h = 1 até 6,2e-10 em h = 1e-5, o mínimo). Abaixo disso domina o erro de arredondamento: f(c+h) e f(c) ficam quase iguais, a subtração cancela os dígitos e a divisão por um h pequeno amplifica o ruído (2,6e-3 em h = 1e-11). Em h = 1e-14, `1000 + 1e-14 == 1000` retorna `True` (o passo entre números vizinhos perto de 1000 é cerca de 1e-13), então f(c+h) == f(c), a derivada numérica dá 0 e o erro é a própria derivada exata, 0,2134 kPa/contagem.
+
+### R9 — Issue #7
+
+Testes de regressão: `test_total_exato` e `test_kahan_e_ingenuo` (classe `TestAcumuladorKahan`). Antes da
+correção os dois falhavam: o total dava 100000.00000133288, com erro de 1,33e-6, igual ao do ingênuo.
+Causa: `t` já é o `float` arredondado de `s + y`; recalcular `s + y` repete a mesma operação com os
+mesmos operandos e dá o mesmo `t`, então `t - (s + y)` é `t - t = 0` e a correção nunca guarda o
+resíduo. Em aritmética exata `t - (s + y)` e `(t - s) - y` valem o mesmo, mas em ponto flutuante só
+`(t - s) - y` recupera o que o arredondamento descartou. Os testes de aceitação somam só 10 parcelas de
+0,1 e comparam com `math.isclose` (tolerância relativa 1e-9): nesse tamanho o erro do ingênuo é da
+ordem de 1e-16, então o defeito passa despercebido e só aparece com muitas parcelas.
+
+### R10 — Precisão × exatidão
+
+Precisão é o quanto as leituras se agrupam (o desvio) e exatidão é o quanto a média chega perto do
+valor verdadeiro (o viés). Em PT102 o desvio é praticamente o mesmo nas duas curvas (0,557 na linear e
+0,558 na spline), então a precisão é igual; o viés, porém, é -1,841 kPa na linear (média 378,2) e
+-0,012 kPa na spline (média 380,0), ou seja, a spline é muito mais exata. Tirar a média de quase 600
+leituras só reduz o erro aleatório (erro padrão ≈ 0,557/√595 ≈ 0,02 kPa), mas o viés da linear vem de
+um erro sistemático do modelo da curva, que desloca todas as leituras no mesmo sentido e não se
+cancela na média. Esse viés de 1,84 kPa é maior que a incerteza declarada de ±1,5, que vem da
+`u_sistematica` e não enxerga o erro da curva.
