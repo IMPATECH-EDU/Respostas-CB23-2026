@@ -72,3 +72,37 @@ Sintoma: media_movel(30) na série de 600 pontos devolvia 570 valores, e não 57
 Causa: acumulada[i] era a soma de x[0] até x[i] inclusive, então acumulada[janela:] - acumulada[:-janela] só dá as janelas que começam em 1, 2, ...; a primeira janela (que começa em 0) precisaria de uma soma "antes do início", que não existia.
 Correção: coloquei um 0 no início da soma acumulada (np.concatenate), com .view(SerieTemporal) para manter o tipo. Assim a primeira janela entra e saem n - janela + 1 valores.
 Os testes de aceitação só conferiam o tipo do retorno e os erros para janela 0 e 6, nunca o tamanho nem os valores. Outro caso que eles não cobrem: serie com leitura de valor 0 (contagens=0), que a versão antiga descartava; está coberto por test_serie_mantem_valor_zero.
+
+## Marco 2
+
+### Ambiente
+
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+=== Etapa 0: ambiente ===
+Python 3.12.3 | NumPy 2.5.3 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3527
+
+### R8 — Derivada numérica
+
+<!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
+depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+De h = 1 até h = 1e-5 domina o erro de truncamento (a diferença adiante ignora os termos de ordem h da série de Taylor): ele cai 10 vezes a cada vez que h cai 10 vezes (1,66e-5 em h = 1 até 6,2e-10 em h = 1e-5, o menor erro).
+Depois disso domina o erro de arredondamento: f(x + h) e f(x) ficam quase iguais e a subtração perde algarismos, e esse erro é dividido por h, então cresce quando h diminui (chega a 0,355 em h = 1e-13).
+Em h = 1e-14, 1000 + 1e-14 == 1000 é True: o h é menor que o espaçamento entre floats perto de 1000, então x + h vira o próprio x, a diferença f(x + h) - f(x) dá 0 e o erro é |0 - derivada| = a própria derivada (0,2134).
+
+### R9 — Issue #7
+
+<!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
+de aceitação não pegaram o defeito. -->
+Testes de regressão: test_kahan_um_milhao_de_decimos_da_exato, test_kahan_erro_bem_menor_que_o_ingenuo e test_kahan_guarda_parcelas_pequenas.
+Causa: t já é o resultado arredondado de s + y. Calcular s + y de novo dá exatamente o mesmo arredondamento, então t - (s + y) = t - t = 0 sempre e a correção nunca guardava nada. Já em (t - s) - y, a conta t - s recupera a parte de y que realmente entrou na soma, e tirando y sobra o que se perdeu no arredondamento.
+Os testes de aceitação só somavam 10 parcelas de 0,1 e comparavam com math.isclose, que tem tolerância grande; com tão poucas parcelas o ingênuo e o Kahan defeituoso passam do mesmo jeito.
+
+### R10 — Precisão × exatidão
+
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
+diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
+por que a média de quase 600 leituras não elimina o viés da curva linear. -->
+Precisão é o quanto as leituras se espalham (o desvio), e exatidão é o quanto a média fica perto do valor verdadeiro (o viés). Para PT102 as duas curvas têm quase o mesmo desvio (0,525 kPa na linear e 0,527 kPa na spline), então são igualmente precisas, mas o viés da linear é -1,819 kPa e o da spline é 0,011 kPa: só a spline é exata.
+Tirar a média de 595 leituras diminui o erro aleatório (o erro padrão fica em torno de 0,525 / raiz(595) ≈ 0,02 kPa), mas o viés da curva linear é um erro sistemático: a reta erra para o mesmo lado em todas as leituras, então ele não se cancela na média.
