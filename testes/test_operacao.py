@@ -7,7 +7,9 @@ ser que a igualdade exata seja justamente o que você quer testar.
 import math
 import unittest
 
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
 from elevatoria.raizes import Bisseccao, Newton
+from elevatoria.calibracao import CurvaCalibracao
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -44,5 +46,24 @@ class TestRegressaoNewton(unittest.TestCase):
         self.assertLess(abs(historico[2] - math.sqrt(2.0)), 1e-5)
 
 
-if __name__ == "__main__":
+class TestContratoOperacao(unittest.TestCase):
+    """Regras das docstrings da issue #8 que os testes de aceitação não verificam."""
+
+    BOMBA = CurvaCalibracao([0.0, 50.0, 100.0], [50.0, 40.0, 20.0], "linear")
+
+    def test_intervalo_invertido_levanta_value_error(self):
+        """a >= b levanta ValueError antes de chamar o resolvedor."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(self.BOMBA, None, Bisseccao(), a=80.0, b=20.0)
+
+    def test_intervalo_fora_do_dominio_da_bomba(self):
+        """[a, b] que sai do domínio da bomba ([0, 100]) levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(self.BOMBA, None, Bisseccao(), a=10.0, b=150.0)
+
+    def test_ordem_ignora_erros_abaixo_do_piso(self):
+        """Erros no nível do arredondamento (0 e 1e-16) são ignorados: a ordem continua 2."""
+        historico = [1 + 1e-1, 1 + 1e-2, 1 + 1e-4, 1 + 1e-8, 1 + 1e-16, 1.0]
+        self.assertAlmostEqual(ordem_convergencia(historico, 1.0), 2.0, places=6)
+
     unittest.main()
