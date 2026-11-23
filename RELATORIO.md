@@ -89,3 +89,13 @@ Na bissecção, o intervalo inicial é dividido ao meio a cada passo, então o n
 ### R12 — Issue 9
 
 Testes de regressão: test_converge_em_poucas_iteracoes, test_erro_cai_mais_que_linearmente e test_derivada_e_calculada_a_cada_iteracao. Calcular a derivada uma única vez fixa uma inclinação constante m = f'(x0) em vez de atualizar a tangente a cada passo; sem o cancelamento do termo de primeira ordem de Taylor, o erro cai por uma razão constante a cada iteração (convergência linear, ordem 1). Os testes de aceitação não pegaram o defeito porque conferiam apenas se a raiz final estava correta dentro do limite máximo de iterações, sem verificar o número de passos gastos ou a ordem de convergência.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+As ordens teóricas 2 (trapézio) e 4 (Simpson) pedem que o integrando seja suave. Dado o salto descontínuo da tarifa de R$ 0,50 para R$ 1,50/kWh às 18h, voltando às 21h, os subintervalos que cruzam esses saltos acumulam erro de ordem O(h). Isso degrada a convergência global para ordem mais ou menos 1 (na Etapa 1(b), 1,00 no trapézio e 0,65 no Simpson). Integrando cada faixa separadamente, as descontinuidades ficam nas fronteiras e o integrando é suave dentro de cada trecho, recuperando as ordens 2,00 e 4,00.
+
+### R14 — Issue #11
+
+Testes:`test_malha_funcao_linear`;`test_registro_com_falhas_e_integral_constante`;`test_intervalo_inicio_n_superestima`. Em `Trapezio.integrar_tabela`: erro porque o código assumia passo constante `h = x[1] - x[0]` (15 min) e não a largura de cada (`np.diff(x)`), subestimando o tempo total quando as 8 falhas do SCADA geravam intervalos de 30 e 45min (89/97 leituras). Os testes de aceitação não pegaram o bug porque usavam apenas malhas uniformes. A regra de Simpson não serve para o registro do dia porque exige pontos igualmente espaçados (e número ímpar de pontos).
