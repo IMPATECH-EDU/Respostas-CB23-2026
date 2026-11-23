@@ -88,7 +88,7 @@ De h = 1 até 1e-5 domina o erro de truncamento da diferença finita, proporcion
 Testes de regressão: `test_total_exato` e `test_kahan_e_ingenuo` (classe `TestAcumuladorKahan`). Antes da
 correção os dois falhavam: o total dava 100000.00000133288, com erro de 1,33e-6, igual ao do ingênuo.
 Causa: `t` já é o `float` arredondado de `s + y`; recalcular `s + y` repete a mesma operação com os
-mesmos operandos e dá o mesmo `t`, então `t - (s + y)` é `t - t = 0` e a correção nunca guarda o
+mesmos operandos e d git config --global user.email "you@example.com"á o mesmo `t`, então `t - (s + y)` é `t - t = 0` e a correção nunca guarda o
 resíduo. Em aritmética exata `t - (s + y)` e `(t - s) - y` valem o mesmo, mas em ponto flutuante só
 `(t - s) - y` recupera o que o arredondamento descartou. Os testes de aceitação somam só 10 parcelas de
 0,1 e comparam com `math.isclose` (tolerância relativa 1e-9): nesse tamanho o erro do ingênuo é da
@@ -104,3 +104,13 @@ leituras só reduz o erro aleatório (erro padrão ≈ 0,557/√595 ≈ 0,02 kPa
 um erro sistemático do modelo da curva, que desloca todas as leituras no mesmo sentido e não se
 cancela na média. Esse viés de 1,84 kPa é maior que a incerteza declarada de ±1,5, que vem da
 `u_sistematica` e não enxerga o erro da curva.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção realiza sempre 44 iterações porque a quantidade depende da largura do intervalo inicial e da tolerância, que permanecem iguais para os três números de Reynolds. A ordem de convergência 2 significa que o erro seguinte é aproximadamente proporcional ao quadrado do erro atual, fazendo com que os dígitos corretos dobrem a cada iteração. O Newton pode falhar quando a derivada é nula na aproximação inicial, como em \(f(x)=x^3+0.1\), partindo de \(x_0=0\). Nesse caso, a bissecção ainda consegue encontrar a raiz no intervalo \([-1,1]\), pois há troca de sinal nos extremos.
+
+### R12 — Issue #9
+
+Testes de regressão: `test_recalcula_derivada_analitica` e `test_convergencia_com_derivada_numerica` (classe `TestRegressaoNewton`). Calcular a derivada apenas uma vez mantém o denominador fixo nas iterações, fazendo o método apresentar convergência linear, em vez de quadrática. Ao recalcular a derivada em cada aproximação, recuperamos a convergência quadrática, na qual o erro aproximadamente se eleva ao quadrado a cada iteração. Os testes de aceitação não detectaram o defeito porque verificavam a precisão do resultado, mas não a quantidade de iterações nem o recálculo da derivada.
