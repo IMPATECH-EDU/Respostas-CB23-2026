@@ -106,3 +106,21 @@ diferentes para PT102. Explique a diferença entre precisão e exatidão com ess
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 Precisão é o quanto as leituras se espalham (o desvio), e exatidão é o quanto a média fica perto do valor verdadeiro (o viés). Para PT102 as duas curvas têm quase o mesmo desvio (0,525 kPa na linear e 0,527 kPa na spline), então são igualmente precisas, mas o viés da linear é -1,819 kPa e o da spline é 0,011 kPa: só a spline é exata.
 Tirar a média de 595 leituras diminui o erro aleatório (o erro padrão fica em torno de 0,525 / raiz(595) ≈ 0,02 kPa), mas o viés da curva linear é um erro sistemático: a reta erra para o mesmo lado em todas as leituras, então ele não se cancela na média.
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+A bissecção divide o intervalo ao meio a cada iteração e para quando a largura fica menor que tol. Então o número de iterações só depende da largura inicial e da tolerância (cerca de log2((b - a)/tol)), e não da função: por isso dá 44 para qualquer Reynolds.
+Ordem 2 quer dizer que cada erro é mais ou menos o quadrado do anterior (e_{k+1} ≈ C·e_k²), ou seja, o número de dígitos corretos dobra a cada iteração. Para Re = 1e4 os erros do Newton foram 5,0e-2, 2,3e-5 e 5,0e-12: 2, 5 e 11 dígitos corretos.
+O Newton falha quando a derivada é zero ou quase zero perto do ponto (a tangente fica horizontal e o próximo x vai para muito longe), ou quando o chute inicial está longe e ele diverge ou fica oscilando. A bissecção não tem esse problema: se f(a) e f(b) têm sinais opostos, ela sempre converge.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+Testes de regressão: test_newton_raiz_de_2_em_poucas_iteracoes, test_newton_converge_quadraticamente e test_colebrook_re_1e4_em_poucas_iteracoes.
+Com a derivada calculada só no ponto inicial, o método usa sempre a mesma inclinação f'(x0) em vez da tangente no ponto atual. Perto da raiz, o erro passa a ser multiplicado por um fator constante (1 - f'(raiz)/f'(x0)) a cada passo, e isso é convergência linear: os dígitos corretos crescem de pouco em pouco em vez de dobrar. A correção foi calcular a derivada dentro do laço, a cada iteração.
+Os testes de aceitação só conferiam que o Newton converge e chega na raiz certa; eles não olhavam o número de iterações nem a ordem de convergência, e um método lento também acaba chegando na raiz.
