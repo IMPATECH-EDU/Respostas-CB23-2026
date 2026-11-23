@@ -144,3 +144,24 @@ Notemos que ao calcularmos a derivada apenas no ponto inicial, fazendo com que e
 Os testes de aceitação verificavam principalmente se o método encontrava uma raiz com precisão satisfatória e se cumpria os critérios funcionais esperados, mas não verificavam adequadamente a velocidade de convergência do Newton. Como o método ainda conseguia encontrar a raiz, mesmo com mais iterações, o defeito passava despercebido. Os testes de regressão foram criados justamente para detectar essa deficiência de desempenho e comportamento numérico.
 
 Portanto, vemos que os testes não demonstravam defeito pelo fato deles estarem verificando apenas se o método encontrava uma raiz com precisão satisfatória, mas não verificavam de modo direto a velodidade de convergência.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+Isso ocorre por causa da descontinuidade da função nas mudanças de faixa tarifária (que acontece quando a hora é alterada, isto é, temos um salto às 18h para um valor alto, e outro às 21h, quando voltamos para o valor mais baixo). Ou seja, se integrarmos o custo do dia inteiro de uma só vez, essa descontinuidade prejudica a aproximação numérica, o que reduz a ordem observada para 1. Por outro lado, se integrarmos cada faixa separadamente, os pontos de descontinuidade são irrelevantes, agindo como se fossem os limites de integração. Em palavras, estamos fazendo primeiro uma integração durante toda a faixa de menor valor (não estamos entre 18 e 21 horas) e depois uma na faixa de maior custo, o que recupera as ordens esperadas do trapézio que é 2 e a de Simpson que é 4.
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+
+Nome dos testes de regressão: `test_malha_irregular_com_valores_diferentes` e `test_malha_irregular`
+
+A causa do defeito é dada pelo fato de que o método utilizava um único espaçamento (`h = x[1] - x[0]`) para todos os intervalos, o que assumi uma malha uniforme, até quando os valores de `x` apresentam espaçamentos diferentes.
+Desse modo, podemos ver que os testes de aceitação não detectavam esse defeito pelo fato de que eles cobriam apenas os casos com espaçamentos regulares, o que, assim, não apresentava o defeito.
+Portanto, tendo que o registro possui espacamentos irregulares (das 18h às 21h), temos que o método de simpson não pode ser aplicado, já que ele só pode ser aplicado para intervalos uniformes, isto é, o método de simpson assumi que os subintervalos em `x` são igualmente espaçados, o que não é o nosso caso, pela irregularidade nos espaçamentos do registro.

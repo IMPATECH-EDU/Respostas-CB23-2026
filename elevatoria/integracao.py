@@ -66,8 +66,14 @@ class Trapezio(Integrador):
         """
         x, y = _validar_tabela(x, y)
         # O SCADA registra uma leitura a cada 15 min, então o passo é o mesmo em toda a tabela.
-        h = x[1] - x[0]
-        return float(h * (0.5 * y[0] + y[1:-1].sum() + 0.5 * y[-1]))
+        
+        # Notemos que esta seguinte linha faz com que a altura do trapézio seja fixa, o que não é 
+        # propício para uma malha irregular, assim devemos alterá-la
+        #h = x[1] - x[0]
+
+        h = np.diff(x)
+        return float(np.sum(h * (y[:-1] + y[1:]) / 2))
+        #return float(h * (0.5 * y[0] + y[1:-1].sum() + 0.5 * y[-1]))
 
 
 class Simpson(Integrador):

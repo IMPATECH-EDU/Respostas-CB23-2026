@@ -36,7 +36,7 @@ class TestRegressaoTrapezio(unittest.TestCase):
 
         resultado = Trapezio().integrar_tabela(x, y)
 
-        self.assertAlmostEqual(resultado, 4.0)
+        self.assertAlmostEqual(resultado, 5.0)
 
     def test_malha_irregular_com_valores_diferentes(self):
         """Verifica a integração em uma malha irregular com diferentes valores de y."""
