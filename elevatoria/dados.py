@@ -29,7 +29,22 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+
+LINHA: re.Pattern = re.compile(
+    r"""
+    (?P<data>\d{4}-\d{2}-\d{2})   # Data: AAAA-MM-DD
+    [ ]+                          # Espaços
+    (?P<hora>\d{2}:\d{2}:\d{2})   # Hora: HH:MM:SS
+    [ ]+                          # Espaços
+    (?P<nivel>INFO|WARN|ALARME)   # Nível da mensagem
+    [ ]+                          # Espaços
+    (?P<tag>[A-Z]{1,2}\d{1,3})    # Identificador do sensor
+    [ ]+                          # Espaços
+    (?P<resto>\S.*)               # Dados restantes da linha
+    """,
+    re.VERBOSE,
+)
+
 
 
 @dataclass(frozen=True)
@@ -48,7 +63,9 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    
+    return re.fullmatch(r"[A-Z]{1,2}[0-9]{1,3}", s) is not None
+
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -69,7 +86,53 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
     """
-    raise NotImplementedError("issue #1: ler_log")
+
+    registros = []
+    invalidas = []
+
+    for linha in texto.splitlines():
+        if not linha.strip():
+            continue
+
+        resultado = LINHA.fullmatch(linha)
+
+        if resultado is None:
+            invalidas.append(linha)
+            continue
+
+        try:
+            instante = datetime.strptime(
+                resultado["data"] + " " + resultado["hora"],
+                "%Y-%m-%d %H:%M:%S"
+            )
+        except ValueError:
+            invalidas.append(linha)
+            continue
+
+        pares = re.findall(r"(\w+)=(\S+)", resultado["resto"])
+
+        if not pares:
+            invalidas.append(linha)
+            continue
+
+        valores = {}
+
+        for chave, valor in pares:
+            try:
+                valores[chave] = float(valor)
+            except ValueError:
+                valores[chave] = valor
+
+        registro = Registro(
+            instante,
+            resultado["nivel"],
+            resultado["tag"],
+            valores
+        )
+
+        registros.append(registro)
+
+    return registros, invalidas
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
@@ -83,7 +146,13 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
     de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+
+    tags = {registro.tag for registro in registros}
+
+    return {
+        tag: sum(1 for registro in registros if registro.tag == tag)
+        for tag in tags
+    }
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
@@ -92,7 +161,15 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
     Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
     """
-    raise NotImplementedError("issue #1: serie")
+    
+    valores = [
+        registro.valores[chave]
+        for registro in registros
+        if registro.tag == tag and chave in registro.valores
+    ]
+
+    return SerieTemporal.de_lista(valores)
+
 
 
 # ---------------------------------------------------------------------------------------
@@ -104,7 +181,12 @@ def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], 
     Cada `f` é uma lambda. Cuidado com o *late binding*: cada função deve usar o fator da
     sua tag, e não o último fator do dicionário (veja a issue #2 no enunciado).
     """
-    raise NotImplementedError("issue #2: criar_conversores")
+    
+    return {
+        tag: (lambda valor, fator=fator: valor * fator)
+        for tag, fator in escalas.items()
+    }
+
 
 
 # ---------------------------------------------------------------------------------------
