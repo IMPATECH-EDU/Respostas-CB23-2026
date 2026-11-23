@@ -265,7 +265,7 @@ def converter_vetorizado(contagens: np.ndarray) -> np.ndarray:
    Returns:
        `ndarray` com pressões em kPa calculadas por `c * 600 / 4095`.
    """
-   contagens_kpa = contagens*600/4095
+   contagens_kpa = contagens*(600/4095)
    return contagens_kpa
 
 def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:

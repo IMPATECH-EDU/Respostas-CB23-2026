@@ -1,4 +1,4 @@
-# Relatório — <seu nome> (<sua matrícula>)
+# Relatório — Emanuel Eduardo Oliveira Dionisio (3498)
 
 Relatório do projeto, preenchido na sua branch. Cada marco acrescenta a sua seção. Responda com as suas palavras e com
 os números da sua execução; cada resposta cabe em até 6 linhas, além das tabelas.
@@ -10,6 +10,8 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
 
 /home/emanuel-dionisio/venvs/prog2-venv/bin/python
+
+Python 3.14.7 | NumPy 2.5.3 | fornecido 4.0
 
 ### R1 — Expressões regulares
 
@@ -77,3 +79,37 @@ Causa: na soma de prefixos, faltava o zero inicial; sem ele, os cortes da soma a
 Correção: usar `np.concatenate((np.zeros(1), np.cumsum(self)))` e então calcular `(cs[i + w] - cs[i]) / w` de forma vetorizada.
 Os testes de aceitação não pegaram porque não cobriam o caso crítico de janela 1, onde o erro aparece claramente.
 Caso extra não coberto por aceitação: a preservação do tamanho correto para janela arbitrária (ex.: 600 e 30), coberta por `test_media_movel_tem_tamanho_n_menos_janela_mais_um`.
+
+## Marco 2
+
+### Ambiente
+
+Python 3.14.7 | NumPy 2.5.3 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3498
+
+### R8 — Derivada numérica
+
+Para valores grandes de `h`, predomina o erro de truncamento da diferença adiante,
+pois a aproximação ainda representa mal a derivada local. Ao diminuir `h`, esse erro
+diminui até aproximadamente `h = 1e-5`. Depois disso, passa a predominar o erro de
+arredondamento causado pela precisão finita dos números de ponto flutuante. Em
+`h = 1e-14`, `1000 + h == 1000`, portanto o numerador fica zero e a derivada
+aproximada também é zero. Assim, o erro é exatamente o valor absoluto da derivada exata.
+
+### R9 — Issue #7
+
+Os testes foram `test_um_milhao_de_decimos` e
+`test_parcelas_pequenas_apos_valor_grande`. O erro estava em calcular
+`t - (s + y)`, expressão que em ponto flutuante normalmente arredonda para zero.
+A fórmula correta de Kahan é `t - s - y`, equivalente algebricamente a
+`(t - s) - y`, mas com arredondamentos intermediários diferentes. Os testes de
+aceitação não detectaram o defeito porque usavam apenas dez parcelas de `0.1`,
+cujo erro era pequeno o suficiente para `assertAlmostEqual`.
+
+### R10 — Precisão × exatidão
+
+Precisão indica a pequena dispersão das leituras, representada pelo desvio padrão;
+exatidão indica a proximidade da média em relação ao valor de referência. As curvas
+linear e spline produzem desvios praticamente iguais, portanto têm precisão
+semelhante, mas a curva linear apresenta um viés muito maior para PT102. A média de
+quase 600 leituras reduz o ruído aleatório, mas não elimina o viés sistemático
+introduzido pela aproximação linear da curva de calibração.
