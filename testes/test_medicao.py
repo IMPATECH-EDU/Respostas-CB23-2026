@@ -56,10 +56,43 @@ def test_kahan_fica_mais_perto_do_exato_que_o_ingenuo(self):
     erro_ingenuo = abs(somar(AcumuladorIngenuo(), valores) - exato)
     self.assertGreater(erro_ingenuo, 0.0)
     self.assertLess(erro_kahan, erro_ingenuo / 1000)
-    
+
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
 # issue #7 (escreva-os ANTES de corrigir o defeito e confirme que falham).
 
+class TestMedirContrato(unittest.TestCase):
+    """Issue #6: regras de `medir` que os testes de aceitação não verificam."""
+    def setUp(self):
+        self.contagens = [10, 11, 9, 10, 12, 11, 10, 9]
+
+    def test_u_sistematica_negativa_e_invalida(self):
+        """Uma incerteza sistemática negativa levanta ValueError."""
+        with self.assertRaises(ValueError):
+            medir(registros("PT101", self.contagens), "PT101", IDENTIDADE, u_sistematica=-1.0)
+
+    def test_mad_zero_e_invalida(self):
+        """Leituras todas iguais têm MAD zero e o z robusto não existe: ValueError."""
+        with self.assertRaises(ValueError):
+            medir(registros("PT101", [10] * 8), "PT101", IDENTIDADE)
+            
+    def test_indices_das_espurias_sao_posicoes_na_serie_da_tag(self):
+        """Os índices das espúrias contam só as leituras da tag, e não as linhas do log."""
+        regs = []
+        for i, c in enumerate(self.contagens + [500]):
+            regs += registros("PT101", [3000])
+            regs += registros("PT102", [c])
+        m = medir(regs, "PT102", IDENTIDADE)
+        self.assertEqual(m.espurias, [8]) 
+
+    def test_desvio_e_das_leituras_validas(self):
+        """O desvio padrão da Medicao é calculado sem as leituras espúrias."""
+        m = medir(registros("PT102", self.contagens + [500]), "PT102", IDENTIDADE)
+        self.assertAlmostEqual(m.desvio, 1.0350983, places=5)
+
+    def test_limiar_baixo_deixa_menos_de_duas_validas(self):
+        """Com um limiar muito baixo, quase tudo é descartado e sobram menos de 2: ValueError."""
+        with self.assertRaises(ValueError):
+           medir(registros("PT101", [10, 11, 12, 13]), "PT101", IDENTIDADE, limiar=0.1)
 
 if __name__ == "__main__":
     unittest.main()
