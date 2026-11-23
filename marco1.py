@@ -54,7 +54,6 @@ def etapa1(texto: str, verdade: dict) -> list:
     # (c) Some os pulsos de FT201 (com `serie`) e imprima o volume bombeado na hora (0,1 L/pulso).
     valores = serie(registros, "FT201", "pulsos")
     total = np.sum(valores)
-    print("DEBUG:", len(valores), total, verdade["pulsos_total"])
     assert total == verdade["pulsos_total"]
     volume_l = total * 0.1  # cada pulso x por pulso
     print(f"(c) pulsos FT201: {total:.0f} | volume bombeado: {volume_l:.1f} L " f"({volume_l / 1000:.2f} m³)")
