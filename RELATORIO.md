@@ -35,7 +35,7 @@ jogando informação fora, não sendo possível resgatar parte dela ou entender 
 de modo que a investigação é sobre a captação ou transmissão deles. Uma situação real para exemplificar o problema de jogar
 os dados fora seria um eventual pico de dados ser considerado inválido e descartado, mas esse pico de dados pode nos estar
 informando que algum aparelho de captação como o RTU dos dados ou alguma rede de comunicação está defeituosa. Com meus dados
-recebi 4 linhas avisando sobre invalides de dados, onde elas apontam falha na comuniação com o RTU, e isso é importante saber.
+recebi 4 linhas avisando sobre invalidades de dados, onde elas apontam falha na comunicação com o RTU, e isso é importante saber.
 
 ### R3 — Late binding
 
@@ -46,25 +46,18 @@ fixo para cada tag, logo quando a comprehesion acaba o valor de k é último pos
 logo ele guarda k = 0.1, e então o cálculo sai errado para os sensores de pressão, e por isso temos 409,5, que é 4095 * 0.1. A
 minha criar_conversores guarda o k junto com a lambda, logo não há o problema da variação de k influenciar a lambda: a lambda guarda
 a sua constante que será usada na hora. Esse problema também ocorre pel fato de criar_conversores ser uma função que apenas cria as
-conversões: se ela cria-se uma conversão e a aplicasse em seguida ainda daria certo.
+conversões: se ela criasse uma conversão e a aplicasse em seguida ainda daria certo.
 
 ### R4 — Escala nominal
 
 A primeira função em fornecido/simulador.py, p_real, retorna
 `600.0 * np.sin(0.5 * np.pi * np.asarray(c, dtype=float) / 4095.0)`, uma função não linear, diferente da modelagem linear nominal,
-com c * 600 / 4095. A escala nominal dá 262,0 kPa, a conferência 300,0 kPa, por que a reta subestimaa pressão devido ao transmissor
+com c * 600 / 4095. A escala nominal dá 262,0 kPa, a conferência 380,0 kPa, por que a reta subestima pressão devido ao transmissor
 real seguir um seno.
 
 ### R5 — Previsão × medição (Etapa 3)
 
 Previsões registradas no commit: R5: e2a60c2, R6: 90fc0f5
-
-A lista aprensenta 36 bytes por número (8 da referência mais 28 do objeto int), enquanto que uint16 2 apenas bytes.
-O laço interpreta cada operação enquanto que o vetorizado aplica de uma vez. Vetorizado mais rápido.
-A compreessão e laço interpretam elemento a elemento, possuindo então tempo parecido (aproximadamente 1 como previ).
-Respondendo as perguntas: 20 * uint16 dá 16364 por que a contágem dá a volta, ela supera o máximo possível que esse
-tipo pode guardar e inicia do zero novamente (81.900 - 65.535 = 16364). Para guardar as contagens que vão de 0 a 4095
-uint16 basta, mas para a pressão necessita ser um float, pois há casas decimais, e o float32 já basta, sendo mais ecoômico.
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
@@ -73,6 +66,14 @@ uint16 basta, mas para a pressão necessita ser um float, pois há casas decimai
 | Tempo da compreensão / tempo do laço | 1 | 1,1 |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
+
+A lista apresenta 36 bytes por número (8 da referência mais 28 do objeto int), enquanto que uint16 2 apenas bytes. O laço interpreta cada
+operação enquanto que o vetorizado aplica de uma vez. Vetorizado mais rápido. A compreenssão e laço interpretam elemento a elemento, possuindo
+então tempo parecido (aproximadamente 1 como previ). Respondendo as perguntas: A maior diferença foi entre o tempo do laço e o vetorizado,
+compilado, enquanto que o laço passa pelo interpretador do Python a cada elemento. 20 * uint16 dá 16364 por que a contagem dá a volta, ela
+supera o máximo possível que esse tipo pode guardar e inicia do zero novamente (81.900 - 65.536 = 16364). Para guardar as contagens que vão de 0
+a 4095 uint16 basta, mas para a pressão necessita ser um float, pois há casas decimais, e o float32 já basta, sendo mais econômico.
+
 
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
@@ -85,9 +86,15 @@ uint16 basta, mas para a pressão necessita ser um float, pois há casas decimai
 | `s[0]` | float | float64 |
 
 <!-- Explique o resultado que mais surpreendeu você. -->
-O resultado mais surpreendente para mim foi s.sum() retornar um SeriaTemporal, e não um número, que deveria é a natureza do
+O resultado mais surpreendente para mim foi s.sum() retornar um SerieTemporal, e não um número, que deveria é a natureza do
 resultado do .sum()
 
 ### R7 — Issue #4
 
 <!-- Sintoma; o teste de regressão (nome); a causa, em termos da soma acumulada; a correção; por que os testes de aceitação não pegaram o defeito; mais um caso que eles não cobrem e qual teste seu o cobre. -->
+
+Para a média móvel de 30 pontos da PT102, temos 570 valores, mas o esperado dado a docstring é 571. Os testes de regressão:
+`test_media_movel_tem_n_menos_janela_mais_um_valores`, `test_media_movel_inclui_a_primeira_janela`(e `test_media_movel_janela_igual_ao_tamanho`).
+A soma de cada janela é a diferença entre duas posições do `cumsum`, e na primeira janela faltava o termo 0. A resolução seria por um 0 no
+início da soma acumulada, com `np.concatenate(([0.0], np.cumsum(self)))`. Os testes de aceitação não detectam tal erro porque eles não medem
+o tamanho. Caso a janela seja igual ao tamanho da série, o código devolvia 0 ao invés de devolver 1 valor, a média de toda a série.
