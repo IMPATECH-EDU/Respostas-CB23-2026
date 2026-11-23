@@ -124,3 +124,22 @@ convergência linear; por que os testes de aceitação não pegaram o defeito. -
 Testes de regressão: test_newton_raiz_de_2_em_poucas_iteracoes, test_newton_converge_quadraticamente e test_colebrook_re_1e4_em_poucas_iteracoes.
 Com a derivada calculada só no ponto inicial, o método usa sempre a mesma inclinação f'(x0) em vez da tangente no ponto atual. Perto da raiz, o erro passa a ser multiplicado por um fator constante (1 - f'(raiz)/f'(x0)) a cada passo, e isso é convergência linear: os dígitos corretos crescem de pouco em pouco em vez de dobrar. A correção foi calcular a derivada dentro do laço, a cada iteração.
 Os testes de aceitação só conferiam que o Newton converge e chega na raiz certa; eles não olhavam o número de iterações nem a ordem de convergência, e um método lento também acaba chegando na raiz.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+As ordens 2 (trapézio) e 4 (Simpson) só valem quando a função é suave (tem derivadas contínuas) em todo o intervalo. O custo tem a tarifa, que dá um salto às 18 h e às 21 h. Integrando de uma vez, o subintervalo que contém o salto tem um erro proporcional a h vezes o tamanho do salto, e esse erro domina: a ordem cai para cerca de 1 (medi 1,00 no trapézio e 0,65 no Simpson).
+Integrando faixa por faixa, os saltos ficam exatamente nas pontas das faixas e, dentro de cada faixa, a tarifa é constante e a potência é suave. Por isso voltam as ordens 2,00 e 4,00.
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+Testes de regressão: test_malha_nao_uniforme_reta, test_malha_nao_uniforme_constante e test_registro_com_falha_igual_ao_sem_falha.
+Causa: integrar_tabela usava o mesmo passo h = x[1] - x[0] (15 min) para todos os trapézios. Com as 8 leituras perdidas, alguns intervalos têm 30 min mas eram contados como 15, então a área (o volume) saía menor. A correção usa np.diff(x), a largura de cada intervalo; o volume ficou em 3892,5 m³ contra 3888,0 m³ de conferência (erro de 0,12%).
+Os testes de aceitação só usavam malhas uniformes (np.linspace), em que todos os passos são iguais a x[1] - x[0], então o defeito não aparecia.
+A regra de Simpson exige pontos igualmente espaçados (e um número ímpar de pontos), e o registro do dia tem intervalos de 15 e 30 min, por isso ela recusa a tabela.
