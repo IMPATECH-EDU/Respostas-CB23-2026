@@ -93,3 +93,18 @@ Com um milhão de pulsos, a soma ingênua deu 100000,00000133288 L e a compensad
 Após descartar cinco leituras espúrias de PT102, restaram 595. Os desvios amostrais foram 0,531 kPa com a curva linear e 0,532 kPa com a spline: as leituras têm dispersões semelhantes, portanto precisões semelhantes.
 Em relação à referência de 380 kPa, os vieses foram −1,842 kPa e −0,012 kPa, respectivamente. A spline foi mais exata neste ponto.
 A média de muitas leituras reduz o erro aleatório da média. Como a curva linear subestima a pressão nessa faixa de operação, o deslocamento sistemático persiste na média.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+Em Colebrook, todos os valores de Reynolds usam o intervalo [2, 15] e a tolerância 10⁻¹². Após k divisões, a largura é 13/2ᵏ: ela fica abaixo da tolerância pela primeira vez em k = 44.
+Para Re = 10⁴, os erros de Newton passaram por 5,0 × 10⁻², 2,3 × 10⁻⁵ e 5,0 × 10⁻¹². A ordem estimada foi 2,00: perto da raiz, o erro seguinte é aproximadamente proporcional ao quadrado do atual.
+Por exemplo, para f(x) = x³ − 1 em [−2, 2], Newton começa em zero, onde a derivada é nula. A bissecção encontra a raiz 1, pois a função é contínua e muda de sinal no intervalo.
+
+### R12 — Issue #9
+
+Os testes de regressão são `test_segundo_passo_da_raiz_de_dois` e `test_colebrook_em_cinco_iteracoes`. Ambos falharam antes da correção.
+Com a derivada fixa d = f′(x₀), a iteração usa sempre a inclinação inicial. Perto de uma raiz simples r, o erro conserva, em geral, um termo linear com fator 1 − f′(r)/d.
+Recalcular a derivada no ponto atual cancela esse termo, recuperando a convergência quadrática. Para Re = 10⁴, Newton passou de dez para cinco iterações.
+Os testes de aceitação verificavam a convergência e a raiz obtida. O método com inclinação fixa satisfazia essas condições, embora demorasse mais.
