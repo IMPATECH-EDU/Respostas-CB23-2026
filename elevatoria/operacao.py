@@ -8,9 +8,6 @@ Este módulo junta peças que já existem na base:
 - `Bisseccao` e `Newton` (de `elevatoria/raizes.py`, escritos por um colega): os métodos de
   raiz, que devolvem um `ResultadoRaiz`.
 
-As funções marcadas com `NotImplementedError` são a issue #8; as docstrings descrevem o
-contrato. Não mude nomes nem assinaturas públicas: o `marco3.py` e os testes dependem deles.
-Funções auxiliares privadas (`_nome`) são permitidas.
 """
 from __future__ import annotations
 
@@ -49,7 +46,23 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError("o intervalo de vazões deve ter a < b")
+    minimo, maximo = bomba.dominio
+    if not minimo <= a < b <= maximo:
+        raise ValueError(f"intervalo fora do domínio da bomba: [{minimo}, {maximo}]")
+
+    def diferenca(vazao: float) -> float:
+        """Altura fornecida pela bomba menos a altura exigida pelo sistema."""
+        return bomba(vazao) - tubulacao.altura_sistema(vazao)
+
+    resultado = resolvedor.encontrar(diferenca, a, b)
+    if not resultado.convergiu:
+        raise ValueError("o método não convergiu para o ponto de operação")
+    vazao = resultado.raiz
+    if not a <= vazao <= b:
+        raise ValueError("a raiz encontrada está fora do intervalo de vazões")
+    return PontoOperacao(vazao, bomba(vazao), resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +79,12 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    limite = piso * max(1.0, abs(raiz))
+    erros = [abs(x - raiz) for x in historico]
+    significativos = [erro for erro in erros if erro > limite]
+    if len(significativos) < 3:
+        raise ValueError("são necessários três erros acima do piso")
+    anterior, atual, seguinte = significativos[-3:]
+    if anterior == atual:
+        raise ValueError("erros consecutivos iguais impedem estimar a ordem")
+    return math.log(seguinte / atual) / math.log(atual / anterior)
