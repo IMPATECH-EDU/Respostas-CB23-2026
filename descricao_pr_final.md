@@ -220,9 +220,9 @@ Resolve as issues #10 e #11 do enunciado.
 - Registrei as respostas R13 e R14 no `RELATORIO.md`.
 
 ### Como testei
-- A executar: `python -m unittest discover -v` — preencher com o total após rodar os testes.
-- A executar: `python marco4.py` — confirmar que todas as etapas e asserts passam.
-- Os testes de regressão da issue #11 devem falhar com a implementação original do trapézio.
+- `python -m unittest discover -v`: 84 testes, todos passando.
+- `python marco4.py`: todas as etapas e asserts passaram; o volume calculado foi 3888,8 m³, com erro de 0,02% em relação à conferência.
+- Os testes de regressão da issue #11 foram escritos para a implementação original do trapézio e cobrem uma malha irregular e um intervalo com leitura ausente.
 
 ### Pontos de atenção para o revisor
 - O ajuste usa `np.polynomial.polynomial.polyfit`, que fornece coeficientes na ordem crescente exigida pelo projeto.
