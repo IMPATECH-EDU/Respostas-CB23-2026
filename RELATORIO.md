@@ -8,7 +8,6 @@ os números da sua execução; cada resposta cabe em até 6 linhas, além das ta
 ### Ambiente
 
 <!-- Cole aqui a saída de `which python` e da Etapa 0 do `python marco1.py`. -->
-### Ambiente
 
 Usei Windows, então no lugar de `which python` usei `(Get-Command python).Source`.
 
@@ -79,28 +78,32 @@ O que mais me surpreendeu foi o s.sum() devolver uma SerieTemporal e não um nú
 
 ### Ambiente
 
-<!-- Cole a saída da Etapa 0 do `python marco2.py`. --> === Etapa 0: ambiente ===
+<!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
+
+```text
+=== Etapa 0: ambiente ===
 Python 3.14.4 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3476
+```
 
 ### R8 — Derivada numérica
 
 <!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
 depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
-é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) --> Para h grande domina o erro de truncamento, a diferença só aproxima a derivada e o erro é proporcional a h, de 1.658e-05 em h = 1 a 1.654e-08 em h = 1e-3, caindo cerca de 10 vezes a cada passo. Para h muito pequeno domina o erro de arredondamento, f(x+h) e f(x) ficam quase iguais, a subtração perde algarismos significativos e a divisão por h amplifica isso. O menor erro foi em h = 1e-5, com 6.224e-10, onde os dois efeitos se equilibram. Em h = 1e-14, "1000 + 1e-14 == 1000" dá "True", h é menor que metade do espaçamento entre floats perto de 1000, então x+h é o mesmo float que x e f(x+h) − f(x) = 0. A derivada numérica vale 0 e o erro é |0 − 0.2134|.
+é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) --> 
+Para h grande domina o erro de truncamento, a diferença só aproxima a derivada e o erro é proporcional a h, de 1.658e-05 em h = 1 a 1.654e-08 em h = 1e-3, caindo cerca de 10 vezes a cada passo. Para h muito pequeno domina o erro de arredondamento, f(x+h) e f(x) ficam quase iguais, a subtração perde algarismos significativos e a divisão por h amplifica isso. O menor erro foi em h = 1e-5, com 6.224e-10, onde os dois efeitos se equilibram. Em h = 1e-14, "1000 + 1e-14 == 1000" dá "True", h é menor que metade do espaçamento entre floats perto de 1000, então x+h é o mesmo float que x e f(x+h) − f(x) = 0. A derivada numérica vale 0 e o erro é |0 − 0.2134|.
 
 
 
 ### R9 — Issue #7
 
 <!-- Os nomes dos seus testes de regressão; a causa: por que, em ponto flutuante,
-t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
-de aceitação não pegaram o defeito. --> Meus testes de regressão são "test_um_milhao_de_pulsos" e "test_mais_preciso_que_o_ingenuo", falhavam com o código original e passam depois da correção. Causa: "t = soma + y" já é o resultado arredondado, e na linha com defeito "soma + y" é calculado de novo e dá exatamente o mesmo float, então "t - (soma + y)" é sempre 0 e a correção nunca existe. Algebricamente isso é igual a (t - soma) - y, mas em ponto flutuante só essa ordem recupera a parte que o arredondamento perdeu. Os testes de aceitação não pegaram o defeito porque somam só 10 parcelas e comparam com "math.isclose", cuja tolerância esconde um erro dessa ordem. Ele só aparece com muitas parcelas, como no 1 000 000 da issue (total 100000.00000133288, erro de 1.333e-06 L).
+t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes de aceitação não pegaram o defeito. -->
+Meus testes de regressão são "test_um_milhao_de_pulsos" e "test_mais_preciso_que_o_ingenuo", falhavam com o código original e passam depois da correção. Causa: "t = soma + y" já é o resultado arredondado, e na linha com defeito "soma + y" é calculado de novo e dá exatamente o mesmo float, então "t - (soma + y)" é sempre 0 e a correção nunca existe. Algebricamente isso é igual a (t - soma) - y, mas em ponto flutuante só essa ordem recupera a parte que o arredondamento perdeu. Os testes de aceitação não pegaram o defeito porque somam só 10 parcelas e comparam com "math.isclose", cuja tolerância esconde um erro dessa ordem. Ele só aparece com muitas parcelas, como no 1 000 000 da issue (total 100000.00000133288, erro de 1.333e-06 L).
 
 ### R10 — Precisão × exatidão
 
-<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
-diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
-por que a média de quase 600 leituras não elimina o viés da curva linear. --> Precisão é a dispersão das leituras, o desvio de PT102 é 0.522 kPa (linear) e 0.523 kPa (spline), praticamente iguais, porque o ruído aleatório do transmissor é o mesmo nas duas curvas. Exatidão é a proximidade do valor verdadeiro, a spline tem viés de 0.000 kPa e a linear, de −1.829 kPa, porque a curva linear erra a forma da calibração. A média de 595 leituras válidas reduz só o erro aleatório: o erro padrão é 0.523/√595 ≈ 0.021 kPa. O erro sistemático é igual em todas as leituras, então a média herda o viés inteiro, mais de 80 vezes maior que o erro padrão. Por isso "medir" soma a "u_sistematica" (1.5 kPa), que não diminui com o número de leituras.
+<!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e por que a média de quase 600 leituras não elimina o viés da curva linear. --> 
+Precisão é a dispersão das leituras, o desvio de PT102 é 0.522 kPa (linear) e 0.523 kPa (spline), praticamente iguais, porque o ruído aleatório do transmissor é o mesmo nas duas curvas. Exatidão é a proximidade do valor verdadeiro, a spline tem viés de 0.000 kPa e a linear, de −1.829 kPa, porque a curva linear erra a forma da calibração. A média de 595 leituras válidas reduz só o erro aleatório: o erro padrão é 0.523/√595 ≈ 0.021 kPa. O erro sistemático é igual em todas as leituras, então a média herda o viés inteiro, mais de 80 vezes maior que o erro padrão. Por isso "medir" soma a "u_sistematica" (1.5 kPa), que não diminui com o número de leituras.
 
 
 ## Marco 3
@@ -109,12 +112,14 @@ por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 
 <!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
 quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
-situação em que o Newton falha e a bissecção não. --> A bissecção parte de [2, 15], de largura 13, e a cada iteração a largura cai pela metade. Ela para quando 13/2^k < 1e-12, ou seja, k > log2(1,3e13) ≈ 43,6, então k = 44. Esse número só depende da largura e da tolerância, e não do Reynolds. Ordem de convergência 2 significa e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada passo. Para Re = 1e4, os erros foram 5.0e-02, 2.3e-05 e 5.0e-12, cerca de 1, 4 e 11 dígitos corretos, com ordem estimada de 2.00. O Newton falha e a bissecção não quando a derivada é zero no ponto atual, então o código levanta "ValueError", ou quando o ponto inicial está longe da raiz e a iteração diverge, como em f(x) = x^(1/3) com x₀ ≠ 0, em que x_{k+1} = −2·x_k. A bissecção só exige f contínua e troca de sinal em [a, b].
+situação em que o Newton falha e a bissecção não. --> 
+A bissecção parte de [2, 15], de largura 13, e a cada iteração a largura cai pela metade. Ela para quando 13/2^k < 1e-12, ou seja, k > log2(1,3e13) ≈ 43,6, então k = 44. Esse número só depende da largura e da tolerância, e não do Reynolds. Ordem de convergência 2 significa e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada passo. Para Re = 1e4, os erros foram 5.0e-02, 2.3e-05 e 5.0e-12, cerca de 1, 4 e 11 dígitos corretos, com ordem estimada de 2.00. O Newton falha e a bissecção não quando a derivada é zero no ponto atual, então o código levanta "ValueError", ou quando o ponto inicial está longe da raiz e a iteração diverge, como em f(x) = x^(1/3) com x₀ ≠ 0, em que x_{k+1} = −2·x_k. A bissecção só exige f contínua e troca de sinal em [a, b].
 
 ### R12 — Issue #9
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
-convergência linear; por que os testes de aceitação não pegaram o defeito. --> Meus testes de regressão são 'test_recalcula_a_derivada_a_cada_iteracao' e 'test_converge_em_poucas_iteracoes': os dois falhavam com o código original e passam depois da correção. Com a derivada calculada uma vez só, em x₀, a iteração vira x_{k+1} = x_k − f(x_k)/f'(x₀). Como f'(x₀) ≠ f'(raiz), o erro só é multiplicado por uma constante menor que 1 a cada passo, então a convergência é linear. Recalculando f'(x_k) a cada iteração, essa constante tende a zero perto da raiz e a convergência fica quadrática. Para Re = 1e4, o relato da issue dava 10 iterações e, depois da correção, a tabela 2(a) mostra 5. Os testes de aceitação não pegaram o defeito porque só conferem se a raiz está certa, e o Newton defeituoso ainda chega à raiz certa. Nenhum deles verifica o número de iterações nem a ordem de convergência.
+convergência linear; por que os testes de aceitação não pegaram o defeito. --> 
+Meus testes de regressão são 'test_recalcula_a_derivada_a_cada_iteracao' e 'test_converge_em_poucas_iteracoes': os dois falhavam com o código original e passam depois da correção. Com a derivada calculada uma vez só, em x₀, a iteração vira x_{k+1} = x_k − f(x_k)/f'(x₀). Como f'(x₀) ≠ f'(raiz), o erro só é multiplicado por uma constante menor que 1 a cada passo, então a convergência é linear. Recalculando f'(x_k) a cada iteração, essa constante tende a zero perto da raiz e a convergência fica quadrática. Para Re = 1e4, o relato da issue dava 10 iterações e, depois da correção, a tabela 2(a) mostra 5. Os testes de aceitação não pegaram o defeito porque só conferem se a raiz está certa, e o Newton defeituoso ainda chega à raiz certa. Nenhum deles verifica o número de iterações nem a ordem de convergência.
 
 ## Marco 4
 
