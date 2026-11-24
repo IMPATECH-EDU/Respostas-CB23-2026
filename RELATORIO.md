@@ -34,13 +34,13 @@ A escala linear nominal dá 261,97 kPa para uma pressão de referência de 380,0
 
 ### R5 — Previsão × medição
 
-Nas três branches públicas do fork, as versões do relatório mantêm vazias as previsões de R5 e R6. Não foi localizado um commit de previsões anterior à medição. Sem esse registro, não é possível quantificar a diferença entre previsão e resultado.
+Nas três branches públicas do fork, as versões do relatório mantêm vazias as previsões de R5 e R6. Não foi localizado um commit de previsões anterior à medição. As estimativas teóricas abaixo foram acrescentadas em 23/11/2026, após a execução.
 
-| Grandeza | Previsão anterior | Medido no Ubuntu |
+| Grandeza | Estimativa após a execução | Medido no Ubuntu |
 | --- | --- | ---: |
-| Memória da lista / memória do uint16 | Sem registro anterior | 18,00 |
-| Tempo do laço / tempo vetorizado | Sem registro anterior | 36,80 |
-| Tempo da compreensão / tempo do laço | Sem registro anterior | 0,93 |
+| Memória da lista / memória do uint16 | Cerca de 18 vezes: (8 bytes pela referência + 28 pelo inteiro) / 2 por uint16, no CPython de 64 bits | 18,00 |
+| Tempo do laço / tempo vetorizado | Maior que 1: a versão vetorizada percorre os dados em código compilado | 36,80 |
+| Tempo da compreensão / tempo do laço | Próximo de 1: ambos fazem a mesma aritmética em Python | 0,93 |
 
 Tempos médios no Ubuntu para um milhão de contagens: laço 39,70 ms, compreensão 37,04 ms, map com lambda 50,55 ms e vetorizado 1,08 ms.
 
@@ -48,13 +48,13 @@ Para um milhão de contagens, a lista ocupa 36.000.056 bytes pelo critério do e
 
 ### R6 — Tipos da SerieTemporal
 
-| Expressão | Previsão anterior | Tipo observado na revisão (NumPy 2.3.5) |
+| Expressão | Hipótese teórica após a execução (23/11/2026) | Tipo observado na revisão (NumPy 2.3.5) |
 | --- | --- | --- |
-| `s + s` | Sem registro anterior | SerieTemporal |
-| `s[1:]` | Sem registro anterior | SerieTemporal |
-| `s * 2` | Sem registro anterior | SerieTemporal |
-| `s.sum()` | Sem registro anterior | SerieTemporal |
-| `s[0]` | Sem registro anterior | float64 |
+| `s + s` | SerieTemporal | SerieTemporal |
+| `s[1:]` | SerieTemporal | SerieTemporal |
+| `s * 2` | SerieTemporal | SerieTemporal |
+| `s.sum()` | float64 seria intuitivo por se tratar de uma redução | SerieTemporal |
+| `s[0]` | float64 | float64 |
 
 A soma de todos os pontos tem um único valor, mas nesta execução o NumPy o devolve como um array de dimensão zero da subclasse SerieTemporal. A indexação s[0] extrai diretamente um escalar NumPy.
 
