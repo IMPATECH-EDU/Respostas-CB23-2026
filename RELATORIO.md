@@ -170,6 +170,7 @@ convergência linear; por que os testes de aceitação não pegaram o defeito. -
 Testes: test_raiz_de_dois_em_no_maximo_seis_iteracoes e test_digitos_corretos_dobram_a_cada_iteracao. Calcular a derivada uma vez e usá-la ira
 implicar em menos informação sobre a curva perto da raiz, de modo que cada passo irá errar o valor da raiz na mesma proporção, uma proporção linear, em vez de ser elevada ao quadrado. Os teste de aceitação não detectavam isso porque eles apenas avaliam se a raiz estava certa, e de
 fato ela estava, mas demorava mais para chegar nela, e essa demora não era avaliada (o número de iterações).
+
 ## Marco 4
 
 ### R13 — Integração e descontinuidade
@@ -177,6 +178,10 @@ fato ela estava, mas demorava mais para chegar nela, e essa demora não era aval
 <!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
 de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
 Por quê? -->
+
+Ocorre um salto no valor da tarifa, de 0,50 reais para 1,50, de modo que as integrais agora não integram curvas suaves. Integrar tudo mantem
+esse salto que espalha um erro e gera a ordem 1. Mas integrar separadamente ignora esse salto, voltamos a ter curvas suaves e volta a 
+oferecer os valores de ordem 2 e 4.
 
 ### R14 — Issue #11
 
