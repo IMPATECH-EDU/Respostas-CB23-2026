@@ -39,7 +39,7 @@ LINHA: re.Pattern = re.compile(
     [ ]+                          # um ou mais espaços de separação
     (?P<tag>[A-Z]{1,2}\d{1,3})    # tag: 1 ou 2 maiúsculas e 1 a 3 dígitos
     [ ]+                          # um ou mais espaços de separação
-    (?P<resto>\S.*)               # resto: começa com caractere que não éespaço e vai até o fim
+    (?P<resto>\S.*)               # resto: começa com caractere que não é espaço e vai até o fim
     """,
     re.VERBOSE,
 )
@@ -63,13 +63,15 @@ def valida_tag(s: str) -> bool:
     """
     return re.fullmatch(r"[A-Z]{1,2}\d{1,3}", s) is not None
 
+
 def _converter_valor(valor: str) -> float | str:
     """Devolve `valor` como `float` se a conversão for possível; senão, devolve a própria `str`."""
     try:
         return float(valor)
     except ValueError:
         return valor
-    
+
+
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
     """Lê o texto do log e devolve `(registros, invalidas)`.
 
@@ -222,4 +224,4 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
         "compreensão": cronometrar(converter_compreensao, lista, k=k),
         "map+lambda": cronometrar(converter_map, lista, k=k),
         "vetorizado": cronometrar(converter_vetorizado, contagens, k=k),
-    }
+}

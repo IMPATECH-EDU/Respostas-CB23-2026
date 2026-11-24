@@ -17,7 +17,7 @@ from fornecido.simulador import gerar_log
 from elevatoria.dados import (contagem_por_tag, criar_conversores, ler_log, medir_memoria,
                               medir_tempos, serie, valida_tag)
 
-MATRICULA = 3476  
+MATRICULA = 3476
 
 
 def _todo(item: str):

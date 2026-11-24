@@ -7,8 +7,7 @@ import unittest
 import numpy as np
 from elevatoria import dados
 from elevatoria.dados import por_tag
-from elevatoria.serie import SerieTemporal 
-
+from elevatoria.serie import SerieTemporal
 
 class TestPorTagExemplo(unittest.TestCase):
     """Exemplo do formato. `por_tag` é código existente da base."""
@@ -158,4 +157,3 @@ class TestReamostrar(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

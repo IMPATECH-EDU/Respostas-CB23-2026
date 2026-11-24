@@ -118,7 +118,6 @@ class Newton(MetodoRaiz):
         """Uma raiz de `f` pelo método de Newton, começando no ponto médio de `[a, b]`."""
         x = 0.5 * (a + b)
         historico = [x]
-    
         for k in range(1, self.max_iter + 1):
             derivada = self._derivada(f, x)
             if derivada == 0:

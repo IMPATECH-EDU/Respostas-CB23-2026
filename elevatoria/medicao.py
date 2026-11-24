@@ -90,7 +90,6 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     return Medicao(tag, Medida(media, u), desvio, int(validas.size), espurias)
 
 
-
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
                        u_sistematica: float = 1.5) -> Medida:
     """Altura manométrica da bomba, em metros, com a sua incerteza.
