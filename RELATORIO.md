@@ -80,3 +80,13 @@ Testes de regressão: `TestRegressaoKahan.test_um_milhao_de_parcelas_de_um_decim
 ### R10 — Precisão × exatidão
 
 O desvio é 0,514 kPa na curva linear e 0,516 kPa na spline. A precisão (dispersão das leituras) é a mesma, porque o ruído vem do transmissor. O viés em relação a 380 kPa é -1,852 kPa na linear e -0,022 kPa na spline, e essa é a diferença de exatidão: perto de 1790 contagens a linear converte com erro sistemático. A média de 595 leituras válidas reduz o erro padrão para 0,021 kPa, mas todas passam pela mesma curva e carregam o mesmo erro. Assim a média herda o viés de 1,9 kPa, cerca de 88 vezes o erro padrão.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção para quando a largura do intervalo fica abaixo de `tol`, e essa largura depende só de [2, 15] e da tolerância: 13/2^k < 1e-12 exige k = 44, para qualquer f e Re. Com ordem de convergência 2, o erro de cada iteração é proporcional ao quadrado do anterior. Em Re = 1e4 os erros do Newton são 5,0e-2, 2,3e-5 e 5,0e-12, com constante perto de 0,009, e os dígitos corretos dobram a cada passo. O Newton falha onde a bissecção funciona em f(x) = x³ - 2x + 2 sobre [-2, 2]: parte de 0, vai a 1, volta a 0 e fica nesse ciclo sem convergir, enquanto a bissecção encontra a raiz perto de -1,769.
+
+### R12 — Issue #9
+
+Testes de regressão: `TestRegressaoNewton.test_colebrook_re_1e4_em_poucas_iteracoes`, `test_raiz_de_dois_em_poucas_iteracoes`, `test_derivada_e_avaliada_a_cada_iteracao` e `test_erro_cai_mais_rapido_que_linear`. Com a derivada fixa em f'(x0), a iteração vira x_{k+1} = x_k - f(x_k)/f'(x0), um ponto fixo cujo erro encolhe por um fator constante |1 - f'(x*)/f'(x0)|. Esse fator só vai a zero quando f'(x_k) acompanha o ponto, e daí vem a convergência quadrática. A aceitação confere a raiz e `convergiu`, e a versão lenta também cumpre isso: gastava 10 iterações em Re = 1e4 e 32 em x² - 2.
