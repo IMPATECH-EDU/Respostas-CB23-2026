@@ -88,6 +88,8 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
         raise ValueError("Menos de 3 erros acima do piso")
 
     e1, e2, e3 = erros[-3:]
+    if not (e3<e2<e1):
+        raise ValueError("Os três últimos erros devem ser estritamente decrescentes.")
 
     numerador = math.log(e3/e2)
     denominador = math.log(e2/e1)

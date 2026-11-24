@@ -86,6 +86,9 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
 
     validas = convertido[validas_mask]
 
+    if len(validas)<2:
+        raise ValueError("menos de 2 leituras válidas após o descarte de espúrias")
+
     indices_espurias = np.flatnonzero(abs(z) > limiar) 
 
     media = np.mean(validas)

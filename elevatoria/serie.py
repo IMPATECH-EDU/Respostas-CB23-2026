@@ -32,8 +32,8 @@ class SerieTemporal(np.ndarray):
         """
         if janela < 1 or janela > len(self):
             raise ValueError(f"janela deve estar entre 1 e {len(self)}; recebi {janela}")
-        acumulada = np.cumsum(self)
-        return (acumulada[janela-1:] - acumulada[:-janela+1]) / janela
+        acumulada = np.concatenate(([0.0], np.cumsum(self)))
+        return ((acumulada[janela:] - acumulada[:-janela]) / janela).view(type(self))
 
 
     def variacao(self) -> SerieTemporal:
@@ -64,11 +64,6 @@ class SerieTemporal(np.ndarray):
         if k<1 or k>len(self):
             raise ValueError
         n_elementos = (len(self)//k)*k
-        novo = np.asarray(self[:n_elementos])
-
-        re = novo.reshape(-1, k).mean(axis=1)
-        return(novo.reshape(-1, k).mean(axis=1))
-
-
+        return(self[:n_elementos].reshape(-1,k).mean(axis=1))
 
         raise NotImplementedError("issue #5: reamostrar ainda não foi implementado")
