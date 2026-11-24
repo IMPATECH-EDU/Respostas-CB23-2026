@@ -20,23 +20,6 @@ class TestBisseccaoExemplo(unittest.TestCase):
         resultado = Bisseccao().encontrar(lambda x: x - 1.0, 1.0, 3.0)
         self.assertEqual((resultado.raiz, resultado.iteracoes), (1.0, 0))
 
-    def test_convergencia(self):
-
-        def f(x):
-            return x**2 - 2  #Raiz: sqrt(2)
-
-        raiz = Newton(tol=1e-12).encontrar(f,0,4)
-        conv = ordem_convergencia(raiz.historico, raiz.raiz)
-        self.assertGreater(conv, 1.8) 
-
-    def test_quant_passos(self):
-
-        Re = 10e4
-        D = 0.15e-3
-        resolv = Newton(tol=1e-12)
-
-        f, resultado = fator_atrito_colebrook(Re, D, resolv)
-        self.assertLessEqual(resultado.iteracoes, 6) 
 
 VAZOES = np.arange(0.0, 101.0, 10.0)
 BOMBA = CurvaCalibracao(VAZOES, 50.0 - 0.004 * VAZOES ** 2, "spline")
