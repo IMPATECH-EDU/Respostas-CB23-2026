@@ -50,6 +50,7 @@ Previsões registradas no commit: 2ee94cd
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
 A maior diferença foi no tempo vetorizado: previsto ~100x, medido 12,5x. O vetorizado ganhou menos que o esperado porque a conta c * 600 / 4095 é muito simples, então o laço já gasta pouco por elemento, e o vetorizado ainda paga a conversão com astype e cria arrays temporários.
 uint16 * 20 dá 16364 porque 4095 * 20 = 81900 não cabe em 16 bits (máximo 65535), e o NumPy dá a volta: 81900 - 65536 = 16364. Para contagens eu escolheria uint16 (0 a 4095, 2 B por valor) e, para pressões em kPa, float64, porque o float32 tem menos precisão e o erro pode se acumular em somas longas.
+
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
 | Expressão | Tipo previsto | Tipo observado |
@@ -112,11 +113,13 @@ Precisão é a dispersão das leituras, o desvio de PT102 é 0.522 kPa (linear) 
 quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
 situação em que o Newton falha e a bissecção não. --> 
 A bissecção parte de [2, 15], de largura 13, e a cada iteração a largura cai pela metade. Ela para quando 13/2^k < 1e-12, ou seja, k > log2(1,3e13) ≈ 43,6, então k = 44, número que só depende da largura e da tolerância, e não do Reynolds. Ordem de convergência 2 significa e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada passo. Para Re = 1e4, os erros foram 5.0e-02, 2.3e-05 e 5.0e-12, com ordem estimada de 2.00. O Newton falha e a bissecção não quando a iteração diverge, como em f(x) = x^(1/3) com x₀ ≠ 0, em que x_{k+1} = −2·x_k; a bissecção só exige f contínua e troca de sinal em [a, b].
+
 ### R12 — Issue #9
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. --> 
 Meus testes de regressão são 'test_recalcula_a_derivada_a_cada_iteracao' e 'test_converge_em_poucas_iteracoes'. Com a derivada calculada uma vez só, em x₀, a iteração vira x_{k+1} = x_k − f(x_k)/f'(x₀). Como f'(x₀) ≠ f'(raiz), o erro só é multiplicado por uma constante menor que 1 a cada passo, então a convergência é linear. Recalculando f'(x_k) a cada iteração, essa constante tende a zero perto da raiz e a convergência fica quadrática: para Re = 1e4, eram 10 iterações e agora são 5. Os testes de aceitação só conferem se a raiz está certa, e o Newton defeituoso ainda chega à raiz certa; nenhum verifica o número de iterações.
+
 ## Marco 4
 
 ### R13 — Integração e descontinuidade
