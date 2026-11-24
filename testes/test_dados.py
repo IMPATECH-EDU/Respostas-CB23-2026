@@ -50,6 +50,42 @@ class TestRegressaoMediaMovel(unittest.TestCase):
         self.assertTrue(np.allclose(resultado, [5.0, -1.0, 3.5]))
 
 
+class TestReamostrar(unittest.TestCase):
+    """Issue #5: reamostrar."""
+
+    def test_sobra_no_fim_e_descartada(self):
+        """Com 7 pontos e k = 3, o último ponto sobra e é descartado."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
+        resultado = s.reamostrar(3)
+        self.assertEqual(len(resultado), 2)
+        self.assertTrue(np.allclose(resultado, [2.0, 5.0]))
+
+    def test_sem_sobra_a_media_geral_se_conserva(self):
+        """Se k divide n, a média dos blocos é a média da série."""
+        s = SerieTemporal.de_lista(np.arange(12.0) ** 2)
+        self.assertAlmostEqual(float(s.reamostrar(4).mean()), float(s.mean()))
+
+    def test_k_igual_ao_tamanho_da_um_bloco(self):
+        """k igual a n forma um bloco só."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 6.0])
+        resultado = s.reamostrar(3)
+        self.assertEqual(len(resultado), 1)
+        self.assertAlmostEqual(float(resultado[0]), 3.0)
+
+    def test_nao_modifica_a_serie_original(self):
+        """Não altera a série original e devolve uma SerieTemporal."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0, 5.0])
+        copia = np.array(s)
+        resultado = s.reamostrar(2)
+        self.assertIsInstance(resultado, SerieTemporal)
+        self.assertTrue(np.array_equal(s, copia))
+
+    def test_k_nao_inteiro(self):
+        """k não inteiro levanta ValueError."""
+        with self.assertRaises(ValueError):
+            SerieTemporal.de_lista([1.0, 2.0, 3.0, 4.0]).reamostrar(2.5)
+
+
 class TestContratoLerLog(unittest.TestCase):
     """Regras de ler_log que a aceitação não cobre."""
 
