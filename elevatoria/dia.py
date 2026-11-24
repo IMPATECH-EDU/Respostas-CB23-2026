@@ -21,6 +21,9 @@ import numpy as np
 from elevatoria.integracao import Integrador
 from fornecido.energia import FAIXAS_TARIFARIAS, potencia_eletrica
 
+#: Tolerância (h) para reconhecer um limite de faixa entre os instantes do registro.
+_TOLERANCIA_H = 1e-9
+
 
 def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     """Coeficientes `[c0, c1, ..., c_grau]` do polinômio de mínimos quadrados de grau `grau`.
@@ -39,9 +42,22 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     - a fatoração QR dessa mesma matriz, com `np.linalg.qr` e `scipy.linalg.solve_triangular`.
 
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
-    houver menos pontos que coeficientes (`len(x) < grau + 1`).
+    houver menos pontos que coeficientes (`len(x) < grau + 1`) ou se houver valores não finitos.
+
+    Usa `polyfit`, que resolve por mínimos quadrados via SVD e já devolve os coeficientes em
+    ordem crescente. Evita as equações normais, que elevam o número de condição ao quadrado.
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if grau < 0:
+        raise ValueError(f"o grau deve ser não negativo; recebi {grau}")
+    if x.size < grau + 1:
+        raise ValueError(f"{x.size} ponto(s) não bastam para o grau {grau}: são precisos {grau + 1}")
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(y))):
+        raise ValueError("x e y devem ter só valores finitos")
+    return np.polynomial.polynomial.polyfit(x, y, grau)
 
 
 @dataclass(frozen=True)
@@ -74,6 +90,29 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Todas as integrais usam `integrador.integrar_tabela(x, y)`.
 
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
-    faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
+    faixa (0, 18, 21 e 24 h) não estiver em `t` (tolerância de 1e-9 h) ou se o rendimento não
+    for positivo.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t = np.asarray(t, dtype=float)
+    vazao = np.asarray(vazao, dtype=float)
+    if t.ndim != 1 or vazao.shape != t.shape:
+        raise ValueError(f"t e vazao devem ser vetores 1D do mesmo tamanho; recebi {t.shape} e {vazao.shape}")
+    limites = {inicio for inicio, _, _ in FAIXAS_TARIFARIAS} | {FAIXAS_TARIFARIAS[-1][1]}
+    for limite in sorted(limites):
+        if not np.any(np.abs(t - limite) <= _TOLERANCIA_H):
+            raise ValueError(f"o limite de faixa {limite:g} h não está entre os instantes de t")
+
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+
+    custo_por_faixa = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        dentro = (t >= inicio - _TOLERANCIA_H) & (t <= fim + _TOLERANCIA_H)
+        custo_por_faixa.append(float(tarifa * integrador.integrar_tabela(t[dentro], potencia[dentro])))
+    return ResumoDia(
+        volume_m3=3.6 * integrador.integrar_tabela(t, vazao),
+        energia_kwh=integrador.integrar_tabela(t, potencia),
+        custo_reais=sum(custo_por_faixa),
+        custo_por_faixa=tuple(custo_por_faixa),
+    )
