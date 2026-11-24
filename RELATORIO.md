@@ -69,3 +69,13 @@ Testes de regressão: test_um_milhao_de_pulsos, test_melhor_que_o_ingenuo e test
 
 ### R10 — Precisão × exatidão
 Precisão é o espalhamento das leituras: o desvio de PT102 é 0.525 (linear) e 0.527 (spline), que é, praticamente, igual. Exatidão é a proximidade do valor verdadeiro (380 kPa): o viés da curva linear é −1.834 kPa e o da spline é −0.005 kPa. Em outras palavras, as duas curvas são igualmente precisas, mas só a spline é exata. A curva linear erra até 2.88 kPa na Etapa 1, contra 0.025 da spline, porque o transmissor segue um seno e a reta ignora a curvatura. A média de cerca de 595 leituras válidas reduz o erro aleatório, o erro padrão fica em torno de 0.525/√595 ≈ 0.02 kPa. Mas o viés da linear é um erro sistemático, que desloca todas as leituras para o mesmo lado, e a média não o corrige.
+
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+Sempre 44, pois, a bissecção divide o intervalo ao meio a cada passo e só para quando a largura fica menor que tol. O intervalo inicial é [2, 15], então o número de passos é cerca de log2(13 / tol), que dá 44 para a tolerância usada. Isso só depende da largura e da tolerância, e não da função nem do Reynolds. Ordem 2 com os seus erros: em Re = 1e4, os erros são 2.9, 5.0e-2, 2.3e-5, 5.0e-12. Cada erro é aproximadamente uma constante vezes o quadrado do anterior. Na prática, o número de dígitos corretos dobra a cada iteração. A ordem estimada deu 2.00. Tem uma situação em que o Newton falha e a bissecção não: quando a derivada é zero (ou quase) no ponto inicial ou durante o caminho, o passo f/f' explode ou nem existe (o código levanta ValueError), e há funções em que o Newton fica oscilando entre dois pontos. A bissecção só precisa que f(a) e f(b) tenham sinais opostos, então ela não depende da derivada.
+
+
+### R12 — Issue #9
+test_poucas_iteracoes_em_colebrook, test_raiz_de_dois_em_poucas_iteracoes e test_erro_cai_mais_rapido_que_linear são os testes de regrewsão. Contra o raizes.py original, os três falham. Calcular a derivada uma vez só deixa a convergência linear, uma vez que o passo vira x − f(x)/f'(x₀), com a derivada congelada no ponto inicial. Esse é o método da corda: a inclinação usada fica cada vez mais diferente da inclinação verdadeira perto da raiz, e o erro cai por um fator aproximadamente constante a cada passo, em vez de ser elevado ao quadrado. A aceitação não pegou, porque os testes de aceitação só conferem se o resultado final está certo (a raiz, o fator de atrito), e nunca o número de iterações nem a velocidade de convergência. O Newton com defeito chega à resposta certa, só que bem mais devagar.
