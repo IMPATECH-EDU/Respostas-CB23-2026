@@ -40,6 +40,11 @@ class TestRegressaoNewton(unittest.TestCase):
 class TestContratoOperacao(unittest.TestCase):
     """Casos de fronteira da estimativa da ordem e do ponto de operação."""
 
+    def test_ordem_com_erros_em_escalas_extremas(self) -> None:
+        """A ordem continua definida quando o quociente direto subflui."""
+        ordem = ordem_convergencia([1e300, 1e-100, 1e-200], 0.0, piso=0.0)
+        self.assertAlmostEqual(ordem, 0.25)
+
     def test_piso_relativo_exclui_igualdade(self) -> None:
         """O erro igual ao piso escalado pela raiz fica fora da estimativa."""
         historico = [144, 132, 104, 102]

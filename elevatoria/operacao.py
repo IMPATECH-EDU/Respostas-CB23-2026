@@ -87,4 +87,10 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     anterior, atual, seguinte = significativos[-3:]
     if anterior == atual:
         raise ValueError("erros consecutivos iguais impedem estimar a ordem")
-    return math.log(seguinte / atual) / math.log(atual / anterior)
+    def log_razao(novo: float, antigo: float) -> float:
+        """Calcula o logaritmo da razão sem perder diferenças pequenas ou extremas."""
+        if 0.5 * antigo <= novo <= 2.0 * antigo:
+            return math.log1p((novo - antigo) / antigo)
+        return math.log(novo) - math.log(antigo)
+
+    return log_razao(seguinte, atual) / log_razao(atual, anterior)
