@@ -126,3 +126,27 @@ diferentes para PT102. Explique a diferença entre precisão e exatidão com ess
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 
 Fazer a média de quase 600 leituras não elimina o viés da curva linear porque a média só cancela o ruído aleatório, que varia para cima e para baixo. Como a aproximação por reta da interpolação linear empurra todas as leituras para baixo nessa faixa, o erro é sistemático e a média continua deslocada.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+A bissecção divide o intervalo ao meio a cada passo isso resultan em um número fixo de iterações. A ordem de convergência 2 significa que o erro atual é proporcional ao quadrado do erro anterior. O Newton falha se a derivada inicial for zero, se tiver muitas oscilações bruptas ou se o chute inicial estiver distante da raiz, enquanto a bissecção sempre converge se houver troca de sinal.
+
+
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+test_regressao_newton_convergencia_rapida
+test_regressao_newton_atualiza_derivada
+test_ordem_convergencia_quadratica
+test_ordem_convergencia_lanca_erro_poucos_erros
+
+Derivar uma vez fixa a inclinação. OS testes de aceitaçao nao pegaram porque eles verificavam se o método encontra a raiz correte. nao testaram restrições para velocidades nem o número exato de intereações.

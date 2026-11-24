@@ -77,8 +77,12 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     """
 
     erros = [abs(x-raiz) for x in historico]
-    erros_validos = [x for x in erros[::-1] if x > piso*max(1,abs(raiz))]
+    erros_validos = [x for x in erros if x > piso*max(1,abs(raiz))]
     if len(erros_validos) < 3:
         raise ValueError("Menos de três erros acima do piso.")
-    p = math.log(erros_validos[-3]/erros_validos[-2]) / math.log(erros_validos[-2] / erros_validos[-1])
+    e_k2 = erros_validos[-3]
+    e_k1 = erros_validos[-2]
+    e_k  = erros_validos[-1]
+    p = math.log(e_k / e_k1) / math.log(e_k1 / e_k2)
     return p
+
