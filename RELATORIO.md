@@ -150,3 +150,24 @@ test_ordem_convergencia_quadratica
 test_ordem_convergencia_lanca_erro_poucos_erros
 
 Derivar uma vez fixa a inclinação. OS testes de aceitaçao nao pegaram porque eles verificavam se o método encontra a raiz correte. nao testaram restrições para velocidades nem o número exato de intereações.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+A variação abrupta das tarifas nas fronteiras das faixas quebra a suavidade da função. Integrar o dia todo de uma vez faz o erro dominar e cair para ordem 1. Integrando por faixa, cada trecho é contínuo e recupera as ordens 2 e 4.
+
+
+### R14 — Issue #11
+
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+
+test_integracao_com_falhas_multiplas
+test_integracao_com_valores_nan
+
+A causa foi o passo constante no trapezio, quebrava em malhas irregulares. Simpson serve porque exige que a malha seja perfeitamente uniforme e um número impar de pontos
