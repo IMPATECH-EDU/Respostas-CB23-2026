@@ -20,7 +20,6 @@ class CurvaCalibracao:
 
     - `metodo="linear"`: `make_interp_spline(entradas, saidas, k=1)`;
     - `metodo="spline"`: `CubicSpline(entradas, saidas)` (spline cúbica).
-
     Levanta `ValueError` se `entradas` e `saidas` não forem vetores 1D do mesmo tamanho, com
     pelo menos 3 pontos, se `entradas` não for estritamente crescente ou se `metodo` não for
     `"linear"` nem `"spline"`.
