@@ -8,9 +8,6 @@ Este módulo junta peças que já existem na base:
   um colega);
 - o NumPy ou o SciPy, para o ajuste de curvas (há mais de um caminho: veja `ajustar_polinomio`).
 
-As funções marcadas com `NotImplementedError` são a issue #10; as docstrings descrevem o
-contrato. Não mude nomes nem assinaturas públicas: o `marco4.py` e os testes dependem deles.
-Funções auxiliares privadas (`_nome`) são permitidas.
 """
 from __future__ import annotations
 
@@ -41,7 +38,13 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1D de mesmo tamanho")
+    if grau < 0 or x.size < grau + 1:
+        raise ValueError("o grau deve ser não negativo e menor que o número de pontos")
+    return np.polynomial.polynomial.polyfit(x, y, grau)
 
 
 @dataclass(frozen=True)
@@ -76,4 +79,21 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t = np.asarray(t, dtype=float)
+    vazao = np.asarray(vazao, dtype=float)
+    if t.ndim != 1 or vazao.ndim != 1 or t.size != vazao.size:
+        raise ValueError("tempo e vazão devem ser vetores 1D de mesmo tamanho")
+
+    altura = np.polynomial.polynomial.polyval(vazao, coef_altura)
+    rendimento = np.polynomial.polynomial.polyval(vazao, coef_rendimento)
+    potencia = potencia_eletrica(vazao, altura, rendimento)
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    energia = integrador.integrar_tabela(t, potencia)
+
+    custos = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        if inicio not in t or fim not in t:
+            raise ValueError(f"faltam leituras nos limites da faixa [{inicio}, {fim}]")
+        faixa = (t >= inicio) & (t <= fim)
+        custos.append(tarifa * integrador.integrar_tabela(t[faixa], potencia[faixa]))
+    return ResumoDia(volume, energia, sum(custos), tuple(custos))
