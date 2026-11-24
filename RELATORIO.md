@@ -156,3 +156,19 @@ Testes de regressão: test_raiz_de_dois_em_poucas_iteracoes, test_derivada_e_cha
 Com a derivada calculada uma vez só, todo passo usa a inclinação do ponto inicial, e não a tangente local. O erro passa a ser multiplicado por uma constante a cada passo (é uma convergência linear), em vez de elevado ao quadrado.
 Para x² - 2 foram 32 iterações em vez de 6, e Colebrook com Re = 1e4 levou 10 em vez de 5.
 Os testes de aceitação só vçao conferir a raiz dentro da tolerância, que o método lento também atinge, só que com mais iterações.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+Integrando o custo do dia de uma vez, a tarifa vai dar um salto às 18 h e às 21 h, e as regras só vão ter o erro previsto (h² no trapézio, h⁴ no Simpson) quando a função é suave.
+O subintervalo que contém cada salto é integrado como se a função fosse contínua e erra numa quantidade proporcional a h. Esse erro cai só como h e domina o resto. Por isso a ordem observada foi 1,00 no trapézio e 0,65 no Simpson.
+Integrando cada faixa separadamente, a função (potência × tarifa constante) é suave dentro da faixa e os saltos vão cair nas pontas dos intervalos: voltam as ordens 2,00 e 4,00 (erro de 8,1e-08 no Simpson com n = 110).
+
+
+### R14 — Issue #11
+
+Testes de regressão: test_reta_em_malha_irregular, test_pontos_perdidos_nao_mudam_a_integral_de_uma_reta e test_volume_do_dia_com_registro_falho.
+Causa: Trapezio.integrar_tabela usava h = x[1] - x[0], a largura do primeiro intervalo, em todos os trapézios; com leituras perdidas, intervalos de 30 min eram tratados como de 15 min e o volume saiu 3570,0 m³ contra 3888,0 (erro de 8,18%). Correção ficou como sendo usar a largura de cada trapézio, np.diff(x) (agora 3900,7 m³, erro de 0,33%).
+Os testes de aceitação só usam malhas uniformes, onde a largura do primeiro intervalo vale para todos e por isso nunca viram o defeito.
+O Simpson não serve para o registro do dia porque exige pontos igualmente espaçados (e número ímpar de pontos), e o registro tem intervalos de 15 e de 30 min. a Etapa 2(a) mostra a recusa.
