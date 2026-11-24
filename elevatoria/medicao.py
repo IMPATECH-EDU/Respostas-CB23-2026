@@ -13,6 +13,7 @@ Funções auxiliares privadas (`_nome`) são permitidas.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -61,9 +62,33 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
 
     Levanta `ValueError` se `u_sistematica < 0`, se a tag tiver menos de 2 leituras, se a MAD
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
-    fora do domínio) não é tratado: ele chega a quem chamou `medir`.
+    fora do domínio) não é tratado: ele chega a quem chamou `medir`. Levanta `ValueError`
+    também se `limiar <= 0`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError(f"u_sistematica não pode ser negativa; recebi {u_sistematica}")
+    if not limiar > 0:
+        raise ValueError(f"limiar deve ser positivo; recebi {limiar}")
+    contagens = serie(registros, tag, "contagens")
+    if len(contagens) < 2:
+        raise ValueError(f"a tag {tag!r} tem {len(contagens)} leitura(s); são precisas pelo menos 2")
+    pressoes = np.asarray(curva(np.asarray(contagens)))
+    mad = float(stats.median_abs_deviation(pressoes, scale="normal"))
+    if mad == 0.0:
+        raise ValueError(f"MAD nula na tag {tag!r}: o z robusto não está definido")
+    z = (pressoes - np.median(pressoes)) / mad
+    espuria = np.abs(z) > limiar
+    validas = pressoes[~espuria]
+    if validas.size < 2:
+        raise ValueError(f"só {validas.size} leitura(s) válida(s) na tag {tag!r} com limiar {limiar}")
+    erro_padrao = float(stats.sem(validas))
+    return Medicao(
+        tag=tag,
+        medida=Medida(float(np.mean(validas)), math.hypot(erro_padrao, u_sistematica)),
+        desvio=float(np.std(validas, ddof=1)),
+        n_validas=int(validas.size),
+        espurias=np.flatnonzero(espuria).tolist(),
+    )
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -73,6 +98,8 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     `H = (P_PT102 - P_PT101) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)`, em que `P_PT101` e
     `P_PT102` são as `medida`s de `medir` para as duas tags, em kPa (o fator 1000 converte
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
-    com `Medida`, que propaga as incertezas.
+    com `Medida`, que propaga as incertezas e trata as duas pressões como independentes.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(registros, "PT101", curva, u_sistematica).medida
+    recalque = medir(registros, "PT102", curva, u_sistematica).medida
+    return (recalque - succao) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)

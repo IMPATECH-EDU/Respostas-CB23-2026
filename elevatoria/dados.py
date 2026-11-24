@@ -29,7 +29,26 @@ from fornecido.cronometro import cronometrar
 #: dígitos) e `resto` (o restante da linha, começando por um caractere que não é espaço).
 #: As partes são separadas por um ou mais espaços. A linha inteira deve casar: o padrão é
 #: aplicado com `LINHA.fullmatch(linha)`.
-LINHA: re.Pattern = None  # type: ignore[assignment]  # TODO issue #1
+LINHA: re.Pattern = re.compile(r"""
+    (?P<data>[0-9]{4}-[0-9]{2}-[0-9]{2})    # data AAAA-MM-DD
+    [ ]+                                    # separador: um ou mais espaços
+    (?P<hora>[0-9]{2}:[0-9]{2}:[0-9]{2})    # hora HH:MM:SS
+    [ ]+                                    # separador
+    (?P<nivel>INFO|WARN|ALARME)             # nível de severidade
+    [ ]+                                    # separador
+    (?P<tag>[A-Z]{1,2}[0-9]{1,3})           # tag: 1 ou 2 maiúsculas e 1 a 3 dígitos
+    [ ]+                                    # separador
+    (?P<resto>\S.*)                         # pares chave=valor, a partir de um não-espaço
+""", re.VERBOSE)
+
+#: Padrão de uma tag isolada, usado por `valida_tag`.
+_TAG: re.Pattern = re.compile(r"[A-Z]{1,2}[0-9]{1,3}")
+
+#: Padrão de um par `chave=valor` dentro de `resto`.
+_PAR: re.Pattern = re.compile(r"(\w+)=(\S+)")
+
+#: Quebra de linha do log: `\n` ou `\r\n`.
+_QUEBRA: re.Pattern = re.compile(r"\r?\n")
 
 
 @dataclass(frozen=True)
@@ -48,7 +67,7 @@ def valida_tag(s: str) -> bool:
     Use `fullmatch`. Válidas: `"PT101"`, `"FT201"`, `"B1"`. Inválidas: `"pt101"`, `"PT"`,
     `"PT1010"`, `"101PT"` e `"PT101 "` (sobra de caracteres).
     """
-    raise NotImplementedError("issue #1: valida_tag")
+    return _TAG.fullmatch(s) is not None
 
 
 def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
@@ -68,8 +87,44 @@ def ler_log(texto: str) -> tuple[list[Registro], list[str]]:
       `float` quando a conversão é possível e continua `str` nos demais casos
       (`contagens=1623` vira `1623.0`; `evento=partida` continua `"partida"`);
     - texto vazio devolve `([], [])`.
+
+    Só `\\n` e `\\r\\n` contam como quebra de linha.
     """
-    raise NotImplementedError("issue #1: ler_log")
+    registros: list[Registro] = []
+    invalidas: list[str] = []
+    for linha in _QUEBRA.split(texto):
+        if not linha.strip():
+            continue
+        registro = _interpretar(linha)
+        if registro is None:
+            invalidas.append(linha)
+        else:
+            registros.append(registro)
+    return registros, invalidas
+
+
+def _converter(valor: str) -> float | str:
+    """Converte para `float` quando possível; senão devolve o texto."""
+    try:
+        return float(valor)
+    except ValueError:
+        return valor
+
+
+def _interpretar(linha: str) -> Registro | None:
+    """Converte a linha em `Registro`, ou devolve `None` se ela for inválida."""
+    casou = LINHA.fullmatch(linha)
+    if casou is None:
+        return None
+    try:
+        instante = datetime.strptime(f"{casou['data']} {casou['hora']}", "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None   # data ou hora impossível
+    pares = _PAR.findall(casou["resto"])
+    if not pares:
+        return None
+    valores = {chave: _converter(valor) for chave, valor in pares}
+    return Registro(instante, casou["nivel"], casou["tag"], valores)
 
 
 def por_tag(registros: list[Registro], tag: str) -> list[Registro]:
@@ -83,7 +138,8 @@ def contagem_por_tag(registros: list[Registro]) -> dict[str, int]:
     Use uma compreensão de dicionário sobre o conjunto das tags, obtido por uma compreensão
     de conjunto. Lista vazia devolve `{}`.
     """
-    raise NotImplementedError("issue #1: contagem_por_tag")
+    tags = {r.tag for r in registros}
+    return {tag: sum(1 for r in registros if r.tag == tag) for tag in tags}
 
 
 def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
@@ -91,25 +147,48 @@ def serie(registros: list[Registro], tag: str, chave: str) -> SerieTemporal:
 
     Os registros da tag sem essa chave (por exemplo, os alarmes de PT102, que não têm
     `contagens`) são ignorados. Crie a série com `SerieTemporal.de_lista`.
+
+    Levanta `ValueError` se algum valor da `chave` for texto. Sem registros, devolve série vazia.
     """
-    raise NotImplementedError("issue #1: serie")
+    valores = [r.valores[chave] for r in registros if r.tag == tag and chave in r.valores]
+    textos = [v for v in valores if isinstance(v, str)]
+    if textos:
+        raise ValueError(f"a chave {chave!r} da tag {tag!r} tem valor não numérico: {textos[0]!r}")
+    return SerieTemporal.de_lista(valores)
 
 
 # ---------------------------------------------------------------------------------------
 # Issue #2: conversores por tag
 # ---------------------------------------------------------------------------------------
+def _conversor(fator: float) -> Callable[[float], float]:
+    """Cria `c -> c * fator`, com o `fator` preso a esta chamada."""
+    # Cada chamada tem o seu escopo. Uma lambda criada direto na compreensão leria o `fator`
+    # do laço, que no fim vale o último (late binding).
+    return lambda c: c * fator
+
+
 def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], float]]:
     """Dado `{tag: fator}`, devolve `{tag: f}`, em que `f(c) = c * fator` da própria tag.
 
     Cada `f` é uma lambda. Cuidado com o *late binding*: cada função deve usar o fator da
     sua tag, e não o último fator do dicionário (veja a issue #2 no enunciado).
     """
-    raise NotImplementedError("issue #2: criar_conversores")
+    return {tag: _conversor(fator) for tag, fator in escalas.items()}
 
 
 # ---------------------------------------------------------------------------------------
 # Issue #3: memória e tempo
 # ---------------------------------------------------------------------------------------
+def _validar_contagens(contagens: np.ndarray) -> None:
+    """Levanta `ValueError` se `contagens` não for um `ndarray` 1D de inteiros."""
+    if not isinstance(contagens, np.ndarray):
+        raise ValueError(f"contagens deve ser um ndarray; recebi {type(contagens).__name__}")
+    if contagens.ndim != 1:
+        raise ValueError(f"contagens deve ser 1D; recebi ndim={contagens.ndim}")
+    if contagens.dtype.kind not in "iu":
+        raise ValueError(f"contagens deve ter dtype inteiro; recebi {contagens.dtype}")
+
+
 def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     """Bytes ocupados pelas `contagens` (ndarray 1D de inteiros de 0 a 4095) em cada estrutura.
 
@@ -121,29 +200,46 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     - `"uint16"`, `"int32"`, `"int64"`, `"float32"`, `"float64"`: o `ndarray` convertido para
       esse `dtype`; conte só os dados (atributo `.nbytes`).
 
-    Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
+    Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros ou se algum valor
+    não couber em `uint16` (0 a 65535).
     """
-    raise NotImplementedError("issue #3: medir_memoria")
+    _validar_contagens(contagens)
+    lista = contagens.tolist()
+    try:
+        compacto = array.array("H", lista)
+    except OverflowError as erro:
+        raise ValueError("as contagens devem estar entre 0 e 65535") from erro
+    memoria = {
+        "list": sys.getsizeof(lista) + sum(sys.getsizeof(x) for x in lista),
+        "array('H')": compacto.itemsize * len(compacto),
+    }
+    for nome in ("uint16", "int32", "int64", "float32", "float64"):
+        memoria[nome] = contagens.astype(nome).nbytes
+    return memoria
 
 
 def converter_laco(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `for` e `append`."""
-    raise NotImplementedError("issue #3: converter_laco")
+    resultado = []
+    for c in contagens:
+        resultado.append(c * 600 / 4095)
+    return resultado
 
 
 def converter_compreensao(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma compreensão de lista."""
-    raise NotImplementedError("issue #3: converter_compreensao")
+    return [c * 600 / 4095 for c in contagens]
 
 
 def converter_map(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `map` e uma lambda."""
-    raise NotImplementedError("issue #3: converter_map")
+    return list(map(lambda c: c * 600 / 4095, contagens))
 
 
 def converter_vetorizado(contagens: np.ndarray) -> np.ndarray:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma operação vetorizada do NumPy."""
-    raise NotImplementedError("issue #3: converter_vetorizado")
+    # Passa para float64 antes da conta: em uint16, `c * 600` estoura os 16 bits sem avisar.
+    return np.asarray(contagens, dtype=np.float64) * 600 / 4095
 
 
 def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
@@ -152,5 +248,14 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     Use `cronometrar` (de `fornecido.cronometro`). Chaves: `"laço"`, `"compreensão"` e
     `"map+lambda"` (que recebem a lista `contagens.tolist()`, criada uma única vez, fora da
     medição) e `"vetorizado"` (que recebe o próprio `ndarray`).
+
+    Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros ou se `k` for inválido.
     """
-    raise NotImplementedError("issue #3: medir_tempos")
+    _validar_contagens(contagens)
+    lista = contagens.tolist()
+    return {
+        "laço": cronometrar(converter_laco, lista, k=k),
+        "compreensão": cronometrar(converter_compreensao, lista, k=k),
+        "map+lambda": cronometrar(converter_map, lista, k=k),
+        "vetorizado": cronometrar(converter_vetorizado, contagens, k=k),
+    }

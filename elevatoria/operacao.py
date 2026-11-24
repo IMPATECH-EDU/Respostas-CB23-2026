@@ -18,6 +18,8 @@ import math
 from dataclasses import dataclass
 from typing import Sequence
 
+import numpy as np
+
 from elevatoria.calibracao import CurvaCalibracao
 from elevatoria.raizes import MetodoRaiz, ResultadoRaiz
 from fornecido.hidraulica import Tubulacao
@@ -49,7 +51,20 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    inicio, fim = bomba.dominio
+    if a < inicio or b > fim:
+        raise ValueError(f"o intervalo [{a}, {b}] sai do domínio da bomba [{inicio}, {fim}]")
+
+    def f(vazao: float) -> float:
+        """Altura da bomba menos a altura exigida pelo sistema, na vazão dada."""
+        return bomba(vazao) - tubulacao.altura_sistema(vazao)
+
+    resultado = resolvedor.encontrar(f, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"o resolvedor não convergiu em {resultado.iteracoes} iterações")
+    return PontoOperacao(vazao=resultado.raiz, altura=bomba(resultado.raiz), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -64,6 +79,14 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
     sobre o método. Exemplos: erros 1e-1, 1e-2, 1e-4, 1e-8 dão `p = 2` (convergência
     quadrática); erros 0.5, 0.25, 0.125 dão `p = 1` (convergência linear).
 
-    Levanta `ValueError` se houver menos de 3 erros acima do piso.
+    Levanta `ValueError` se houver menos de 3 erros acima do piso ou se dois erros seguidos
+    forem iguais (o denominador zera).
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    erros = np.abs(np.asarray(historico, dtype=float) - raiz)
+    acima = erros[erros > piso * max(1.0, abs(raiz))]
+    if acima.size < 3:
+        raise ValueError(f"só {acima.size} erro(s) acima do piso; são precisos pelo menos 3")
+    anterior, atual, seguinte = (float(e) for e in acima[-3:])
+    if anterior == atual:
+        raise ValueError("os dois últimos erros usados são iguais: a ordem não está definida")
+    return math.log(seguinte / atual) / math.log(atual / anterior)
