@@ -1,4 +1,4 @@
-"""Leitura do log SCADA e preparação dos dados da estação elevatória."""
+"""Leitura do log SCADA e preparação dos dados da estação elevatória"""
 from __future__ import annotations
 
 import array
