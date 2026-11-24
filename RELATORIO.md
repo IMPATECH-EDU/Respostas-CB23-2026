@@ -161,11 +161,15 @@ depende da função ou do Reynolds, sempre dando 44 interações. Uma ordem de c
 anterior, como vemos no output, temos que 5.0e-02 ~ (2.9)², 2,3e-05 ~ (5.0e02)². Output completo: 2.9e+00 5.0e-02 2.3e-05 5.0e-12 8.9e-16 0.0e+00
 Para Newton, temos que se o chute inicial for muito longe da raiz, pode ocorrer divergência e oscilações, e uma situação onde Newton falha é
 quando a derivada é 0 ou quase 0, por que ai o termo f(x)/f'(x) explode.
+
 ### R12 — Issue #9
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. -->
 
+Testes: test_raiz_de_dois_em_no_maximo_seis_iteracoes e test_digitos_corretos_dobram_a_cada_iteracao. Calcular a derivada uma vez e usá-la ira
+implicar em menos informação sobre a curva perto da raiz, de modo que cada passo irá errar o valor da raiz na mesma proporção, uma proporção linear, em vez de ser elevada ao quadrado. Os teste de aceitação não detectavam isso porque eles apenas avaliam se a raiz estava certa, e de
+fato ela estava, mas demorava mais para chegar nela, e essa demora não era avaliada (o número de iterações).
 ## Marco 4
 
 ### R13 — Integração e descontinuidade
