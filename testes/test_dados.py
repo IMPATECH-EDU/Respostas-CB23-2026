@@ -9,6 +9,7 @@ from elevatoria import dados
 from elevatoria.dados import por_tag
 from elevatoria.serie import SerieTemporal
 
+
 class TestPorTagExemplo(unittest.TestCase):
     """Exemplo do formato. `por_tag` é código existente da base."""
 
