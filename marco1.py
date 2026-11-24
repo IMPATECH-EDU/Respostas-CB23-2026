@@ -101,6 +101,7 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     certos = criar_conversores(escalas)
     assert math.isclose(errados["PT102"](4095), 409.5)
     assert math.isclose(certos["PT102"](4095), 600.0)
+    print(f"errados['PT102'](4095) = {errados['PT102'](4095):.1f} | certos['PT102'](4095) = {certos['PT102'](4095):.1f}")
 
     # (f) Converta a média das contagens normais de PT102 (até 2000) com a escala nominal
     #     (certos["PT102"]) e imprima ao lado de verdade["pressao_recalque"].
