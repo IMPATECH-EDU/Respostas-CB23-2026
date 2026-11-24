@@ -6,9 +6,22 @@ np.allclose, a não ser que a igualdade exata seja justamente o que você quer t
 """
 import math
 import unittest
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from elevatoria.acumuladores import AcumuladorIngenuo, AcumuladorKahan
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.dados import Registro
+from elevatoria.medicao import altura_manometrica, medir
+
+IDENTIDADE = CurvaCalibracao([0.0, 2000.0, 4095.0], [0.0, 2000.0, 4095.0], "linear")
+
+
+def leituras(tag: str, contagens: list, inicio: int = 0) -> list:
+    """Cria registros de `contagens` da `tag`, um a cada 6 s."""
+    t0 = datetime(2026, 10, 5, 8, 0, 0) + timedelta(seconds=inicio)
+    return [Registro(t0 + timedelta(seconds=6 * i), "INFO", tag, {"contagens": float(c)})
+            for i, c in enumerate(contagens)]
 
 
 class TestAcumuladorIngenuoExemplo(unittest.TestCase):
@@ -56,6 +69,81 @@ class TestRegressaoKahan(unittest.TestCase):
         acumulador = AcumuladorKahan()
         acumulador.adicionar_todos(parcelas)
         self.assertLess(abs(acumulador.total - math.fsum(parcelas)), 1e-12)
+
+
+class TestContratoMedir(unittest.TestCase):
+    """Issue #6: regras de medir que a aceitação não cobre."""
+
+    BASE = [3000, 3001, 2999, 3000, 3002, 2998, 3000, 3001]
+
+    def test_incerteza_sistematica_negativa(self):
+        """Incerteza sistemática negativa levanta ValueError."""
+        with self.assertRaises(ValueError):
+            medir(leituras("PT101", self.BASE), "PT101", IDENTIDADE, u_sistematica=-0.1)
+
+    def test_mad_nula_levanta_erro(self):
+        """Leituras iguais dão MAD zero e levantam ValueError."""
+        with self.assertRaises(ValueError):
+            medir(leituras("PT101", [3000] * 8), "PT101", IDENTIDADE)
+
+    def test_indices_contam_so_as_leituras_da_tag(self):
+        """Os índices das espúrias contam só as leituras da tag, sem alarmes nem outras tags."""
+        regs = leituras("PT102", self.BASE[:4] + [3500] + self.BASE[4:])
+        alarme = Registro(datetime(2026, 10, 5, 8, 0, 1), "ALARME", "PT102", {"evento": "pressao_alta"})
+        outra = leituras("PT101", [100] * 5)
+        medicao = medir(outra + [alarme] + regs, "PT102", IDENTIDADE)
+        self.assertEqual(medicao.espurias, [4])
+        self.assertEqual(medicao.n_validas, len(self.BASE))
+
+    def test_espuria_para_baixo_tambem_e_descartada(self):
+        """O critério usa |z|, então leitura muito abaixo da mediana também é espúria."""
+        medicao = medir(leituras("PT102", self.BASE + [100]), "PT102", IDENTIDADE)
+        self.assertEqual(medicao.espurias, [8])
+        self.assertAlmostEqual(medicao.medida.valor, sum(self.BASE) / len(self.BASE))
+
+    def test_limiar_alto_nao_descarta_nada(self):
+        """Com limiar enorme, a leitura de 3500 fica e `espurias` sai vazia."""
+        medicao = medir(leituras("PT102", self.BASE + [3500]), "PT102", IDENTIDADE, limiar=1e6)
+        self.assertEqual((medicao.espurias, medicao.n_validas), ([], 9))
+
+    def test_limiar_nao_positivo(self):
+        """Limiar zero ou negativo levanta ValueError."""
+        for limiar in (0.0, -1.0):
+            with self.subTest(limiar=limiar), self.assertRaises(ValueError):
+                medir(leituras("PT101", self.BASE), "PT101", IDENTIDADE, limiar=limiar)
+
+    def test_sobram_menos_de_duas_validas(self):
+        """Se sobra só uma leitura válida, levanta ValueError."""
+        with self.assertRaises(ValueError):
+            medir(leituras("PT101", [10, 11, 12]), "PT101", IDENTIDADE, limiar=0.1)
+
+    def test_contagem_fora_do_dominio_chega_ao_chamador(self):
+        """Contagem acima de 4095 faz a curva levantar ValueError, e medir não esconde."""
+        with self.assertRaises(ValueError):
+            medir(leituras("PT101", self.BASE + [5000]), "PT101", IDENTIDADE)
+
+    def test_incerteza_total_nunca_fica_abaixo_da_sistematica(self):
+        """A incerteza é hypot(erro padrão, sistemática), logo fica acima da sistemática."""
+        medicao = medir(leituras("PT101", self.BASE * 50), "PT101", IDENTIDADE, u_sistematica=2.0)
+        self.assertGreater(medicao.medida.incerteza, 2.0)
+        self.assertAlmostEqual(medicao.medida.incerteza, 2.0, delta=0.05)
+
+
+class TestAlturaManometricaContrato(unittest.TestCase):
+    """Issue #6: altura_manometrica."""
+
+    def test_sem_a_tag_de_succao_levanta_erro(self):
+        """Sem registros de PT101, levanta ValueError."""
+        with self.assertRaises(ValueError):
+            altura_manometrica(leituras("PT102", [3000, 3001, 2999, 3000]), IDENTIDADE)
+
+    def test_incerteza_cresce_com_a_sistematica(self):
+        """Incerteza sistemática maior nos transmissores aumenta a incerteza da altura."""
+        regs = leituras("PT101", [100, 101, 99, 100]) + leituras("PT102", [1100, 1101, 1099, 1100])
+        pequena = altura_manometrica(regs, IDENTIDADE, u_sistematica=0.5)
+        grande = altura_manometrica(regs, IDENTIDADE, u_sistematica=3.0)
+        self.assertAlmostEqual(pequena.valor, grande.valor)
+        self.assertGreater(grande.incerteza, pequena.incerteza)
 
 
 if __name__ == "__main__":
