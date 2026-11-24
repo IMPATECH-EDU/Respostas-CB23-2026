@@ -222,3 +222,13 @@ convergência linear; por que os testes de aceitação não pegaram o defeito. -
 A derivada é usada no método de Newton, porque fornece a inclinação da melhor aproximação linear da curva em um determinado ponto. 
 Calcular a derivada uma vez só deixa a convergência linear, pois não estaremos utilizando calculando a melhor aproximação lienar sempre, e sim pegando uma reta com direção constante. Os testes de aceitação não pegaram o defeito porque, apesar de ter menor eficiência, o algorítmo encontrava a raiz que procurava; e nenhum teste verificava a eficiência.
 Testes de regressão: test_aproximacoes_usam_derivada_no_ponto_atual, test_colebrook_converge_em_ate_cinco_iteracoes
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+A tarifa muda bruscamente às 18 h e às 21 h, então o custo integrado de uma vez tem descontinuidades nesses pontos. Isso reduz a ordem observada das regras: os métodos perdem a hipótese de integrando suave. Separando a integral pelos limites tarifários, cada trecho tem tarifa constante e integrando suave; assim, voltam as ordens teóricas 2 do trapézio e 4 de Simpson.
+
+### R14 — Issue #11
+
+Os testes de regressão são `test_malha_irregular_linear` e `test_malha_irregular_com_leitura_ausente`. O defeito era usar a primeira largura de intervalo em toda a tabela, subestimando a integral quando havia leituras perdidas. Os testes de aceitação usavam malha uniforme e não revelavam isso. Simpson não serve ao registro porque exige espaçamento uniforme e número ímpar de pontos; o dia tem lacunas e 89 leituras.

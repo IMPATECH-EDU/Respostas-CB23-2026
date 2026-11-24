@@ -209,3 +209,22 @@ Resolve as issues #8 e #9 do enunciado.
 - A função `ponto_operacao` compõe a curva da bomba, o modelo da tubulação e o resolvedor fornecido, propagando erros do resolvedor conforme o contrato.
 - Os testes adicionais cobrem o descarte de erros no piso e o escalonamento do piso pelo módulo da raiz.
 
+## Marco 4
+Resolve as issues #10 e #11 do enunciado.
+
+### O que mudou
+- Implementei `ajustar_polinomio` por mínimos quadrados, com coeficientes em ordem crescente e validação das entradas.
+- Implementei `dia_de_operacao` para calcular volume, energia e custo por faixa tarifária.
+- Corrigi `Trapezio.integrar_tabela` para usar a largura de cada intervalo da malha, incluindo registros com leituras ausentes.
+- Acrescentei testes de regressão para a malha irregular e testes de validação para as funções da issue #10.
+- Registrei as respostas R13 e R14 no `RELATORIO.md`.
+
+### Como testei
+- A executar: `python -m unittest discover -v` — preencher com o total após rodar os testes.
+- A executar: `python marco4.py` — confirmar que todas as etapas e asserts passam.
+- Os testes de regressão da issue #11 devem falhar com a implementação original do trapézio.
+
+### Pontos de atenção para o revisor
+- O ajuste usa `np.polynomial.polynomial.polyfit`, que fornece coeficientes na ordem crescente exigida pelo projeto.
+- O custo é integrado separadamente em cada faixa, respeitando as mudanças de tarifa.
+
