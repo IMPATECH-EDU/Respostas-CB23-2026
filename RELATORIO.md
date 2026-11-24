@@ -113,3 +113,51 @@ linear e spline produzem desvios praticamente iguais, portanto têm precisão
 semelhante, mas a curva linear apresenta um viés muito maior para PT102. A média de
 quase 600 leituras reduz o ruído aleatório, mas não elimina o viés sistemático
 introduzido pela aproximação linear da curva de calibração.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+<!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
+quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
+situação em que o Newton falha e a bissecção não. -->
+
+A quantidade de iterações da bissecção depende monotomicamente do tamanho do intervalo e da tolerância,
+como, neste caso, a bisseccção começa sempre no intervlo `[2,15]` e usa a mesma tolerância ($10^{-12}$).
+O Reynolds altera a função, mas o intervalo e o erro mantém-se invariantes. Ordem 2 significa que, perto da raiz, o erro seguinte é aproximadamente proporcional ao quadrado do erro atual, dobrando os dígitos corretos a cada
+iteração. Newton pode falhar se a derivada for zero ou se um passo sair da região de convergência.
+
+### R12 — Issue #9
+
+<!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
+convergência linear; por que os testes de aceitação não pegaram o defeito. -->
+
+Os testes de regressão são `test_newton_recalcula_derivada_da_raiz_quadratica` e
+`test_newton_avalia_derivada_em_cada_aproximacao`. Reutilizar a derivada no ponto inicial faz
+Newton virar uma iteração de inclinação fixa; perto da raiz, o erro diminui linearmente, em vez
+de quadraticamente. Os testes de aceitação verificavam convergência e valor da raiz, mas não
+impunham limite de iterações nem conferiam a ordem de convergência.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+<!-- Na Etapa 1(b), integrando o custo do dia de uma vez, a ordem observada cai para cerca
+de 1, no trapézio e no Simpson; integrando cada faixa separadamente, voltam as ordens 2 e 4.
+Por quê? -->
+
+Como hipótese da aplicação dos métodos numéricos de integral é que as funções são contínuas,
+integrar o custo do dia de uma vez atravessa os instantes em que a tarifa muda, criando
+descontinuidades. Isso altera o comportamento ideal de Trapézio e Simpson, os quaise
+perdem a ordem teórica quando a malha não trata essas quebras. Como a inegral é suave por
+partes, separar faz com que as funcções sejam contínuas nos intervalos avaliados
+e as ordens 2 (trapézio) e 4 (Simpson) voltam a aparecer.
+
+### R14 — Issue #11
+<!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
+aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
+
+Os testes são `test_vazao_constante_em_intervalos_irregulares` e
+`test_vazao_linear_com_intervalo_de_leitura_perdida`. O defeito usava a largura do primeiro
+intervalo em todos os trapézios, embora falhas de comunicação deixem a malha irregular; os
+testes de aceitação usavam espaçamento uniforme. Simpson exige malha uniforme, portanto não
+serve diretamente para o registro com leituras perdidas.

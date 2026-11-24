@@ -41,7 +41,19 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x = np.asarray(x)
+    y = np.asarray(y)
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if grau < 0:
+        raise ValueError(f"grau deve ser não-negativo; recebi {grau}")
+    if x.size < grau + 1:
+        raise ValueError(
+            f"há menos pontos que coeficientes: {x.size} pontos para grau {grau}"
+        )
+
+    pol = np.polyfit(x, y, grau)[::-1]
+    return pol
 
 
 @dataclass(frozen=True)
@@ -76,4 +88,26 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    if len(t) != len(vazao):
+        raise ValueError("t e vazao devem ter o mesmo tamanho")
+    limites = [inicio for inicio, _, _ in FAIXAS_TARIFARIAS]
+    limites.append(FAIXAS_TARIFARIAS[-1][1])
+    if any(not np.any(t == limite) for limite in limites):
+        raise ValueError("t deve conter os limites das faixas tarifárias: 0, 18, 21 e 24 h")
+    
+    volume = 3.6 * integrador.integrar_tabela(t, vazao)
+    potencia = potencia_eletrica(vazao, 
+                                 np.polynomial.polynomial.polyval(vazao, coef_altura),
+                                 np.polynomial.polynomial.polyval(vazao, coef_rendimento))
+    energia = integrador.integrar_tabela(t, potencia)
+    custo = 0.0
+    custo_por_faixa = []
+    
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+      idx = (t >= inicio) & (t <= fim)
+      intg = integrador.integrar_tabela(t[idx], potencia[idx])
+      custo_faixa = tarifa * intg
+      custo_por_faixa.append(custo_faixa)
+      custo += custo_faixa
+    
+    return ResumoDia(volume, energia, custo, tuple(custo_por_faixa))

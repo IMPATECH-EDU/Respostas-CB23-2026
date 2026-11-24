@@ -15,6 +15,7 @@ Funções auxiliares privadas (`_nome`) são permitidas.
 from __future__ import annotations
 
 import math
+import numpy as np
 from dataclasses import dataclass
 from typing import Sequence
 
@@ -49,8 +50,17 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
-
+    
+    if (a >= b or not (a >= bomba.dominio[0] and b <= bomba.dominio[1])):
+      raise ValueError("Parâmetros incorretos.")
+    
+    f = lambda Q: bomba(Q) - tubulacao.altura_sistema(Q)
+    q = resolvedor.encontrar(f, a, b)
+    
+    if (not q.convergiu):
+      raise ValueError("Resolvedor não convergiu.")
+        
+    return PontoOperacao(vazao=q.raiz, altura=bomba(q.raiz), resultado=q)    
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
     """Estimativa da ordem de convergência `p` de uma sequência de aproximações.
@@ -66,4 +76,15 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    
+    erros = np.abs(np.array(historico) - raiz)
+    erros = erros[erros > piso*max(1, abs(raiz))]
+    
+    maiores = erros[-1:-4:-1]
+    
+    if (len(maiores) < 3):
+      raise ValueError("Não há valores maiores o suficiente")
+    
+    p = np.log(maiores[0]/maiores[1]) / np.log(maiores[1]/maiores[2])
+    return p
+  
