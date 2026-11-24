@@ -90,3 +90,13 @@ A bissecção para quando a largura do intervalo fica abaixo de `tol`, e essa la
 ### R12 — Issue #9
 
 Testes de regressão: `TestRegressaoNewton.test_colebrook_re_1e4_em_poucas_iteracoes`, `test_raiz_de_dois_em_poucas_iteracoes`, `test_derivada_e_avaliada_a_cada_iteracao` e `test_erro_cai_mais_rapido_que_linear`. Com a derivada fixa em f'(x0), a iteração vira x_{k+1} = x_k - f(x_k)/f'(x0), um ponto fixo cujo erro encolhe por um fator constante |1 - f'(x*)/f'(x0)|. Esse fator só vai a zero quando f'(x_k) acompanha o ponto, e daí vem a convergência quadrática. A aceitação confere a raiz e `convergiu`, e a versão lenta também cumpre isso: gastava 10 iterações em Re = 1e4 e 32 em x² - 2.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+O custo do dia integra potência vezes tarifa, e a tarifa é uma função degrau, com saltos em 18 h e 21 h. As ordens 2 (trapézio) e 4 (Simpson) valem para integrandos com derivadas contínuas. Com um salto dentro de um painel, esse painel erra por algo da ordem de h vezes o salto, e o erro total cai com h, ou seja, ordem 1 nas duas regras (o Simpson deu 0,65, porque a posição do salto em relação aos painéis muda a cada n). Integrando cada faixa separadamente, cada pedaço é suave e voltam as ordens 2,00 e 4,00 observadas.
+
+### R14 — Issue #11
+
+Testes de regressão: `TestRegressaoTrapezioTabela.test_malha_irregular_com_reta`, `test_lacuna_no_registro`, `test_reta_em_malha_aleatoria` e `test_volume_do_dia_com_falhas`. O código multiplicava tudo por `h = x[1] - x[0]`, o primeiro passo, e usava esse valor em todos os intervalos. No meu registro faltam 8 leituras de 97 e o primeiro intervalo é de 45 min, então o volume saía 10 621,8 m³, contra 3884,9 m³ da versão corrigida e 3888,0 m³ do totalizador. Com primeiro passo de 15 min, como no relato, o mesmo código daria 3540,6 m³, uns 9% abaixo. A aceitação só usa tabelas sem falha, em que o primeiro passo vale para todas. O Simpson não serve para esse registro porque exige nós igualmente espaçados, e aqui os intervalos são de 15, 30 e 45 min; o `marco4.py` mostra a recusa com `ValueError`.
