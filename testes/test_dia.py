@@ -6,7 +6,10 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.integracao import Simpson
+import numpy as np
+
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
+from elevatoria.integracao import Simpson, Trapezio
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -17,8 +20,42 @@ class TestSimpsonExemplo(unittest.TestCase):
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
 
 
-# Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
-# issue #11 (escreva-os ANTES de corrigir o defeito e confirme que falham).
+class TestTrapezioIrregular(unittest.TestCase):
+    """Regressões de integração de registros com leituras perdidas."""
+
+    def test_constante_com_lacuna(self) -> None:
+        """Uma leitura ausente não encurta a duração de uma vazão constante."""
+        resultado = Trapezio().integrar_tabela([0, 1, 3], [4, 4, 4])
+        self.assertAlmostEqual(resultado, 12.0)
+
+    def test_reta_com_primeiro_intervalo_maior(self) -> None:
+        """A integral de y = x em [0, 4] vale oito mesmo com passos 3 e 1."""
+        resultado = Trapezio().integrar_tabela([0, 3, 4], [0, 3, 4])
+        self.assertAlmostEqual(resultado, 8.0)
+
+
+class TestContratoDia(unittest.TestCase):
+    """Casos de fronteira do ajuste e da integração por faixas."""
+
+    def test_grau_zero(self) -> None:
+        """O ajuste constante devolve um único coeficiente igual à média."""
+        coef = ajustar_polinomio([0, 1, 2], [1, 2, 9], 0)
+        self.assertEqual(coef.shape, (1,))
+        self.assertAlmostEqual(coef[0], 4.0)
+
+    def test_rejeita_matriz(self) -> None:
+        """Uma tabela bidimensional de respostas não é um vetor de medições."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0, 1], [[1], [3]], 1)
+
+    def test_limite_de_tarifa_ausente(self) -> None:
+        """Cada fronteira tarifária precisa ter uma leitura registrada."""
+        limites = np.array([0., 9., 18., 20., 21., 23., 24.])
+        for hora in (0, 18, 21, 24):
+            with self.subTest(hora=hora):
+                t = limites[limites != hora]
+                with self.assertRaises(ValueError):
+                    dia_de_operacao(t, np.full(t.size, 50.), [40.], [0.8], Trapezio())
 
 
 if __name__ == "__main__":
