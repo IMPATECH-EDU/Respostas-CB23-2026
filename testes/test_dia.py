@@ -8,6 +8,7 @@ import unittest
 
 import numpy as np
 
+from elevatoria.dia import ajustar_polinomio, dia_de_operacao
 from elevatoria.integracao import Simpson, Trapezio
 
 
@@ -33,6 +34,24 @@ class TestTrapezioMalhaIrregular(unittest.TestCase):
         x = np.array([0.0, 1.0, 3.0, 4.0])
         y = np.ones_like(x)
         self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 4.0)
+
+
+class TestIssue10(unittest.TestCase):
+    """Testes dos contratos de ajuste e balanço diário."""
+
+    def test_ajustar_polinomio_rejeita_quantidade_insuficiente(self) -> None:
+        """O ajuste rejeita menos pontos do que coeficientes do polinômio."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio(np.array([0.0, 1.0]), np.array([1.0, 2.0]), grau=2)
+
+    def test_dia_de_operacao_rejeita_limite_tarifario_ausente(self) -> None:
+        """O balanço rejeita registros sem todos os limites das faixas tarifárias."""
+        t = np.array([0.0, 12.0, 18.0, 24.0])
+        vazao = np.ones_like(t)
+        with self.assertRaises(ValueError):
+            dia_de_operacao(
+                t, vazao, np.array([10.0]), np.array([0.8]), Trapezio()
+            )
 
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
