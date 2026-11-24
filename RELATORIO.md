@@ -116,12 +116,12 @@ Python 3.12.3 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3523
 depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
 é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
 
-Na derivação matemática, sem limitações físicas, temos que quanto menor o h (lim h -> 0), mais próxina a derivada chega de seu valor verdadeiro.
-Então faz sentido o erro diminuir quando h diminui, pois na prática o computador nunca fara h = 0. Esse é um erro de truncamento (o erro do lado
-maior que 1e-5) pois temos uma limitação da fórmula para sua aplicação. Quando h diminui de mais, ocorre o erro de arredondamento, que é quando
-(x+h) é quase igual a f(x). Diminuir por h amplifica o erro (o do lado menor que 1e-5). Para h = 1e-14 ocorre que o númerador da derivada irá
-zerar, pois f(x+h) = f(x), então como o erro é f'(x) - (f(x+h) - f(x))/h, logo o erro será -f'(x). Fazer 1000 + 1e-14 == 1000 retorna True, por
-que para c tal grande a precisão relativa cai muito, e então a diferença dos dois valores da função é nula.
+Faz sentido, inicialmente, o erro diminuir quando h diminui, pois na prática o computador nunca fará h = 0. Esse é um erro de
+truncamento (o erro do lado maior que 1e-5) pois temos uma limitação da fórmula para sua aplicação. Quando h diminui demais, ocorre
+o erro de arredondamento, que é quando f(x+h) é quase igual a f(x) e a subtração deixa o ruído do arredondamento. Diminuir h amplifica
+o erro (o do lado menor que 1e-5). Para h = 1e-14 ocorre que o numerador da derivada irá zerar, pois f(x+h) = f(x), então como o erro é
+f'(x) - (f(x+h) - f(x))/h, logo o erro será f'(x). Fazer 1000 + 1e-14 == 1000 retorna True, porque para c tão grande o menor passo cai
+muito, e então a diferença dos dois valores da função é nula. Da tabela: h=1, erro=1,658e-05; h=1e-5, erro=6,224e-10; h=14, erro=2,134e-14.
 
 ### R9 — Issue #7
 
