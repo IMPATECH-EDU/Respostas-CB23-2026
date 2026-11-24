@@ -50,5 +50,46 @@ class TestTrapezioMalhaIrregularRegressao(unittest.TestCase):
         esperado = 0.25 * (0.5 * y[0] + y[1:-1].sum() + 0.5 * y[-1])
         self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), esperado)
 
+class TestAjustarPolinomioContrato(unittest.TestCase):
+    """Issue #10: regras de `ajustar_polinomio` que os testes de aceitação não verificam."""
+    def test_x_e_y_de_tamanhos_diferentes(self):
+        """x e y com tamanhos diferentes levantam ValueError."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 2.0], 1)
+
+    def test_grau_negativo(self):
+        """Um grau negativo levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ajustar_polinomio([0.0, 1.0, 2.0], [1.0, 2.0, 3.0], -1)
+
+    def test_pontos_igual_a_coeficientes_interpola(self):
+        """Com len(x) == grau + 1 não há erro: o polinômio passa exatamente pelos pontos."""
+        x, y = [0.0, 1.0, 2.0], [1.0, 0.0, 3.0]
+        coef = ajustar_polinomio(x, y, 2)
+        self.assertTrue(np.allclose(np.polynomial.polynomial.polyval(x, coef), y))
+
+class TestDiaDeOperacaoContrato(unittest.TestCase):
+    """Issue #10: regras de `dia_de_operacao` que os testes de aceitação não verificam."""
+    def test_limite_de_faixa_ausente(self):
+        """Sem a leitura das 18 h na malha, dia_de_operacao levanta ValueError."""
+        t = T[T != 18.0]
+        with self.assertRaises(ValueError):
+            dia_de_operacao(t, np.full(t.size, 50.0), [40.0], [0.8], Trapezio())
+
+    def test_simpson_em_malha_uniforme(self):
+        """Com malha uniforme e pontos ímpares por faixa, o Simpson dá o mesmo balanço do trapézio."""
+        vazao = np.full(T.size, 50.0)
+        com_trapezio = dia_de_operacao(T, vazao, [40.0], [0.8], Trapezio())
+        com_simpson = dia_de_operacao(T, vazao, [40.0], [0.8], Simpson())
+        self.assertAlmostEqual(com_simpson.volume_m3, com_trapezio.volume_m3)
+        self.assertAlmostEqual(com_simpson.energia_kwh, com_trapezio.energia_kwh)
+        self.assertAlmostEqual(com_simpson.custo_reais, com_trapezio.custo_reais)
+
+    def test_rendimento_nao_positivo(self):
+        """Um rendimento zero levanta ValueError (vem de potencia_eletrica)."""
+        with self.assertRaises(ValueError):
+            dia_de_operacao(T, np.full(T.size, 50.0), [40.0], [0.0], Trapezio())
+
+
 if __name__ == "__main__":
     unittest.main()
