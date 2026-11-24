@@ -105,11 +105,23 @@ o tamanho. Caso a janela seja igual ao tamanho da série, o código devolvia 0 a
 
 <!-- Cole a saída da Etapa 0 do `python marco2.py`. -->
 
+```
+=== Etapa 0: ambiente ===
+Python 3.12.3 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3523
+```
+
 ### R8 — Derivada numérica
 
 <!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
 depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
 é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) -->
+
+Na derivação matemática, sem limitações físicas, temos que quanto menor o h (lim h -> 0), mais próxina a derivada chega de seu valor verdadeiro.
+Então faz sentido o erro diminuir quando h diminui, pois na prática o computador nunca fara h = 0. Esse é um erro de truncamento (o erro do lado
+maior que 1e-5) pois temos uma limitação da fórmula para sua aplicação. Quando h diminui de mais, ocorre o erro de arredondamento, que é quando
+(x+h) é quase igual a f(x). Diminuir por h amplifica o erro (o do lado menor que 1e-5). Para h = 1e-14 ocorre que o númerador da derivada irá
+zerar, pois f(x+h) = f(x), então como o erro é f'(x) - (f(x+h) - f(x))/h, logo o erro será -f'(x). Fazer 1000 + 1e-14 == 1000 retorna True, por
+que para c tal grande a precisão relativa cai muito, e então a diferença dos dois valores da função é nula.
 
 ### R9 — Issue #7
 
