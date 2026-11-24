@@ -108,3 +108,17 @@ Os testes de regressão são `test_segundo_passo_da_raiz_de_dois` e `test_colebr
 Com a derivada fixa d = f′(x₀), a iteração usa sempre a inclinação inicial. Perto de uma raiz simples r, o erro conserva, em geral, um termo linear com fator 1 − f′(r)/d.
 Recalcular a derivada no ponto atual cancela esse termo, recuperando a convergência quadrática. Para Re = 10⁴, Newton passou de dez para cinco iterações.
 Os testes de aceitação verificavam a convergência e a raiz obtida. O método com inclinação fixa satisfazia essas condições, embora demorasse mais.
+
+## Marco 4
+
+### R13 — Integração e descontinuidade
+
+Às 18 h e às 21 h, a tarifa muda de forma descontínua. Uma regra que atravessa o salto representa mal o custo naquele subintervalo: uma diferença de altura finita atua sobre uma largura da ordem de h.
+Integrando o dia de uma vez, a ordem observada foi 1,00 no trapézio e 0,65 no Simpson. A posição do salto em relação aos nós ajuda a explicar a irregularidade da estimativa.
+Separando as faixas, cada integral usa uma tarifa constante e uma potência suave. As ordens observadas voltaram a 2,00 e 4,00; com n = 110, os erros foram 6,3 × 10⁻⁴ e 8,1 × 10⁻⁸, respectivamente.
+
+### R14 — Issue #11
+
+Os testes `test_constante_com_lacuna` e `test_reta_com_primeiro_intervalo_maior` revelaram o uso do primeiro passo em todos os trapézios. Os testes fornecidos para o trapézio usavam uma malha uniforme, em que essa suposição funciona.
+Das 97 leituras previstas, restaram 89, separadas por 15 ou 30 minutos. Usar cada diferença de tempo na área correspondente elevou o volume de 3.538,7 para 3.879,7 m³, a 0,21% da referência de 3.888,0 m³.
+Mesmo com 89 pontos, a regra de Simpson implementada exige também espaçamento uniforme. Essa condição falha no registro do dia.
