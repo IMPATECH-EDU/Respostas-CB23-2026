@@ -53,3 +53,19 @@ O resultado que mais me surpreendeu foi s.sum(), que devolve uma SerieTemporal d
 ### R7 — Issue #4
 
 O sintoma era a média móvel de 30 pontos de uma série de 600 devolver um valor a menos. Escrevi test_tamanho_do_resultado e test_valores_incluem_a_primeira_janela, que falhavam antes da correção. Isso porque np.cumsum não começa com um zero, então a soma da primeira janela (acumulada[janela-1] não tem um "antes" para subtrair e a diferença só produz as janelas seguintes. A correção foi colocar um 0.0 na frente da soma acumulada. Os testes de aceitação só conferem o tipo e os erros, nunca o tamanho nem os valores. Outro caso que eles não cobrem é a janela igual ao tamanho da série, que deve dar um único valor, e é coberto pelo meu test_janela_igual_ao_tamanho.
+
+
+## Marco 2 
+
+### Ambiente 
+=== Etapa 0: ambiente ===
+Python 3.9.6 | NumPy 2.0.2 | SciPy 1.13.1 | fornecido 4.0 | matrícula 3517
+
+### R8 — Derivada numérica
+De h = 1 até h = 1e-5, o erro cai de 1.66e-5 para 6.2e-10, cerca de 10 vezes a cada passo. Isso é o erro de truncamento, que é proporcional a h: a diferença adiante ignora os termos de ordem superior da série de Taylor, e eles diminuem com h. Depois de 1e-5, o erro volta a crescer (2.3e-8 em 1e-6, até 3.6e-1 em 1e-13). Aí domina o erro de arredondamento: f(x+h) e f(x) ficam quase iguais, a subtração perde algarismos significativos, e esse erro é dividido por um h cada vez menor. O melhor passo é h = 1e-5, onde os dois erros se equilibram. Em h = 1e-14, x + h arredonda para o próprio x: no terminal, 1000 + 1e-14 == 1000 dá True. Então f(x+h) − f(x) = 0, a aproximação vale 0, e o erro é |0 − derivada|, ou seja, a própria derivada (0.2134, o valor da tabela).
+
+### R9 — Issue #7
+Testes de regressão: test_um_milhao_de_pulsos, test_melhor_que_o_ingenuo e test_recupera_parcelas_menores_que_a_precisao. O código calculava t - (soma + y), e soma + y é exatamente o t que acabou de ser calculado. Em ponto flutuante o resultado é sempre zero, então a correção nunca guardava nada e o Kahan se comportava como a soma ingênua (a Etapa 2 mostra 100000.00000133288 contra 100000.0 depois da correção). Logo, corrigimos com (t - soma) - y. Algebricamente é o mesmo zero, mas em ponto flutuante a primeira subtração recupera o que foi arredondado, e a segunda isola a parte de y que se perdeu. Já a aceitação não pegou, porque o teste dela soma só 10 parcelas e compara com isclose, uma tolerância larga demais para o erro de cerca de 1e-6.
+
+### R10 — Precisão × exatidão
+Precisão é o espalhamento das leituras: o desvio de PT102 é 0.525 (linear) e 0.527 (spline), que é, praticamente, igual. Exatidão é a proximidade do valor verdadeiro (380 kPa): o viés da curva linear é −1.834 kPa e o da spline é −0.005 kPa. Em outras palavras, as duas curvas são igualmente precisas, mas só a spline é exata. A curva linear erra até 2.88 kPa na Etapa 1, contra 0.025 da spline, porque o transmissor segue um seno e a reta ignora a curvatura. A média de cerca de 595 leituras válidas reduz o erro aleatório, o erro padrão fica em torno de 0.525/√595 ≈ 0.02 kPa. Mas o viés da linear é um erro sistemático, que desloca todas as leituras para o mesmo lado, e a média não o corrige.
