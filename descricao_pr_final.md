@@ -190,3 +190,22 @@ Resolve as issues #6 e #7 do enunciado.
 ### Pontos de atenção para o revisor
 - Foi orientado que os commits não serão considerados durante a avaliação, apenas a versão final.
 
+## Marco 3
+Resolve as issues #8 e #9 do enunciado.
+
+### O que mudou
+- Implementei `ponto_operacao` para encontrar a vazão em que a altura da bomba se iguala à altura exigida pela tubulação.
+- Implementei `ordem_convergencia` usando os três últimos erros acima do piso definido no contrato.
+- Corrigi o método de Newton para recalcular a derivada em cada aproximação, restaurando a convergência quadrática.
+- Acrescentei testes de regressão para o Newton e testes adicionais para `ordem_convergencia`.
+- Registrei no `RELATORIO.md` as respostas R11 e R12.
+
+### Como testei
+- `python -m unittest discover -v`: 4 testes próprios do Marco 3, além do teste de exemplo; a saída registrada no relatório geral informa 58 testes passando.
+- `python marco3.py`: as etapas de interpolação, fator de atrito e ponto de operação passaram, conforme registrado no relatório.
+- Os testes de regressão da issue #9 verificam o passo de Newton e sua convergência em até cinco iterações para o caso descrito.
+
+### Pontos de atenção para o revisor
+- A função `ponto_operacao` compõe a curva da bomba, o modelo da tubulação e o resolvedor fornecido, propagando erros do resolvedor conforme o contrato.
+- Os testes adicionais cobrem o descarte de erros no piso e o escalonamento do piso pelo módulo da raiz.
+
