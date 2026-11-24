@@ -129,6 +129,13 @@ muito, e então a diferença dos dois valores da função é nula. Da tabela: h=
 t - (s + y) dá sempre zero, embora seja algebricamente igual a (t - s) - y; por que os testes
 de aceitação não pegaram o defeito. -->
 
+Nome dos testes: test_um_milhao_de_decimos_da_exatamente_cem_mil, test_kahan_erra_menos_que_a_soma_ingenua,test_parcela_pequena_depois_de_uma_grande_nao_se_perde. 
+O motivo de dar sempre zero é a ordem das operações que geram dado arredondamento. t = s + y, logo s + y sempre gera o mesmo arredondamento
+e t - (s + y) = t - t = 0 sempre. Mas ao fazermos (t - s) - y retira a parte de cada uma das parcelas da soma total sobrando apenas o que o
+arredondamento havia descartado, mas veja que é importante que se subtraia t - s primeiro para que que a subtração seja entre números de ordens
+parecidas, então a ordem importa. O defeito não foi pego pelos testes porque ele só ocorre para pequenas parcelas, pois assim o arredondamento é
+muito pequeno e então o resultado sai correto.
+
 ### R10 — Precisão × exatidão
 
 <!-- Na Etapa 3(b), as curvas linear e spline dão praticamente o mesmo desvio, mas viéses bem
