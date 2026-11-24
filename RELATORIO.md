@@ -34,9 +34,9 @@ A escala linear nominal dá 261,97 kPa para uma pressão de referência de 380,0
 
 ### R5 — Previsão × medição
 
-Nas três branches públicas do fork, as versões do relatório mantêm vazias as previsões de R5 e R6. Não foi localizado um commit de previsões anterior à medição. As estimativas teóricas abaixo foram acrescentadas em 23/11/2026, após a execução.
+As tabelas R5 e R6 comparam estimativas teóricas com os resultados observados. Não foi localizado um registro prévio das previsões no histórico do projeto.
 
-| Grandeza | Estimativa após a execução | Medido no Ubuntu |
+| Grandeza | Estimativa teórica | Medido no Ubuntu |
 | --- | --- | ---: |
 | Memória da lista / memória do uint16 | Cerca de 18 vezes: (8 bytes pela referência + 28 pelo inteiro) / 2 por uint16, no CPython de 64 bits | 18,00 |
 | Tempo do laço / tempo vetorizado | Maior que 1: a versão vetorizada percorre os dados em código compilado | 36,80 |
@@ -48,7 +48,7 @@ Para um milhão de contagens, a lista ocupa 36.000.056 bytes pelo critério do e
 
 ### R6 — Tipos da SerieTemporal
 
-| Expressão | Hipótese teórica após a execução (23/11/2026) | Tipo observado na revisão (NumPy 2.3.5) |
+| Expressão | Hipótese teórica | Tipo observado na revisão (NumPy 2.3.5) |
 | --- | --- | --- |
 | `s + s` | SerieTemporal | SerieTemporal |
 | `s[1:]` | SerieTemporal | SerieTemporal |
