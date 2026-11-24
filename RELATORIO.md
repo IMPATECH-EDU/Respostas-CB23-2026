@@ -140,3 +140,19 @@ Precisão é o espalhamento das leituras (o desvio); exatidão é a distância a
 Mas o viés de PT102 é -1,844 kPa na linear e -0,015 na spline: a linear é precisa, mas é pouco exata.
 A média de 595 leituras só reduz o erro aleatório (erro padrão ~ 0,54/raiz(595) ~ 0,02 kPa). O viés vem da própria curva (erro máximo de 2,9 kPa na Etapa 1(a)),
 é igual em todas as leituras e, por isso, não some na média.
+
+## Marco 3
+
+### R11 — Bissecção × Newton
+
+A bissecção vai gastar sempre 44 iterações porque o intervalo [2, 15] e a tolerância 1e-12 são os mesmos. Cada passo vai cortar a largura ao meio e log2(13/1e-12) ~ 43,6; o Re não entra na conta.
+Ordem 2 significa que o erro novo é proporcional ao quadrado do anterior: com Re = 1e4 os erros foram 5,0e-2, 2,3e-5 e 5,0e-12 (os dígitos corretos mais do que dobran) e a ordem estimada deu 2,00.
+O Newton falha onde a bissecção acerta, porque pra atan(x) em [-3, 7] ele parte de 2, vai a -3,54, 13,95, -279... e diverge (até a derivada sumir),
+enquanto a bissecção, que só precisa de troca de sinal, converge em 37 iterações.
+
+### R12 — Issue #9
+
+Testes de regressão: test_raiz_de_dois_em_poucas_iteracoes, test_derivada_e_chamada_a_cada_iteracao, test_erros_caem_quadraticamente e test_colebrook_re_1e4_em_poucas_iteracoes.
+Com a derivada calculada uma vez só, todo passo usa a inclinação do ponto inicial, e não a tangente local. O erro passa a ser multiplicado por uma constante a cada passo (é uma convergência linear), em vez de elevado ao quadrado.
+Para x² - 2 foram 32 iterações em vez de 6, e Colebrook com Re = 1e4 levou 10 em vez de 5.
+Os testes de aceitação só vçao conferir a raiz dentro da tolerância, que o método lento também atinge, só que com mais iterações.
