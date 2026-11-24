@@ -6,7 +6,9 @@ ser que a igualdade exata seja justamente o que você quer testar.
 """
 import unittest
 
-from elevatoria.integracao import Simpson
+import numpy as np
+
+from elevatoria.integracao import Simpson, Trapezio
 
 
 class TestSimpsonExemplo(unittest.TestCase):
@@ -15,6 +17,22 @@ class TestSimpsonExemplo(unittest.TestCase):
     def test_exato_para_parabola(self):
         """Simpson integra x² exatamente, mesmo com n = 2."""
         self.assertAlmostEqual(Simpson().integrar(lambda x: x ** 2, 0.0, 3.0, 2), 9.0)
+
+
+class TestTrapezioMalhaIrregular(unittest.TestCase):
+    """Regressões para integrar tabelas com intervalos de larguras diferentes."""
+
+    def test_malha_irregular_linear(self) -> None:
+        """Cada trapézio usa a largura do seu próprio intervalo."""
+        x = np.array([0.0, 1.0, 3.0])
+        y = 2.0 * x + 1.0
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 12.0)
+
+    def test_malha_irregular_com_leitura_ausente(self) -> None:
+        """A integração continua correta quando um intervalo mede o dobro do usual."""
+        x = np.array([0.0, 1.0, 3.0, 4.0])
+        y = np.ones_like(x)
+        self.assertAlmostEqual(Trapezio().integrar_tabela(x, y), 4.0)
 
 
 # Acrescente abaixo as suas classes de teste, começando pelos testes de regressão da
