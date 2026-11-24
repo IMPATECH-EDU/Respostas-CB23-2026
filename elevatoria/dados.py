@@ -179,6 +179,16 @@ def criar_conversores(escalas: dict[str, float]) -> dict[str, Callable[[float], 
 # ---------------------------------------------------------------------------------------
 # Issue #3: memória e tempo
 # ---------------------------------------------------------------------------------------
+def _validar_contagens(contagens: np.ndarray) -> None:
+    """Levanta `ValueError` se `contagens` não for um `ndarray` 1D de inteiros."""
+    if not isinstance(contagens, np.ndarray):
+        raise ValueError(f"contagens deve ser um ndarray; recebi {type(contagens).__name__}")
+    if contagens.ndim != 1:
+        raise ValueError(f"contagens deve ser 1D; recebi ndim={contagens.ndim}")
+    if contagens.dtype.kind not in "iu":
+        raise ValueError(f"contagens deve ter dtype inteiro; recebi {contagens.dtype}")
+
+
 def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     """Bytes ocupados pelas `contagens` (ndarray 1D de inteiros de 0 a 4095) em cada estrutura.
 
@@ -190,29 +200,46 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
     - `"uint16"`, `"int32"`, `"int64"`, `"float32"`, `"float64"`: o `ndarray` convertido para
       esse `dtype`; conte só os dados (atributo `.nbytes`).
 
-    Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
+    Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros ou se algum valor
+    não couber em `uint16` (0 a 65535).
     """
-    raise NotImplementedError("issue #3: medir_memoria")
+    _validar_contagens(contagens)
+    lista = contagens.tolist()
+    try:
+        compacto = array.array("H", lista)
+    except OverflowError as erro:
+        raise ValueError("as contagens devem estar entre 0 e 65535") from erro
+    memoria = {
+        "list": sys.getsizeof(lista) + sum(sys.getsizeof(x) for x in lista),
+        "array('H')": compacto.itemsize * len(compacto),
+    }
+    for nome in ("uint16", "int32", "int64", "float32", "float64"):
+        memoria[nome] = contagens.astype(nome).nbytes
+    return memoria
 
 
 def converter_laco(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `for` e `append`."""
-    raise NotImplementedError("issue #3: converter_laco")
+    resultado = []
+    for c in contagens:
+        resultado.append(c * 600 / 4095)
+    return resultado
 
 
 def converter_compreensao(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma compreensão de lista."""
-    raise NotImplementedError("issue #3: converter_compreensao")
+    return [c * 600 / 4095 for c in contagens]
 
 
 def converter_map(contagens: list[int]) -> list[float]:
     """Converte contagens em kPa (`c * 600 / 4095`) com `map` e uma lambda."""
-    raise NotImplementedError("issue #3: converter_map")
+    return list(map(lambda c: c * 600 / 4095, contagens))
 
 
 def converter_vetorizado(contagens: np.ndarray) -> np.ndarray:
     """Converte contagens em kPa (`c * 600 / 4095`) com uma operação vetorizada do NumPy."""
-    raise NotImplementedError("issue #3: converter_vetorizado")
+    # Passa para float64 antes da conta: em uint16, `c * 600` estoura os 16 bits sem avisar.
+    return np.asarray(contagens, dtype=np.float64) * 600 / 4095
 
 
 def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
@@ -221,5 +248,14 @@ def medir_tempos(contagens: np.ndarray, k: int = 10) -> dict[str, float]:
     Use `cronometrar` (de `fornecido.cronometro`). Chaves: `"laço"`, `"compreensão"` e
     `"map+lambda"` (que recebem a lista `contagens.tolist()`, criada uma única vez, fora da
     medição) e `"vetorizado"` (que recebe o próprio `ndarray`).
+
+    Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros ou se `k` for inválido.
     """
-    raise NotImplementedError("issue #3: medir_tempos")
+    _validar_contagens(contagens)
+    lista = contagens.tolist()
+    return {
+        "laço": cronometrar(converter_laco, lista, k=k),
+        "compreensão": cronometrar(converter_compreensao, lista, k=k),
+        "map+lambda": cronometrar(converter_map, lista, k=k),
+        "vetorizado": cronometrar(converter_vetorizado, contagens, k=k),
+    }

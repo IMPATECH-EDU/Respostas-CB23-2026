@@ -5,7 +5,10 @@ dizendo qual caso ele cobre, e floats comparados com assertAlmostEqual ou np.all
 """
 import unittest
 
-from elevatoria.dados import ler_log, por_tag, serie, valida_tag
+import numpy as np
+
+from elevatoria.dados import (converter_vetorizado, ler_log, medir_memoria, medir_tempos,
+                              por_tag, serie, valida_tag)
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -79,6 +82,35 @@ class TestSerieDoLog(unittest.TestCase):
         """Tag ausente do log dá série vazia."""
         registros, _ = ler_log(self.TEXTO)
         self.assertEqual(len(serie(registros, "PT101", "contagens")), 0)
+
+
+class TestMemoriaETempos(unittest.TestCase):
+    """Issue #3: casos extras de memória e conversão."""
+
+    def test_tipo_nao_inteiro_levanta_erro(self):
+        """medir_memoria rejeita array de float."""
+        with self.assertRaises(ValueError):
+            medir_memoria(np.array([1.0, 2.0]))
+
+    def test_valor_fora_de_16_bits_levanta_erro(self):
+        """Contagem acima de 65535 não cabe em uint16."""
+        with self.assertRaises(ValueError):
+            medir_memoria(np.array([70000]))
+
+    def test_lista_cresce_com_o_tamanho(self):
+        """A lista ocupa mais memória que qualquer ndarray."""
+        m = medir_memoria(np.arange(1000) % 4096)
+        self.assertGreater(m["list"], m["float64"])
+
+    def test_vetorizado_nao_estoura_em_uint16(self):
+        """Com uint16, 4095 contagens ainda dão 600 kPa (sem overflow)."""
+        resultado = converter_vetorizado(np.array([4095], dtype=np.uint16))
+        self.assertAlmostEqual(float(resultado[0]), 600.0)
+
+    def test_k_invalido_em_medir_tempos(self):
+        """medir_tempos repassa o ValueError de k inválido."""
+        with self.assertRaises(ValueError):
+            medir_tempos(np.arange(10), k=0)
 
 
 if __name__ == "__main__":
