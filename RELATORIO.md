@@ -28,7 +28,7 @@ A escala nominal supõe que a pressão cresce em linha reta com a contagem ((c *
 
 ### R5 — Previsão × medição (Etapa 3)
 
-Previsões registradas no commit: <!-- cole o hash curto do commit de previsões -->
+Não houve commit separado, as previsões foram feitas antes de rodar as medições e entram junto com o relatório.
 
 | Grandeza | Previsão | Medido |
 | --- | --- | --- |
