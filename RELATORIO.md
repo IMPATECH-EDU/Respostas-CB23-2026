@@ -188,3 +188,8 @@ oferecer os valores de ordem 2 e 4.
 <!-- Os nomes dos seus testes de regressão; a causa do defeito; por que os testes de
 aceitação não o pegaram; por que a regra de Simpson não serve para o registro do dia. -->
 
+Testes:test_malha_nao_uniforme_com_funcao_constante e test_leitura_faltando_no_meio_do_dia. O trapézio usa um passo de 15 minutos. Quando falta
+leituras alguns intervalos vão para 30 minutos, pois faltou a leitura no meio do intervalo. Esses intervalos acabam sendo contados com os mesmos
+15 minutos, e ai o volume sai mais baixo. Para corrigir, usa-se a largura de cada intervalo, que agora capta as variações desse valor. Os testes 
+de aceitação não pegam o erro por que eles usam malhas uniformes, neles o passo único está correto. A regra de Simpson acaba não servindo por
+ela exige pontos igualmente espaçados para ser aplicada, e com as leituras faltando o espaço não é mais uniforme.
