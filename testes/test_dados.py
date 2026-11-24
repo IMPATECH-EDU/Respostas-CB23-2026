@@ -9,6 +9,7 @@ import numpy as np
 
 from elevatoria.dados import (converter_vetorizado, ler_log, medir_memoria, medir_tempos,
                               por_tag, serie, valida_tag)
+from elevatoria.serie import SerieTemporal
 
 
 class TestPorTagExemplo(unittest.TestCase):
@@ -17,6 +18,36 @@ class TestPorTagExemplo(unittest.TestCase):
     def test_lista_vazia(self):
         """Sem registros, por_tag devolve uma lista vazia."""
         self.assertEqual(por_tag([], "PT101"), [])
+
+
+class TestRegressaoMediaMovel(unittest.TestCase):
+    """Issue #4: a média móvel perdia a primeira janela."""
+
+    def test_tamanho_da_serie_do_relato(self):
+        """600 pontos e janela 30 dão 571 valores (antes dava 570)."""
+        s = SerieTemporal.de_lista(np.arange(600.0))
+        self.assertEqual(len(s.media_movel(30)), 571)
+
+    def test_primeira_janela_esta_presente(self):
+        """O primeiro valor é a média dos primeiros pontos da janela."""
+        s = SerieTemporal.de_lista([2.0, 4.0, 6.0, 8.0])
+        resultado = s.media_movel(2)
+        self.assertEqual(len(resultado), 3)
+        self.assertTrue(np.allclose(resultado, [3.0, 5.0, 7.0]))
+
+    def test_janela_igual_ao_tamanho(self):
+        """Janela igual ao tamanho da série dá um valor só, a média de tudo."""
+        s = SerieTemporal.de_lista([1.0, 2.0, 3.0, 6.0])
+        resultado = s.media_movel(4)
+        self.assertEqual(len(resultado), 1)
+        self.assertAlmostEqual(float(resultado[0]), 3.0)
+
+    def test_janela_um_devolve_a_propria_serie(self):
+        """Janela 1 devolve a própria série."""
+        s = SerieTemporal.de_lista([5.0, -1.0, 3.5])
+        resultado = s.media_movel(1)
+        self.assertEqual(len(resultado), 3)
+        self.assertTrue(np.allclose(resultado, [5.0, -1.0, 3.5]))
 
 
 class TestContratoLerLog(unittest.TestCase):
