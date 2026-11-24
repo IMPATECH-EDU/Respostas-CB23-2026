@@ -142,6 +142,12 @@ muito pequeno e então o resultado sai correto.
 diferentes para PT102. Explique a diferença entre precisão e exatidão com esses números e
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 
+Temos que precisão é quando os dados concordam entre si, ou seja, há um desvio padrão pequeno. Já exatidão é quando o resultado se aproxima
+do valor real. Temos que os desvios são muito parecidas (0.698 para linear e 0.702 para spline), logo ambas são precisas na mesma ordem, mas o
+viés, ou seja, a diferença para o valor real, é menor na spline (0.015), então ela é a mais exata. A média de 600 linhas é boa para diminuir os 
+ruídos, diminuindo o erro aleatório da media, que seria maior em um número menor de de medições, mas o víes na linear vem de um erro sistemático 
+que afeta todo dado tomado, um erro que diminui o valor de todos os dados, então irá diminuir também a média deles.
+
 ## Marco 3
 
 ### R11 — Bissecção × Newton
