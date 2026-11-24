@@ -182,20 +182,20 @@ def medir_memoria(contagens: np.ndarray) -> dict[str, int]:
 
     Levanta `ValueError` se `contagens` não for um ndarray 1D de inteiros.
     """
-    if not isinstance(contagens, np.ndarray) or contagens.ndim != 1:
-        raise ValueError(f"contagens deve ser um ndarray 1D; recebi {type(contagens).__name__}"
-                         f" com ndim={getattr(contagens, 'ndim', None)}")
+    if not isinstance(contagens, np.ndarray) or contagens.ndim != 1:                            # Avalia se contagens é uma np.ndarray e possui dimensão igual a 1, o tipo correto de informação que a função espera.
+        raise ValueError(f"contagens deve ser um ndarray 1D; recebi {type(contagens).__name__}" # Toma o tipo recebido e retorna o atributo "__name__".
+                         f" com ndim={getattr(contagens, 'ndim', None)}")                       # Mostra a dimensão do objeto dado, caso haja erro e ela exista.
     if contagens.dtype.kind not in "iu":                    # i: inteiro com sinal; u: sem sinal
         raise ValueError(f"contagens deve ter dtype inteiro; recebi {contagens.dtype}")
-    lista = contagens.tolist()
-    vetor_h = array.array("H", lista)
-    memoria = {
-        "list": sys.getsizeof(lista) + sum(sys.getsizeof(x) for x in lista),
+    lista = contagens.tolist()                                                                  # Transforma a ndarray em lista.
+    vetor_h = array.array("H", lista)                                                           # Uma estrutura que guarda os números crus lado a lado, sem um objeto "int" para cada um.
+    memoria = {                                                                 # Um dicionário da estrutura e do tamanho que ocupa
+        "list": sys.getsizeof(lista) + sum(sys.getsizeof(x) for x in lista),    # sys.getsizeof() informa quantos bytes um objeto ocupa: temos de somar o tamanho da lista e os objetos dentro dela.
         "array('H')": vetor_h.itemsize * len(vetor_h),
     }
-    for dtype in ["uint16", "int32", "int64", "float32", "float64"]:
-        memoria[dtype] = contagens.astype(dtype).nbytes      # só os dados, sem o cabeçalho
-    return memoria
+    for dtype in ["uint16", "int32", "int64", "float32", "float64"]: # Vários tipos para testar
+        memoria[dtype] = contagens.astype(dtype).nbytes      # Só os dados, sem o cabeçalho
+    return memoria # Retorna o dicionário com os valores de memória para um dado volume de números, permitindo a comparação entre diferentes tipos de armazenamento.
 
 
 def converter_laco(contagens: list[int]) -> list[float]:
