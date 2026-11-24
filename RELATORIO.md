@@ -48,9 +48,8 @@ Previsões registradas no commit: 2ee94cd
 | Tempo da compreensão / tempo do laço | ~0,8 | 0,83 (77,88 ms / 94,10 ms) |
 
 <!-- Explique a maior diferença entre previsão e medição; por que uint16 * 20 dá 16364; que dtype você escolheria para contagens e para kPa. -->
-A maior diferença foi no tempo vetorizado: previsto ~100x, medido 12,5x. A memória bateu: a lista usa 36 B por elemento, 8 B do ponteiro + 28 B do objeto int, contra 2 B do uint16, o que dá 18x. O vetorizado ganhou menos que o esperado porque a conta c * 600 / 4095 é muito simples, então o laço já gasta pouco por elemento, e o vetorizado ainda paga a conversão com astype e cria arrays temporários, provavelmente. A compreensão ficou perto do laço (0,83) porque as duas fazem a mesma conta em Python, e a compreensão só evita o append. O map com lambda foi o mais lento (106 ms) porque chama uma função Python por elemento.
-uint16 * 20 dá 16364 porque 4095 * 20 = 81900 não cabe em 16 bits (máximo 65535), e o NumPy dá a volta: 81900 - 65536 = 16364. Para contagens eu escolheria uint16 (0 a 4095, 2 B por valor). Para pressões em kPa eu escolheria float64: uso float32 só se a memória for um problema, porque a precisão dele é menor e pode se acumular em somas longas.
-
+A maior diferença foi no tempo vetorizado: previsto ~100x, medido 12,5x. O vetorizado ganhou menos que o esperado porque a conta c * 600 / 4095 é muito simples, então o laço já gasta pouco por elemento, e o vetorizado ainda paga a conversão com astype e cria arrays temporários.
+uint16 * 20 dá 16364 porque 4095 * 20 = 81900 não cabe em 16 bits (máximo 65535), e o NumPy dá a volta: 81900 - 65536 = 16364. Para contagens eu escolheria uint16 (0 a 4095, 2 B por valor) e, para pressões em kPa, float64, porque o float32 tem menos precisão e o erro pode se acumular em somas longas.
 ### R6 — Tipos da SerieTemporal (Etapa 4d)
 
 | Expressão | Tipo previsto | Tipo observado |
@@ -90,8 +89,7 @@ Python 3.14.4 | NumPy 2.5.4 | SciPy 1.18.1 | fornecido 4.0 | matrícula 3476
 <!-- Com a tabela da Etapa 1(b): por que o erro diminui quando h vai de 1 até cerca de 1e-5 e
 depois volta a crescer? Que tipo de erro domina em cada lado? Por que, em h = 1e-14, o erro
 é exatamente a própria derivada? (Experimente 1000 + 1e-14 == 1000.) --> 
-Para h grande domina o erro de truncamento, a diferença só aproxima a derivada e o erro é proporcional a h, de 1.658e-05 em h = 1 a 1.654e-08 em h = 1e-3, caindo cerca de 10 vezes a cada passo. Para h muito pequeno domina o erro de arredondamento, f(x+h) e f(x) ficam quase iguais, a subtração perde algarismos significativos e a divisão por h amplifica isso. O menor erro foi em h = 1e-5, com 6.224e-10, onde os dois efeitos se equilibram. Em h = 1e-14, "1000 + 1e-14 == 1000" dá "True", h é menor que metade do espaçamento entre floats perto de 1000, então x+h é o mesmo float que x e f(x+h) − f(x) = 0. A derivada numérica vale 0 e o erro é |0 − 0.2134|.
-
+Para h grande domina o erro de truncamento: o erro é proporcional a h, de 1.658e-05 em h = 1 a 1.654e-08 em h = 1e-3. Para h muito pequeno domina o erro de arredondamento: f(x+h) e f(x) ficam quase iguais, a subtração perde algarismos significativos e a divisão por h amplifica isso. O menor erro foi em h = 1e-5, com 6.224e-10, onde os dois efeitos se equilibram. Em h = 1e-14, "1000 + 1e-14 == 1000" dá "True": x+h é o mesmo float que x, f(x+h) − f(x) = 0, a derivada numérica vale 0 e o erro é |0 − 0.2134|.
 
 
 ### R9 — Issue #7
@@ -113,14 +111,12 @@ Precisão é a dispersão das leituras, o desvio de PT102 é 0.522 kPa (linear) 
 <!-- Na Etapa 2(a), a bissecção gasta sempre 44 iterações, qualquer que seja o Reynolds. Por
 quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
 situação em que o Newton falha e a bissecção não. --> 
-A bissecção parte de [2, 15], de largura 13, e a cada iteração a largura cai pela metade. Ela para quando 13/2^k < 1e-12, ou seja, k > log2(1,3e13) ≈ 43,6, então k = 44. Esse número só depende da largura e da tolerância, e não do Reynolds. Ordem de convergência 2 significa e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada passo. Para Re = 1e4, os erros foram 5.0e-02, 2.3e-05 e 5.0e-12, cerca de 1, 4 e 11 dígitos corretos, com ordem estimada de 2.00. O Newton falha e a bissecção não quando a derivada é zero no ponto atual, então o código levanta "ValueError", ou quando o ponto inicial está longe da raiz e a iteração diverge, como em f(x) = x^(1/3) com x₀ ≠ 0, em que x_{k+1} = −2·x_k. A bissecção só exige f contínua e troca de sinal em [a, b].
-
+A bissecção parte de [2, 15], de largura 13, e a cada iteração a largura cai pela metade. Ela para quando 13/2^k < 1e-12, ou seja, k > log2(1,3e13) ≈ 43,6, então k = 44, número que só depende da largura e da tolerância, e não do Reynolds. Ordem de convergência 2 significa e_{k+1} ≈ C·e_k²: o número de dígitos corretos dobra a cada passo. Para Re = 1e4, os erros foram 5.0e-02, 2.3e-05 e 5.0e-12, com ordem estimada de 2.00. O Newton falha e a bissecção não quando a iteração diverge, como em f(x) = x^(1/3) com x₀ ≠ 0, em que x_{k+1} = −2·x_k; a bissecção só exige f contínua e troca de sinal em [a, b].
 ### R12 — Issue #9
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
 convergência linear; por que os testes de aceitação não pegaram o defeito. --> 
-Meus testes de regressão são 'test_recalcula_a_derivada_a_cada_iteracao' e 'test_converge_em_poucas_iteracoes': os dois falhavam com o código original e passam depois da correção. Com a derivada calculada uma vez só, em x₀, a iteração vira x_{k+1} = x_k − f(x_k)/f'(x₀). Como f'(x₀) ≠ f'(raiz), o erro só é multiplicado por uma constante menor que 1 a cada passo, então a convergência é linear. Recalculando f'(x_k) a cada iteração, essa constante tende a zero perto da raiz e a convergência fica quadrática. Para Re = 1e4, o relato da issue dava 10 iterações e, depois da correção, a tabela 2(a) mostra 5. Os testes de aceitação não pegaram o defeito porque só conferem se a raiz está certa, e o Newton defeituoso ainda chega à raiz certa. Nenhum deles verifica o número de iterações nem a ordem de convergência.
-
+Meus testes de regressão são 'test_recalcula_a_derivada_a_cada_iteracao' e 'test_converge_em_poucas_iteracoes'. Com a derivada calculada uma vez só, em x₀, a iteração vira x_{k+1} = x_k − f(x_k)/f'(x₀). Como f'(x₀) ≠ f'(raiz), o erro só é multiplicado por uma constante menor que 1 a cada passo, então a convergência é linear. Recalculando f'(x_k) a cada iteração, essa constante tende a zero perto da raiz e a convergência fica quadrática: para Re = 1e4, eram 10 iterações e agora são 5. Os testes de aceitação só conferem se a raiz está certa, e o Newton defeituoso ainda chega à raiz certa; nenhum verifica o número de iterações.
 ## Marco 4
 
 ### R13 — Integração e descontinuidade
