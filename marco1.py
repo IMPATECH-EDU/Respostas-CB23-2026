@@ -162,6 +162,7 @@ def etapa4(registros: list) -> None:
     por_minuto = s.reamostrar(10)
     assert len(por_minuto) == 60
     assert math.isclose(float(por_minuto.mean()), float(s.mean()))
+    print(f"Médias por minuto: {len(por_minuto)} valores | mín {float(por_minuto.min()):.1f}, máx {float(por_minuto.max()):.1f} | média {float(por_minuto.mean()):.2f}")
 
     # (d) Imprima o tipo (type(...).__name__) de s + s, s[1:], s * 2, s.sum() e s[0].
     for expr, valor in [("s + s", s + s), ("s[1:]", s[1:]), ("s * 2", s * 2),
