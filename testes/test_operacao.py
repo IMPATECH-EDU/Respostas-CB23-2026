@@ -7,10 +7,34 @@ ser que a igualdade exata seja justamente o que você quer testar.
 import math
 import unittest
 
-from elevatoria.raizes import Bisseccao, Newton
-from fornecido.hidraulica import fator_atrito_colebrook
+import numpy as np
+
+from elevatoria.calibracao import CurvaCalibracao
+from elevatoria.operacao import ordem_convergencia, ponto_operacao
+from elevatoria.raizes import Bisseccao, Newton, ResultadoRaiz
+from fornecido.hidraulica import Tubulacao, fator_atrito_colebrook
 
 RUGOSIDADE_RELATIVA = 0.15e-3 / 0.20
+VAZOES = np.arange(0.0, 101.0, 10.0)
+BOMBA = CurvaCalibracao(VAZOES, 50.0 - 0.004 * VAZOES ** 2, "spline")   # H = 50 - 0,004 Q²
+
+
+def tubulacao() -> Tubulacao:
+    """A adutora da estação, com a bissecção resolvendo Colebrook."""
+    return Tubulacao(0.20, 850.0, 0.15e-3, 18.0, Bisseccao(tol=1e-12))
+
+
+class ResolvedorEspiao:
+    """Resolvedor falso: guarda `f`, `a` e `b` e devolve um resultado combinado."""
+
+    def __init__(self, resultado: ResultadoRaiz) -> None:
+        self.resultado = resultado
+        self.chamada = None
+
+    def encontrar(self, f, a, b):
+        """Registra os argumentos e devolve o resultado combinado."""
+        self.chamada = (f, a, b)
+        return self.resultado
 
 
 class TestBisseccaoExemplo(unittest.TestCase):
@@ -59,6 +83,70 @@ class TestRegressaoNewton(unittest.TestCase):
         for e, seguinte in pares:
             with self.subTest(erro=e):
                 self.assertLess(seguinte, e ** 1.5)
+
+
+class TestPontoOperacaoContrato(unittest.TestCase):
+    """Issue #8: regras de ponto_operacao que a aceitação não cobre."""
+
+    def test_intervalo_invertido_ou_vazio(self):
+        """a >= b levanta ValueError antes de chamar o resolvedor."""
+        for a, b in [(50.0, 40.0), (50.0, 50.0)]:
+            with self.subTest(a=a, b=b), self.assertRaises(ValueError):
+                ponto_operacao(BOMBA, tubulacao(), Bisseccao(), a=a, b=b)
+
+    def test_intervalo_fora_do_dominio_da_bomba(self):
+        """Intervalo fora do domínio da bomba (0 a 100 L/s) levanta ValueError."""
+        for a, b in [(10.0, 120.0), (-5.0, 50.0)]:
+            with self.subTest(a=a, b=b), self.assertRaises(ValueError):
+                ponto_operacao(BOMBA, tubulacao(), Bisseccao(), a=a, b=b)
+
+    def test_resolvedor_que_nao_converge(self):
+        """Resolvedor que para em max_iter sem convergir levanta ValueError."""
+        with self.assertRaises(ValueError):
+            ponto_operacao(BOMBA, tubulacao(), Newton(tol=1e-12, max_iter=1))
+
+    def test_passa_f_e_o_intervalo_ao_resolvedor(self):
+        """O resolvedor recebe a, b e f = bomba(Q) - altura do sistema."""
+        tub = tubulacao()
+        espiao = ResolvedorEspiao(ResultadoRaiz(50.0, 3, True, (40.0, 50.0)))
+        ponto_operacao(BOMBA, tub, espiao, a=20.0, b=80.0)
+        f, a, b = espiao.chamada
+        self.assertEqual((a, b), (20.0, 80.0))
+        self.assertAlmostEqual(f(35.0), BOMBA(35.0) - tub.altura_sistema(35.0))
+
+    def test_devolve_o_resultado_do_resolvedor(self):
+        """A vazão é a raiz do resolvedor e `resultado` é o objeto que ele devolveu."""
+        resultado = ResultadoRaiz(61.5, 7, True, (40.0, 61.5))
+        ponto = ponto_operacao(BOMBA, tubulacao(), ResolvedorEspiao(resultado))
+        self.assertIs(ponto.resultado, resultado)
+        self.assertAlmostEqual(ponto.vazao, 61.5)
+        self.assertAlmostEqual(ponto.altura, BOMBA(61.5))
+
+
+class TestOrdemConvergenciaContrato(unittest.TestCase):
+    """Issue #8: regras de ordem_convergencia que a aceitação não cobre."""
+
+    def test_piso_cresce_com_o_modulo_da_raiz(self):
+        """Com raiz 1e6 o piso é 1e-8: erros de 5e-9 e 3e-9 ficam de fora e p = 2."""
+        raiz = 1e6
+        historico = [raiz + e for e in (1e-1, 1e-2, 1e-4, 5e-9, 3e-9)]
+        self.assertAlmostEqual(ordem_convergencia(historico, raiz), 2.0, delta=0.02)
+
+    def test_piso_escolhido_pelo_chamador(self):
+        """Com piso 1e-3, só dois erros passam e p não existe."""
+        with self.assertRaises(ValueError):
+            ordem_convergencia([1.1, 1.01, 1.0001], 1.0, piso=1e-3)
+
+    def test_erros_iguais_levantam_erro(self):
+        """Dois erros iguais zerariam o denominador."""
+        with self.assertRaises(ValueError):
+            ordem_convergencia([1.5, 1.5, 1.5], 1.0)
+
+    def test_ordem_do_newton_em_raiz_de_dois(self):
+        """No Newton em x² - 2, a ordem estimada fica perto de 2."""
+        resultado = Newton(tol=1e-12).encontrar(lambda x: x * x - 2.0, 0.0, 2.0)
+        ordem = ordem_convergencia(resultado.historico, resultado.raiz)
+        self.assertAlmostEqual(ordem, 2.0, delta=0.2)
 
 
 if __name__ == "__main__":
