@@ -24,3 +24,37 @@ class TestBisseccaoExemplo(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class TestNewtonRegressao(unittest.TestCase):
+    """Testes de regressão da issue #9."""
+
+    def test_newton_recalcula_derivada_a_cada_iteracao(self):
+        """Regressão #9: a derivada não pode ser congelada no primeiro chute."""
+        from elevatoria.raizes import Newton
+        chamadas = []
+        def derivada(x):
+            chamadas.append(x)
+            return 2.0 * x
+        resultado = Newton(tol=1e-12, df=derivada).encontrar(lambda x: x*x - 2.0, 0.0, 2.0)
+        self.assertTrue(resultado.convergiu)
+        self.assertGreater(len(chamadas), 1)
+        self.assertAlmostEqual(resultado.raiz, 2.0 ** 0.5, places=11)
+
+    def test_newton_converge_quadraticamente_em_raiz_simples(self):
+        """Regressão #9: com derivada atualizada, Newton chega à raiz em poucas iterações."""
+        from elevatoria.raizes import Newton
+        resultado = Newton(tol=1e-12).encontrar(lambda x: x*x - 2.0, 0.0, 2.0)
+        self.assertTrue(resultado.convergiu)
+        self.assertLessEqual(resultado.iteracoes, 7)
+
+    def test_ordem_convergencia_descarta_erros_abaixo_do_piso(self):
+        """Erros no nível do arredondamento não entram na estimativa da ordem."""
+        from elevatoria.operacao import ordem_convergencia
+        historico = [1.1, 1.01, 1.0001, 1.0 + 1e-8, 1.0]
+        self.assertAlmostEqual(ordem_convergencia(historico, 1.0), 2.0, delta=0.05)
+
+    def test_ordem_convergencia_rejeita_historico_insuficiente(self):
+        """A estimativa exige pelo menos três erros acima do piso."""
+        from elevatoria.operacao import ordem_convergencia
+        with self.assertRaises(ValueError):
+            ordem_convergencia([1.0, 1.0 + 1e-16], 1.0)

@@ -7,7 +7,7 @@ Este módulo junta peças que já existem na base:
 - `scipy.stats`: mediana, MAD e erro padrão;
 - `Medida` (de `fornecido/medida.py`, da equipe de metrologia): valor ± incerteza.
 
-As funções marcadas com `NotImplementedError` são a issue #6; as docstrings descrevem o
+As funções deste módulo implementam a issue #6; as docstrings descrevem o
 contrato. Não mude nomes nem assinaturas públicas: o `marco2.py` e os testes dependem deles.
 Funções auxiliares privadas (`_nome`) são permitidas.
 """
@@ -63,7 +63,31 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError("u_sistematica não pode ser negativa")
+    if limiar <= 0:
+        raise ValueError("limiar deve ser positivo")
+    contagens = np.asarray(serie(registros, tag, "contagens"), dtype=float)
+    if contagens.size < 2:
+        raise ValueError("são necessárias pelo menos duas leituras")
+
+    valores = np.asarray(curva(contagens), dtype=float)
+    mediana = float(np.median(valores))
+    mad = float(stats.median_abs_deviation(valores, scale="normal"))
+    if mad == 0.0:
+        raise ValueError("MAD igual a zero; não é possível identificar leituras espúrias")
+    z = (valores - mediana) / mad
+    mascara_validas = np.abs(z) <= limiar
+    espurias = np.flatnonzero(~mascara_validas).astype(int).tolist()
+    validas = valores[mascara_validas]
+    if validas.size < 2:
+        raise ValueError("restaram menos de duas leituras válidas")
+
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))
+    incerteza = float(np.sqrt(erro_padrao ** 2 + u_sistematica ** 2))
+    return Medicao(tag, Medida(media, incerteza), desvio, int(validas.size), espurias)
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +99,6 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(registros, "PT101", curva, u_sistematica=u_sistematica)
+    recalque = medir(registros, "PT102", curva, u_sistematica=u_sistematica)
+    return (recalque.medida - succao.medida) * 1000 / (MASSA_ESPECIFICA * GRAVIDADE)

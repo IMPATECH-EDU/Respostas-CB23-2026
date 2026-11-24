@@ -8,7 +8,7 @@ Este módulo junta peças que já existem na base:
   um colega);
 - o NumPy ou o SciPy, para o ajuste de curvas (há mais de um caminho: veja `ajustar_polinomio`).
 
-As funções marcadas com `NotImplementedError` são a issue #10; as docstrings descrevem o
+As funções deste módulo implementam a issue #10; as docstrings descrevem o
 contrato. Não mude nomes nem assinaturas públicas: o `marco4.py` e os testes dependem deles.
 Funções auxiliares privadas (`_nome`) são permitidas.
 """
@@ -41,7 +41,16 @@ def ajustar_polinomio(x: np.ndarray, y: np.ndarray, grau: int) -> np.ndarray:
     Levanta `ValueError` se `x` e `y` não forem vetores 1D do mesmo tamanho, se `grau < 0` ou se
     houver menos pontos que coeficientes (`len(x) < grau + 1`).
     """
-    raise NotImplementedError("issue #10: ajustar_polinomio")
+    x_array = np.asarray(x, dtype=float)
+    y_array = np.asarray(y, dtype=float)
+    if (x_array.ndim != 1 or y_array.ndim != 1
+            or x_array.size != y_array.size):
+        raise ValueError("x e y devem ser vetores 1D do mesmo tamanho")
+    if isinstance(grau, bool) or not isinstance(grau, (int, np.integer)) or grau < 0:
+        raise ValueError("grau deve ser um inteiro não negativo")
+    if x_array.size < grau + 1:
+        raise ValueError("há menos pontos que coeficientes do polinômio")
+    return np.asarray(np.polynomial.polynomial.polyfit(x_array, y_array, int(grau)), dtype=float)
 
 
 @dataclass(frozen=True)
@@ -76,4 +85,28 @@ def dia_de_operacao(t: np.ndarray, vazao: np.ndarray, coef_altura: np.ndarray,
     Levanta `ValueError` se `t` e `vazao` tiverem tamanhos diferentes ou se algum limite de
     faixa (0, 18, 21 e 24 h) não estiver entre os instantes de `t`.
     """
-    raise NotImplementedError("issue #10: dia_de_operacao")
+    t_array = np.asarray(t, dtype=float)
+    q_array = np.asarray(vazao, dtype=float)
+    altura_coef = np.asarray(coef_altura, dtype=float)
+    rendimento_coef = np.asarray(coef_rendimento, dtype=float)
+    if t_array.ndim != 1 or q_array.ndim != 1 or t_array.size != q_array.size:
+        raise ValueError("t e vazao devem ser vetores 1D do mesmo tamanho")
+    if t_array.size < 2 or not np.all(np.diff(t_array) > 0):
+        raise ValueError("t deve conter pelo menos dois instantes estritamente crescentes")
+    limites = (0.0, 18.0, 21.0, 24.0)
+    if any(not np.any(np.isclose(t_array, limite, rtol=0.0, atol=1e-10))
+           for limite in limites):
+        raise ValueError("todos os limites das faixas (0, 18, 21 e 24 h) devem estar em t")
+
+    altura = np.polynomial.polynomial.polyval(q_array, altura_coef)
+    rendimento = np.polynomial.polynomial.polyval(q_array, rendimento_coef)
+    potencia = np.asarray(potencia_eletrica(q_array, altura, rendimento), dtype=float)
+
+    volume = 3.6 * integrador.integrar_tabela(t_array, q_array)
+    energia = integrador.integrar_tabela(t_array, potencia)
+    custos: list[float] = []
+    for inicio, fim, tarifa in FAIXAS_TARIFARIAS:
+        mascara = (t_array >= inicio) & (t_array <= fim)
+        energia_faixa = integrador.integrar_tabela(t_array[mascara], potencia[mascara])
+        custos.append(float(tarifa) * energia_faixa)
+    return ResumoDia(float(volume), float(energia), float(sum(custos)), tuple(custos))

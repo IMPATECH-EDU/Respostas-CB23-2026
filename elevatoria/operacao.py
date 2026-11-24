@@ -8,7 +8,7 @@ Este módulo junta peças que já existem na base:
 - `Bisseccao` e `Newton` (de `elevatoria/raizes.py`, escritos por um colega): os métodos de
   raiz, que devolvem um `ResultadoRaiz`.
 
-As funções marcadas com `NotImplementedError` são a issue #8; as docstrings descrevem o
+As funções deste módulo implementam a issue #8; as docstrings descrevem o
 contrato. Não mude nomes nem assinaturas públicas: o `marco3.py` e os testes dependem deles.
 Funções auxiliares privadas (`_nome`) são permitidas.
 """
@@ -49,7 +49,17 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    minimo, maximo = bomba.dominio
+    if a < minimo or b > maximo:
+        raise ValueError(f"o intervalo [{a}, {b}] está fora do domínio da bomba [{minimo}, {maximo}]")
+
+    funcao = lambda q: float(bomba(q)) - tubulacao.altura_sistema(q)
+    resultado = resolvedor.encontrar(funcao, a, b)
+    if not resultado.convergiu:
+        raise ValueError("o método de raiz não convergiu")
+    return PontoOperacao(float(resultado.raiz), float(bomba(resultado.raiz)), resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +76,15 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    if piso <= 0:
+        raise ValueError("piso deve ser positivo")
+    limite = piso * max(1.0, abs(raiz))
+    erros = [abs(float(x) - raiz) for x in historico]
+    erros = [erro for erro in erros if erro > limite]
+    if len(erros) < 3:
+        raise ValueError("são necessários pelo menos três erros acima do piso")
+    e_antigo, e_meio, e_novo = erros[-3:]
+    denominador = math.log(e_meio / e_antigo)
+    if denominador == 0.0:
+        raise ValueError("não é possível estimar a ordem com erros consecutivos iguais")
+    return math.log(e_novo / e_meio) / denominador
