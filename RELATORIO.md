@@ -158,7 +158,7 @@ situação em que o Newton falha e a bissecção não. -->
 
 A bissecção itera sobre o intervalo, sempre o dividindo na metade, de modo que só para quando este fica menor que a tolerância, então ela não
 depende da função ou do Reynolds, sempre dando 44 interações. Uma ordem de convergência 2 quer dizer que cada erro é proporcional ao quadrado de
-do anterior, com a mesma constante, como vemos no output, temos que 5.0e-02/(2.9)² = 2,3e-05/(5.0e-02)² = 0.006. Output completo: 2.9e+00 5.0e-02 2.3e-05 5.0e-12 8.9e-16 0.0e+00. Para Newton, temos que se o chute inicial for muito longe da raiz, pode ocorrer divergência e oscilações, e uma situação onde Newton falha é quando a derivada é 0 ou quase 0, por que ai o termo f(x)/f'(x) explode.
+do anterior, com a mesma constante, como vemos no output, temos que 5.0e-02/(2.9)² ~ 2,3e-05/(5.0e-02)² = 0.009. Output completo: 2.9e+00 5.0e-02 2.3e-05 5.0e-12 8.9e-16 0.0e+00. Para Newton, temos que se o chute inicial for muito longe da raiz, pode ocorrer divergência e oscilações, e uma situação onde Newton falha é quando a derivada é 0 ou quase 0, por que ai o termo f(x)/f'(x) explode.
 
 ### R12 — Issue #9
 
