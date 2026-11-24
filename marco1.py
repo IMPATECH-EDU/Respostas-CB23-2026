@@ -107,7 +107,7 @@ def etapa2(texto: str, registros: list, verdade: dict) -> None:
     media_contagens_normais_float = sum(contagens_ate_ate_2k)/len(contagens_ate_ate_2k)
     print(f"Valor obtido a partir da conversão da média das contagens normais de PT102 (até 2000) \
 com a escala nominal: {media_contagens_normais_float:.02f}")
-    print(f"Pressão Recalque obtida do dicionário de verdade: {verdade["pressao_recalque"]}")
+    print(f"Pressão Recalque obtida do dicionário de verdade: {verdade['pressao_recalque']}")
     p_nominal = certos["PT102"](media_contagens_normais_float)
     assert abs(p_nominal - verdade["pressao_recalque"]) > 100
 
