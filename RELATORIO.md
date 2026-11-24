@@ -133,7 +133,7 @@ Nome dos testes: test_um_milhao_de_decimos_da_exatamente_cem_mil, test_kahan_err
 O motivo de dar sempre zero é a ordem das operações que geram dado arredondamento. t = s + y, logo s + y sempre gera o mesmo arredondamento
 e t - (s + y) = t - t = 0 sempre. Mas ao fazermos (t - s) - y retira a parte de cada uma das parcelas da soma total sobrando apenas o que o
 arredondamento havia descartado, mas veja que é importante que se subtraia t - s primeiro para que que a subtração seja entre números de ordens
-parecidas, então a ordem importa. O defeito não foi pego pelos testes porque ele só ocorre para pequenas parcelas, pois assim o arredondamento é
+parecidas, então a ordem importa. O defeito não foi pego pelos testes porque eles usam poucas parcelas,e com poucas o arredondamento é
 muito pequeno e então o resultado sai correto.
 
 ### R10 — Precisão × exatidão
@@ -143,10 +143,10 @@ diferentes para PT102. Explique a diferença entre precisão e exatidão com ess
 por que a média de quase 600 leituras não elimina o viés da curva linear. -->
 
 Temos que precisão é quando os dados concordam entre si, ou seja, há um desvio padrão pequeno. Já exatidão é quando o resultado se aproxima
-do valor real. Temos que os desvios são muito parecidas (0.698 para linear e 0.702 para spline), logo ambas são precisas na mesma ordem, mas o
-viés, ou seja, a diferença para o valor real, é menor na spline (0.015), então ela é a mais exata. A média de 600 linhas é boa para diminuir os 
-ruídos, diminuindo o erro aleatório da media, que seria maior em um número menor de de medições, mas o víes na linear vem de um erro sistemático 
-que afeta todo dado tomado, um erro que diminui o valor de todos os dados, então irá diminuir também a média deles.
+do valor real. Temos que os desvios são muito parecidas (0.537 para linear e 0.539 para spline), logo ambas são precisas na mesma ordem, mas o
+viés, ou seja, a diferença para o valor real, é menor na spline (0.015, contra -1,815), então ela é a mais exata. A média de 600 linhas é boa 
+para diminuir os ruídos, diminuindo o erro aleatório da media, que seria maior em um número menor de de medições, mas o víes na linear vem de um 
+erro sistemático que afeta todo dado tomado, um erro que diminui o valor de todos os dados, então irá diminuir também a média deles.
 
 ## Marco 3
 
@@ -157,10 +157,10 @@ quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergênci
 situação em que o Newton falha e a bissecção não. -->
 
 A bissecção itera sobre o intervalo, sempre o dividindo na metade, de modo que só para quando este fica menor que a tolerância, então ela não
-depende da função ou do Reynolds, sempre dando 44 interações. Uma ordem de convergência 2 quer dizer que cada erro é perto do quadrado de seu
-anterior, como vemos no output, temos que 5.0e-02 ~ (2.9)², 2,3e-05 ~ (5.0e02)². Output completo: 2.9e+00 5.0e-02 2.3e-05 5.0e-12 8.9e-16 0.0e+00
-Para Newton, temos que se o chute inicial for muito longe da raiz, pode ocorrer divergência e oscilações, e uma situação onde Newton falha é
-quando a derivada é 0 ou quase 0, por que ai o termo f(x)/f'(x) explode.
+depende da função ou do Reynolds, sempre dando 44 interações. Uma ordem de convergência 2 quer dizer que cada erro é proporcional ao quadrado de
+do anterior, com a mesma constante, como vemos no output, temos que 5.0e-02 ~ (2.9)², 2,3e-05 ~ (5.0e02)². Output completo: 2.9e+00 5.0e-02 2.
+3e-05 5.0e-12 8.9e-16 0.0e+00. Para Newton, temos que se o chute inicial for muito longe da raiz, pode ocorrer divergência e oscilações, e uma 
+situação onde Newton falha é quando a derivada é 0 ou quase 0, por que ai o termo f(x)/f'(x) explode.
 
 ### R12 — Issue #9
 
