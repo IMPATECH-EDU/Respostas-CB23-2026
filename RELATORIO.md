@@ -156,6 +156,11 @@ que afeta todo dado tomado, um erro que diminui o valor de todos os dados, entã
 quê? Com os erros da Etapa 2(b), explique o que significa ordem de convergência 2. Dê uma
 situação em que o Newton falha e a bissecção não. -->
 
+A bissecção itera sobre o intervalo, sempre o dividindo na metade, de modo que só para quando este fica menor que a tolerância, então ela não
+depende da função ou do Reynolds, sempre dando 44 interações. Uma ordem de convergência 2 quer dizer que cada erro é perto do quadrado de seu
+anterior, como vemos no output, temos que 5.0e-02 ~ (2.9)², 2,3e-05 ~ (5.0e02)². Output completo: 2.9e+00 5.0e-02 2.3e-05 5.0e-12 8.9e-16 0.0e+00
+Para Newton, temos que se o chute inicial for muito longe da raiz, pode ocorrer divergência e oscilações, e uma situação onde Newton falha é
+quando a derivada é 0 ou quase 0, por que ai o termo f(x)/f'(x) explode.
 ### R12 — Issue #9
 
 <!-- Os nomes dos seus testes de regressão; por que calcular a derivada uma vez só deixa a
