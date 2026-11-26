@@ -63,7 +63,32 @@ def medir(registros: list[Registro], tag: str, curva: CurvaCalibracao,
     for zero ou se sobrarem menos de 2 leituras válidas. Um `ValueError` da curva (contagem
     fora do domínio) não é tratado: ele chega a quem chamou `medir`.
     """
-    raise NotImplementedError("issue #6: medir")
+    if u_sistematica < 0:
+        raise ValueError("u_sistematica deve ser não negativa")
+
+    contagens = np.asarray(serie(registros, tag, "contagens"), dtype=float)
+    if contagens.size < 2:
+        raise ValueError("a tag precisa ter pelo menos 2 leituras")
+
+    # A curva transforma cada contagem em kPa. Erros de domínio são propagados.
+    valores = np.asarray(curva(contagens), dtype=float)
+    mediana = float(np.median(valores))
+    mad = float(stats.median_abs_deviation(valores, scale="normal"))
+    if mad == 0.0:
+        raise ValueError("MAD igual a zero: não é possível calcular o z robusto")
+
+    z = (valores - mediana) / mad
+    indices_validos = np.abs(z) <= limiar
+    espurias = np.flatnonzero(~indices_validos).astype(int).tolist()
+    validas = valores[indices_validos]
+    if validas.size < 2:
+        raise ValueError("restaram menos de 2 leituras válidas")
+
+    media = float(np.mean(validas))
+    desvio = float(np.std(validas, ddof=1))
+    erro_padrao = float(stats.sem(validas))
+    incerteza = float(np.hypot(erro_padrao, u_sistematica))
+    return Medicao(tag, Medida(media, incerteza), desvio, int(validas.size), espurias)
 
 
 def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
@@ -75,4 +100,7 @@ def altura_manometrica(registros: list[Registro], curva: CurvaCalibracao,
     para Pa), ambas com a incerteza sistemática `u_sistematica`. Todas as contas são feitas
     com `Medida`, que propaga as incertezas.
     """
-    raise NotImplementedError("issue #6: altura_manometrica")
+    succao = medir(registros, "PT101", curva, u_sistematica=u_sistematica)
+    recalque = medir(registros, "PT102", curva, u_sistematica=u_sistematica)
+    return ((recalque.medida - succao.medida) * 1000.0
+            / (MASSA_ESPECIFICA * GRAVIDADE))

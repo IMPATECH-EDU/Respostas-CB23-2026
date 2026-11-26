@@ -49,7 +49,21 @@ def ponto_operacao(bomba: CurvaCalibracao, tubulacao: Tubulacao, resolvedor: Met
     `ValueError` do próprio resolvedor (por exemplo, sem troca de sinal na bissecção) não é
     tratado: ele chega a quem chamou `ponto_operacao`.
     """
-    raise NotImplementedError("issue #8: ponto_operacao")
+    if a >= b:
+        raise ValueError(f"o intervalo deve ter a < b; recebi [{a}, {b}]")
+    inicio, fim = bomba.dominio
+    if a < inicio or b > fim:
+        raise ValueError(f"o intervalo [{a}, {b}] sai do domínio da bomba [{inicio}, {fim}]")
+
+    def diferenca_altura(q: float) -> float:
+        """Diferença entre a altura fornecida pela bomba e a exigida pelo sistema."""
+        return float(bomba(q)) - float(tubulacao.altura_sistema(q))
+
+    resultado = resolvedor.encontrar(diferenca_altura, a, b)
+    if not resultado.convergiu:
+        raise ValueError(f"o resolvedor não convergiu em {resultado.iteracoes} iterações")
+    vazao = float(resultado.raiz)
+    return PontoOperacao(vazao=vazao, altura=float(bomba(vazao)), resultado=resultado)
 
 
 def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e-14) -> float:
@@ -66,4 +80,17 @@ def ordem_convergencia(historico: Sequence[float], raiz: float, piso: float = 1e
 
     Levanta `ValueError` se houver menos de 3 erros acima do piso.
     """
-    raise NotImplementedError("issue #8: ordem_convergencia")
+    if piso < 0:
+        raise ValueError(f"piso deve ser não negativo; recebi {piso}")
+    limite = piso * max(1.0, abs(raiz))
+    erros = [abs(float(x) - raiz) for x in historico]
+    acima = [erro for erro in erros if erro > limite]
+    if len(acima) < 3:
+        raise ValueError(f"são precisos 3 erros acima de {limite:.1e}; há {len(acima)}")
+    e0, e1, e2 = acima[-3:]
+    if e0 == e1 or e1 == e2:
+        raise ValueError("erros consecutivos iguais: a ordem não pode ser estimada")
+    denominador = math.log(e1 / e0)
+    if denominador == 0:
+        raise ValueError("não é possível estimar a ordem com esses erros")
+    return math.log(e2 / e1) / denominador
